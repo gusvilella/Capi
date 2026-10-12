@@ -1,7 +1,7 @@
 # Capi — seu dinheiro, de boa na lagoa
 
 
-**Abrir o app:** https://gusvilella.github.io/PlanilhaFinanceira/ (atualiza sozinho a cada mudança publicada)
+**Abrir o app:** https://gusvilella.github.io/Capi/ (atualiza sozinho a cada mudança publicada)
 
 Web app simples para organizar o dinheiro do mês. Sem cadastro, sem instalação, sem servidor: o app inteiro está num único arquivo, `index.html`.
 
@@ -15,7 +15,7 @@ Para ter o app com ícone na tela inicial, abrindo em tela cheia e funcionando s
 
 1. No GitHub, abra o repositório → **Settings** → **Pages**.
 2. Em **Branch**, escolha a branch do app e a pasta `/ (root)` e clique em **Save**.
-3. Depois de uns minutos o endereço aparece no topo da página (algo como `https://seu-usuario.github.io/PlanilhaFinanceira/`).
+3. Depois de uns minutos o endereço aparece no topo da página (algo como `https://seu-usuario.github.io/Capi/`).
 4. Abra esse endereço no celular:
    - **Android (Chrome)**: menu **⋮** → **Instalar app**.
    - **iPhone (Safari)**: **Compartilhar** → **Adicionar à Tela de Início**.

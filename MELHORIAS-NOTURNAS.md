@@ -2,7 +2,7 @@
 
 ## Noite da identidade da Capi (10/out)
 
-Tudo está na **prévia** (https://gusvilella.github.io/PlanilhaFinanceira/preview.html). O site principal não foi mexido. Nenhum dado mudou de formato.
+Tudo está na **prévia** (https://gusvilella.github.io/Capi/preview.html). O site principal não foi mexido. Nenhum dado mudou de formato.
 
 ### Para você testar
 1. **Cena do topo:** abra a planilha. A Capi, agora de perfil, joga a moedinha da boca para o cofrinho, que balança com faíscas e "+R$". Toque nela para repetir.
