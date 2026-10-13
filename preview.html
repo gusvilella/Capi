@@ -43,12 +43,12 @@ html.presplash body::after { display: none; }
   --field: #f6f5f1;
   --field-line: #e3e1db;
   --edge: rgba(17, 17, 17, .075);
-  --green: #13845d;
+  --green: #0f7752;
   --green-soft: #e3f1ea;
   --blue: #0a7598;
   --blue-soft: #e1f2f6;
   --accent: #0a8370;
-  --accent-ink: #0a7d69;   /* menta da Capi para texto (no escuro, mais claro pra ler bem) */
+  --accent-ink: #097362;   /* menta da Capi para texto (no escuro, mais claro pra ler bem) */
   --accent-soft: #dcf5ee;
   --red: #cc353c;
   --red-soft: #fbeaea;
@@ -65,16 +65,16 @@ html.presplash body::after { display: none; }
 
 :root[data-theme="dark"] {
   --over: #e0895c;
-  --bg: #0a0a0a;
-  --bg-top: #181818;
+  --bg: #0f1211;
+  --bg-top: #161b1a;
   --glow: rgba(255, 255, 255, .045);
-  --card: #141414;
-  --ink: #fefefe;
-  --ink-2: #b9b9b9;
-  --muted: #8c8c8c;
-  --line: #202020;
-  --field: #1b1b1b;
-  --field-line: #2a2a2a;
+  --card: #171b1a;
+  --ink: #ececea;
+  --ink-2: #b5b9b7;
+  --muted: #8f9592;
+  --line: #232a28;
+  --field: #1d2321;
+  --field-line: #2c3532;
   --edge: rgba(255, 255, 255, .075);
   --green: #3cc88c;
   --green-soft: #12261c;
@@ -160,7 +160,7 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .kpi.investir .kpi-ico { background: var(--blue-soft); color: var(--blue); } .kpi.investir .kpi-value { color: var(--blue); }
 .kpi.despesas .kpi-ico { background: var(--red-soft); color: var(--red); } .kpi.despesas .kpi-value { color: var(--red); }
 .kpi.saldo .kpi-ico { background: var(--field); color: var(--ink-2); }
-.kpi.saldo .kpi-value.neg { color: var(--red); }
+.kpi.saldo .kpi-value.neg { color: var(--amber); }
 .kpi-sub { margin-top: 4px; font-size: .75rem; color: var(--muted); }
 .adjust {
   margin-left: auto; border: 0; border-radius: 999px;
@@ -519,7 +519,7 @@ html.locked .lock { place-items: normal; overflow-y: auto; }
 .acc .money input { padding: 9px 0; text-align: right; }
 .sign { border: 0; background: transparent; color: var(--muted); font-size: .8rem; font-weight: 700; padding: 6px; border-radius: 8px; white-space: nowrap; }
 .sign:hover { background: var(--card); color: var(--ink); }
-.acc.neg .sign, .acc.neg .money input { color: var(--red); }
+.acc.neg .sign, .acc.neg .money input { color: var(--over); }
 .bank-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .bank-chips button { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--field-line); background: var(--field); border-radius: 999px; padding: 6px 11px; font-size: .8rem; font-weight: 600; color: var(--ink-2); }
 .bank-chips button:hover { border-color: var(--muted); }
@@ -741,13 +741,13 @@ body::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-event
 .adjust { background: var(--accent); box-shadow: none; font-weight: 600; }
 .overlay { background: rgba(17, 17, 17, .28); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 :root[data-theme="dark"] .overlay { background: rgba(0, 0, 0, .62); }
-:root[data-theme="dark"] .modal { background: #131313; }
+:root[data-theme="dark"] .modal { background: #151a19; }
 .toast { background: rgba(24, 24, 24, .94); color: #fefefe; box-shadow: 0 0 0 1px rgba(255, 255, 255, .08), 0 18px 40px -12px rgba(0, 0, 0, .5); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 .toast button { color: #7ae3d1; }
 @media (max-width: 640px) { .hello, .title { font-size: 1.6rem; } .kpi-label { font-size: .76rem; white-space: nowrap; } .kpi-head { gap: 8px; justify-content: space-between; } .kpi-head .adjust { font-size: .76rem; flex: none; } }
 @media (max-width: 480px) { .kpi-label .lg { display: none; } }   /* "hoje" só cabe ao lado do "Adicionar/Bancos" com mais espaço */
 .kpi.receita .kpi-value, .kpi.investir .kpi-value, .kpi.despesas .kpi-value { color: var(--ink); }
-.kpi.saldo .kpi-value.neg { color: var(--red); }
+.kpi.saldo .kpi-value.neg { color: var(--amber); }   /* falta dinheiro: atenção sem alarme (vermelho deixa a gente mais pessimista) */
 .ov-link { color: var(--muted); font-weight: 600; transition: color .15s; }
 .ov-link:hover { color: var(--ink); }
 @media print { body::before { display: none; } }
@@ -1729,8 +1729,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
 }
 
 /* ===== Cores da apresentação na planilha: fundo com luzes coloridas, degradê azul→roxo nos destaques ===== */
-:root { --grad: linear-gradient(135deg, #0c917a, #0a7393); --grad-glow: rgba(12, 130, 118, .5); --in: #19b884; --out: #ff7a8a; --r: 22px; }
-:root[data-theme="dark"] { --in: #34d399; --out: #ff7a8a; }
+:root { --grad: linear-gradient(135deg, #0b8470, #0a7393); --grad-glow: rgba(12, 130, 118, .5); --in: #0a86a6; --out: #d4582a; --r: 22px; }   /* entrou × saiu: água × fruta, distinguíveis pra daltônicos; início do degradê mais escuro pro texto branco (4,6:1) */
+:root[data-theme="dark"] { --in: #5cc8f5; --out: #ff7f50; }
 @media screen {
   body::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
     background: radial-gradient(60vmax 60vmax at -8% -12%, rgba(31, 184, 154, .22), transparent 60%), radial-gradient(52vmax 52vmax at 108% 18%, rgba(255, 168, 76, .16), transparent 60%), radial-gradient(48vmax 48vmax at 40% 115%, rgba(10, 133, 168, .1), transparent 60%); }
@@ -1738,7 +1738,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   .hello { display: flex; align-items: center; gap: 8px; } .hello .av.avc.sm { width: 22px; height: 22px; } .hello .av-pair .av.avc.sm { width: 22px; height: 22px; }
   /* cartões de resumo: o primeiro em degradê; os outros com luz colorida no canto */
   .kpi { background: radial-gradient(170px 150px at 92% -10%, color-mix(in srgb, var(--kc, transparent) 17%, transparent), transparent 72%), var(--card); }
-  .kpi.receita { --kc: #19b884; } .kpi.despesas { --kc: #ff7a8a; } .kpi.sobra { --kc: #ff9416; }
+  .kpi.receita { --kc: #0a86a6; } .kpi.despesas { --kc: #ff8a5c; } .kpi.sobra { --kc: #ff9416; }
   .kpi.contas { background: radial-gradient(190px 160px at 92% -10%, rgba(255, 255, 255, .2), transparent 72%), var(--grad); box-shadow: 0 20px 40px -22px var(--grad-glow); }
   .kpi.contas, .kpi.contas .kpi-value { color: #fff; }
   .kpi.contas .kpi-label, .kpi.contas .kpi-sub { color: rgba(255, 255, 255, .82); }
@@ -1759,7 +1759,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   #ovForecast { --hc: #12a588; } #ovCal { --hc: #0a85a8; } #ovWhere { --hc: #ff6b7f; } #ovCards { --hc: #ff9416; } #ovGoals { --hc: #b8733f; } .evo { --hc: #5cc8f5; }
   .month { box-shadow: var(--shadow); }
   .meter i { background: linear-gradient(90deg, #19b884, #2dd4bf); } .meter.info i { background: var(--grad); }
-  .meter.warn i { background: linear-gradient(90deg, #ffb36b, #ff8a5c); } .meter.over i { background: linear-gradient(90deg, #ff8a5c, #ff5f8f); }
+  .meter.warn i { background: linear-gradient(90deg, #ffb36b, #ff8a5c); } .meter.over i { background: linear-gradient(90deg, #ff8a5c, #d4582a); }
 }
 
 /* Cena da Capi no topo da planilha: de perfil, joga a moedinha da boca pro cofrinho */
@@ -2921,8 +2921,10 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   // ================= Paletas dos gráficos =================
   // As cores padrão (categorias, contas fixas, investimentos) viram as da paleta escolhida;
   // cores escolhidas na mão e cores de marca ficam suavizadas para combinar.
+  // Aurora: cores da Capi escolhidas por computador pra continuarem diferentes também pra quem é daltônico, e combinando com o assunto:
+  // Mercado pêssego · Carro azul-tinta · Contas petróleo · Saúde menta · Lazer céu · Casa caramelo · Comida laranja · Outros grafite · Contas fixas chocolate · Assinaturas rosa
   const PALETTES = {
-    aurora: { name: 'Aurora', cols: ['#0a85a8', '#ff6b7f', '#12a588', '#5cc8f5', '#ff9416', '#e66aa6', '#b8733f', '#7ae3d1', '#f5b82e', '#9aa8a6', '#2fbf71', '#c9b8a8'], keep: true, map: { '#475569': '#8d5a37', '#1d4ed8': '#5cc8f5', '#d97706': '#ff9416' } },
+    aurora: { name: 'Aurora', cols: ['#ffc29a', '#2c4a6b', '#0a6f8f', '#12a588', '#7cd0f3', '#b8733f', '#7a4a2a', '#86dfc8', '#ff9416', '#6e7774', '#12a588', '#d9c2a5'], keep: true, map: { '#475569': '#7a4a2a', '#1d4ed8': '#7cd0f3', '#d97706': '#f39ac0' } },
     vivas: { name: 'Vivas', cols: null },
     salvia: { name: 'Sálvia', cols: ['#8fae9d', '#d2ab85', '#9aa9c9', '#d9a7a7', '#b9b48c', '#a898bf', '#7fa6ab', '#dcc093', '#a4958a', '#b7bec6'] },
     nevoa: { name: 'Névoa', cols: ['#94afc8', '#c9b49d', '#a5b8a7', '#b3a5c6', '#c7a3a9', '#9dbab5', '#8c9cb0', '#d2c2a8', '#aab2bd', '#b9c7d6'] },
@@ -5683,7 +5685,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   function applyTheme(theme, persist) {
     document.documentElement.dataset.theme = theme;
     const splashing = document.documentElement.classList.contains('presplash') || document.querySelector('#bootSplash:not(.gone)');
-    if (!splashing) document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#0a0a0a' : '#f3f2ee';
+    if (!splashing) document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#0f1211' : '#f3f2ee';
     if (persist) { ui.theme = theme; saveUi(); }
   }
   function applyFont(font, persist) {
