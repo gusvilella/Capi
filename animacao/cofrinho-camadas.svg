@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="104 40 64 56" width="512" height="448">
+  <!-- Cofrinho em camadas. -->
+  <g id="sombra"><ellipse cx="133" cy="91.6" rx="22" ry="3.6" fill="#143c32" opacity=".13"/></g>
+  <g id="rabinho"><path d="M152.8 64q6-5 6 1q0 5 4 2" fill="none" stroke="#431608" stroke-width="1.8" stroke-linecap="round"/></g>
+  <g id="pernas"><rect x="120" y="77" width="7.4" height="12" rx="3.6" fill="#ff9ab2" stroke="#431608" stroke-width="1.8"/><rect x="139.2" y="77" width="7.4" height="12" rx="3.6" fill="#ff9ab2" stroke="#431608" stroke-width="1.8"/></g>
+  <g id="orelha"><path d="M118.4 57.4l-1.8-9 8.8 5.2z" fill="#ff9ab2" stroke="#431608" stroke-width="1.8" stroke-linejoin="round"/></g>
+  <g id="corpo"><ellipse cx="133" cy="68" rx="20.6" ry="15.6" fill="#ffb6c6" stroke="#431608" stroke-width="2.2"/><ellipse cx="139.6" cy="60.6" rx="8" ry="3.8" fill="#fff" opacity=".35"/><path d="M120 79.6q13 5 27 0" fill="none" stroke="#f08aa4" stroke-width="2" stroke-linecap="round" opacity=".6"/></g>
+  <g id="focinho"><ellipse cx="112.6" cy="69" rx="4.8" ry="6" fill="#ff9ab2" stroke="#431608" stroke-width="1.8"/><ellipse cx="111.4" cy="67.2" rx=".9" ry="1.5" fill="#431608"/><ellipse cx="111.4" cy="70.8" rx=".9" ry="1.5" fill="#431608"/></g>
+  <g id="olho-e-bochecha"><ellipse cx="121.6" cy="63" rx="2" ry="1.25" fill="#1d0a05"/><ellipse cx="123.4" cy="69.8" rx="3.2" ry="2.1" fill="#ff7f9b" opacity=".6"/></g>
+  <g id="fenda"><rect x="128.6" y="51.2" width="12" height="3.4" rx="1.7" fill="#431608"/></g>
+</svg>

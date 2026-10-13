@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 -10 80 106" width="512" height="678">
+  <!-- Peças extras pra trocar no meio da animação (mesma posição da Capi em camadas). -->
+  <g id="olhos-felizes"><path d="M15.8 26.2q3-3.4 6 0M42.2 26.2q3-3.4 6 0" fill="none" stroke="#1d0a05" stroke-width="1.9" stroke-linecap="round"/></g>
+  <g id="sobrancelhas-preocupadas"><path d="M16.6 22.6l4.6-1.3M47.4 22.6l-4.6-1.3" fill="none" stroke="#431608" stroke-width="1.5" stroke-linecap="round"/></g>
+  <g id="gota-de-suor"><path d="M60.6 25.6q-2.6 3.6-2.6 5.2a2.6 2.6 0 0 0 5.2 0q0-1.6-2.6-5.2z" fill="#8fdcf7" stroke="#4fb8e0" stroke-width=".6"/></g>
+  <g id="balao-exclamacao"><rect x="47" y="-4" width="11" height="13" rx="4" fill="#fff" stroke="#431608" stroke-width="1.6"/><path d="M52.5-1.2v5" stroke="#431608" stroke-width="2.2" stroke-linecap="round"/><circle cx="52.5" cy="6.6" r="1.2" fill="#431608"/></g>
+</svg>
