@@ -988,6 +988,7 @@ html.auth, html.auth body { overflow: hidden; }
   background: radial-gradient(110% 80% at 50% 42%, #5fe0c2, #22b096 55%, #158a76); transition: opacity .55s cubic-bezier(.4, 0, .2, 1) .12s, visibility 0s .7s; }
 :root[data-theme="dark"] .ob-splash { background: radial-gradient(110% 80% at 50% 42%, #2fbf9f, #137d6a 55%, #0a4f44); }
 .ob-splash.gone { opacity: 0; visibility: hidden; }
+.ob-splash.boot { z-index: 300; }   /* abertura de quem já tem conta: cobre a planilha e a senha */
 /* Abertura no estilo Duolingo, só a capivara: ela sobe da água (ondinhas), a laranja cai na cabeça, ela amassa com o peso,
    mexe as orelhas, cora; pra sair, dá um impulsinho e some crescendo de leve enquanto o verde se dissolve */
 .ob-face { position: relative; z-index: 1; width: clamp(190px, 50vw, 280px); aspect-ratio: 1; animation: cap-rise .8s cubic-bezier(.22, 1, .36, 1) .12s both, cap-breathe 2.4s ease-in-out 1.4s infinite; }
@@ -6603,6 +6604,21 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
 
   // ================= Apresentação (primeira vez que abre o app) =================
   // Sem cadastro nem senha: umas perguntas rápidas em telas que deslizam, e telas animadas mostrando como o app funciona.
+  // Abertura da Capi (sai da água, a laranja cai na cabeça): no cadastro e toda vez que o app abre
+  const SPLASH_MS = 2050;   // quando a abertura da capivara termina de sair
+  const splashHtml = id => `<div class="ob-splash" id="${id}" aria-hidden="true">
+        <i class="sp-ring"></i><i class="sp-ring"></i><i class="sp-ring"></i>
+        <div class="ob-face"><svg viewBox="0 0 64 64"><clipPath id="spWater"><path d="M-10-20H74V50.5q-4.2 2.6-8.4 0t-8.4 0t-8.4 0t-8.4 0t-8.4 0t-8.4 0t-8.4 0t-8.4 0t-8.4 0z"/></clipPath><g clip-path="url(#spWater)">${AVATARS.capivara.svg}</g><path d="M4 50.6q4.2 2.6 8.4 0t8.4 0t8.4 0t8.4 0t8.4 0t8.4 0" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".75"/><g class="sp-spark" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M22 5l-3-2M20 10h-3.5M42 5l3-2M44 10h3.5"/></g></svg></div>
+        <i class="sp-shadow"></i></div>`;
+  // App aberto por quem já tem conta: toca a abertura por cima de tudo e, quando o verde se dissolve, a planilha entra
+  function bootSplash(then) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { then(); return; }
+    document.body.insertAdjacentHTML('beforeend', splashHtml('bootSplash'));
+    const sp = $('#bootSplash'); sp.classList.add('boot');
+    let done = false;
+    const go = () => { if (done) return; done = true; sp.classList.add('gone'); then(); setTimeout(() => sp.remove(), 900); };
+    sp.addEventListener('click', go); setTimeout(go, SPLASH_MS - 720);
+  }
   function showOnboarding() {
     document.documentElement.classList.add('auth');
     closeModal();
@@ -6714,13 +6730,9 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
           <div class="ob-done">${capiLagoa(true)}<span class="ob-check"><svg viewBox="0 0 52 52"><path d="M15 27l7 7 15-16" pathLength="1"/></svg></span></div>` },
     ].filter(s => !s.skip);
     const first = !reduced && !showOnboarding.seen; showOnboarding.seen = true;
-    const SPLASH_MS = 2050;   // quando a abertura da capivara termina de sair
     let introDone = false;
     $('#authScreen').innerHTML = `<div class="ob-bg" aria-hidden="true"><i></i><i></i><i></i></div><div class="ob-stk" id="obStk"></div>
-      ${first ? `<div class="ob-splash" id="obSplash" aria-hidden="true">
-        <i class="sp-ring"></i><i class="sp-ring"></i><i class="sp-ring"></i>
-        <div class="ob-face"><svg viewBox="0 0 64 64"><clipPath id="spWater"><path d="M-10-20H74V50.5q-4.2 2.6-8.4 0t-8.4 0t-8.4 0t-8.4 0t-8.4 0t-8.4 0t-8.4 0t-8.4 0t-8.4 0z"/></clipPath><g clip-path="url(#spWater)">${AVATARS.capivara.svg}</g><path d="M4 50.6q4.2 2.6 8.4 0t8.4 0t8.4 0t8.4 0t8.4 0t8.4 0" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".75"/><g class="sp-spark" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M22 5l-3-2M20 10h-3.5M42 5l3-2M44 10h3.5"/></g></svg></div>
-        <i class="sp-shadow"></i></div>` : ''}
+      ${first ? splashHtml('obSplash') : ''}
       <div class="ob" id="ob">
       <div class="ob-top"><div class="ob-dots" id="obDots"></div><div class="ob-tr">
         <button type="button" class="ob-theme" id="obTheme" role="switch" aria-checked="${document.documentElement.dataset.theme === 'dark'}" aria-label="Modo escuro" title="Modo escuro">
@@ -7096,7 +7108,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     history.replaceState(null, '', location.pathname + location.search);
   }
   if (!account) showOnboarding();
-  else { document.documentElement.classList.remove('auth'); stampOwner(); if (lockCfg) lockNow(); else requestAnimationFrame(introAnim); }
+  else { document.documentElement.classList.remove('auth'); stampOwner(); if (lockCfg) { lockNow(); bootSplash(() => {}); } else bootSplash(() => requestAnimationFrame(introAnim)); }
   try { fillFilter(); render(); }
   finally { document.documentElement.classList.remove('booting'); }   // mesmo se algo falhar, a tela aparece
   setTimeout(checkInvite, 600);
