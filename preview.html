@@ -1778,7 +1778,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
 .capi-scene .cs-spark, .capi-scene .cs-eh, .capi-scene .cs-fly { opacity: 0; }
 .capi-scene .cs-brow, .capi-scene .cs-sweat { opacity: 0; transition: opacity .4s; }
 .capi-scene.tight .cs-brow { opacity: 1; }
-.capi-scene.tight .cs-sweat { opacity: 1; transform-origin: 113.6px 66px; animation: cs-sweat 2.6s ease-in infinite; }
+.capi-scene.tight .cs-sweat { opacity: 1; transform-origin: 110.6px 68px; animation: cs-sweat 2.6s ease-in infinite; }
 .capi-scene.tight.busy .cs-brow, .capi-scene.tight.busy .cs-sweat { opacity: 0; animation: none; }   /* guardando a moedinha ela esquece a preocupação */
 @keyframes cs-sweat { 0%, 30% { transform: none; opacity: 1; } 75% { transform: translateY(5px) scale(.8); opacity: 0; } 76% { transform: none; opacity: 0; } 100% { opacity: 1; } }
 .capi-scene .cs-capi { transform-origin: 32px 92px; }
@@ -6596,7 +6596,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     el.innerHTML = `<svg viewBox="0 0 222 100" aria-hidden="true">
       <path class="cs-ground" d="M2 93.2H220" /><g class="cs-grass"><path d="M4 93q1.6-5 2.6 0q.8-6 2.4 0q1.4-4 2.4 0z"/><path d="M98 93q1.4-4.6 2.4 0q.9-5.6 2.4 0z"/><path d="M150 93q1.6-5 2.6 0q.8-6 2.4 0q1.4-4 2.4 0z"/><ellipse cx="88" cy="93.4" rx="2.4" ry="1.2"/><ellipse cx="160" cy="93.6" rx="1.8" ry="1"/><ellipse cx="22" cy="93.8" rx="1.6" ry=".9"/></g>
       <ellipse class="cs-sh" cx="191" cy="91.8" rx="26" ry="3.8"/>
-      <g class="cs-walk"><ellipse class="cs-sh cs-wsh" cx="39.4" cy="92.6" rx="29" ry="3.8"/><g transform="translate(8 1) scale(.98)"><g class="cs-hop"><g class="cs-tilt"><g class="cs-capi"><g class="cs-body"><g transform="matrix(.52 0 0 .52 -6.79 -7.8)">${CAPI.body}<g class="cs-paws"><g class="cs-mcoin">${capiCoin()}</g><g class="cs-pl">${CAPI.pl}</g><g class="cs-pr">${CAPI.pr}</g></g><g class="cs-bl">${CAPI.blush}</g><g class="cs-eo"><g class="cs-look">${CAPI.eyes}</g></g>${CAPI.happy.replace('<path ', '<path class="cs-eh" ')}<path class="cs-brow" d="M43.8 58.4l10.4-3.2M105.4 58.4l-10.4-3.2" fill="none" stroke="#4b1a0d" stroke-width="2.6" stroke-linecap="round"/><path class="cs-sweat" d="M113.6 59.6q-4.2 5.8-4.2 8.4a4.2 4.2 0 0 0 8.4 0q0-2.6-4.2-8.4z" fill="#8fdcf7" stroke="#3aa6d6" stroke-width="1.3"/><g class="cs-fruit">${CAPI.fruit}</g></g></g></g></g></g><g class="cs-bang"><rect x="47" y="-4" width="11" height="13" rx="4" fill="#fff" stroke="#431608" stroke-width="1.6"/><path d="M52.5-1.2v5" stroke="#431608" stroke-width="2.2" stroke-linecap="round"/><circle cx="52.5" cy="6.6" r="1.2" fill="#431608"/></g></g></g></g>
+      <g class="cs-walk"><ellipse class="cs-sh cs-wsh" cx="39.4" cy="92.6" rx="29" ry="3.8"/><g transform="translate(8 1) scale(.98)"><g class="cs-hop"><g class="cs-tilt"><g class="cs-capi"><g class="cs-body"><g transform="matrix(.52 0 0 .52 -6.79 -7.8)">${CAPI.body}<g class="cs-paws"><g class="cs-mcoin">${capiCoin()}</g><g class="cs-pl">${CAPI.pl}</g><g class="cs-pr">${CAPI.pr}</g></g><g class="cs-bl">${CAPI.blush}</g><g class="cs-eo"><g class="cs-look">${CAPI.eyes}</g></g>${CAPI.happy.replace('<path ', '<path class="cs-eh" ')}<path class="cs-brow" d="M43.8 58.4l10.4-3.2M105.4 58.4l-10.4-3.2" fill="none" stroke="#4b1a0d" stroke-width="2.6" stroke-linecap="round"/><path class="cs-sweat" d="M110.6 62.4q-3.8 5.2-3.8 7.6a3.8 3.8 0 0 0 7.6 0q0-2.4-3.8-7.6z" fill="#8fdcf7" stroke="#3aa6d6" stroke-width="1.3"/><g class="cs-fruit">${CAPI.fruit}</g></g></g></g></g></g><g class="cs-bang"><rect x="47" y="-4" width="11" height="13" rx="4" fill="#fff" stroke="#431608" stroke-width="1.6"/><path d="M52.5-1.2v5" stroke="#431608" stroke-width="2.2" stroke-linecap="round"/><circle cx="52.5" cy="6.6" r="1.2" fill="#431608"/></g></g></g></g>
       <g class="cs-fly"><g class="cs-fs"><g transform="matrix(.51 0 0 .51 -38 -62.1)">${capiCoin()}</g></g></g>
       <g transform="matrix(1.2 0 0 1.2 31.4 -17.8)"><g class="cs-pig"><path class="cs-tail" d="M152.8 64q6-5 6 1q0 5 4 2" fill="none" stroke="#431608" stroke-width="1.8" stroke-linecap="round"/><rect x="120" y="77" width="7.4" height="12" rx="3.6" fill="#ff9ab2" stroke="#431608" stroke-width="1.8"/><rect x="139.2" y="77" width="7.4" height="12" rx="3.6" fill="#ff9ab2" stroke="#431608" stroke-width="1.8"/><path d="M118.4 57.4l-1.8-9 8.8 5.2z" fill="#ff9ab2" stroke="#431608" stroke-width="1.8" stroke-linejoin="round"/><ellipse cx="133" cy="68" rx="20.6" ry="15.6" fill="#ffb6c6" stroke="#431608" stroke-width="2.2"/><ellipse cx="139.6" cy="60.6" rx="8" ry="3.8" fill="#fff" opacity=".35"/><path d="M120 79.6q13 5 27 0" fill="none" stroke="#f08aa4" stroke-width="2" stroke-linecap="round" opacity=".6"/><ellipse cx="112.6" cy="69" rx="4.8" ry="6" fill="#ff9ab2" stroke="#431608" stroke-width="1.8"/><ellipse cx="111.4" cy="67.2" rx=".9" ry="1.5" fill="#431608"/><ellipse cx="111.4" cy="70.8" rx=".9" ry="1.5" fill="#431608"/><ellipse class="cs-peye" cx="121.6" cy="63" rx="2" ry="1.25" fill="#1d0a05"/><path class="cs-pwink" d="M119.4 63.6q2.2-2 4.4 0" fill="none" stroke="#1d0a05" stroke-width="1.3" stroke-linecap="round" opacity="0"/><ellipse cx="123.4" cy="69.8" rx="3.2" ry="2.1" fill="#ff7f9b" opacity=".6"/><rect x="128.6" y="51.2" width="12" height="3.4" rx="1.7" fill="#431608"/></g>
         <g class="cs-spark" stroke="#ffc23d" stroke-width="2" stroke-linecap="round"><path d="M127 46l-3-4M134.5 43.5v-5M142 46l3-4"/></g>
@@ -6627,7 +6627,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       A(body, [{ transform: 'scale(1.09, .89)' }, { transform: 'scale(.93, 1.09)', offset: .25 }, { transform: 'scale(1, 1)', offset: .8 }, { transform: 'scale(1, 1)' }], { duration: air });
       A(wsh, [{ transform: 'scale(1)' }, { transform: 'scale(.72)', offset: .5 }, { transform: 'scale(1)' }], { duration: air });
       await A(hop, [{ transform: T(0, 0), easing: 'cubic-bezier(.2, .7, .4, 1)' }, { transform: T(0, -h), easing: 'cubic-bezier(.6, 0, .8, .3)' }, { transform: T(0, 0) }], { duration: air, easing: 'linear' });
-      await A(body, [{ transform: 'scale(1.1, .88)' }, { transform: 'scale(1, 1)' }], { duration: 240, easing: 'cubic-bezier(.3, 1.7, .5, 1)' });   // pouso
+      await A(body, [{ transform: 'scale(1, 1)' }, { transform: 'scale(1.1, .88)', offset: .28, easing: 'cubic-bezier(.3, 1.6, .5, 1)' }, { transform: 'scale(1, 1)' }], { duration: 320, easing: 'ease-out' });   // pouso (amassa rápido, sem pular de quadro)
     }
     // anda bamboleando (de frente, como um bichinho fofo): cada passo sobe e desce e o corpo balança
     async function walkTo(tx) {
@@ -6658,7 +6658,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     // tchauzinho: a patinha direita sobe pro lado da cabeça e balança
     const UP = 'rotate(92deg)';
     async function wave() {
-      await A(pr, [{ transform: 'rotate(0deg)' }, { transform: UP }], { duration: 260, easing: 'cubic-bezier(.3, 1.4, .5, 1)' });
+      await A(pr, [{ transform: 'rotate(0deg)' }, { transform: UP }], { duration: 420, easing: 'cubic-bezier(.45, 0, .4, 1.35)' });   // sobe sem tranco e passa um tiquinho
       await A(pr, [{ transform: UP }, { transform: 'rotate(70deg)' }, { transform: UP }, { transform: 'rotate(70deg)' }, { transform: UP }], { duration: 900 });
       await A(pr, [{ transform: UP }, { transform: 'rotate(0deg)' }], { duration: 280 });
     }
@@ -6697,7 +6697,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         await A(fly, [{ transform: T(cx + 6, -24), easing: 'cubic-bezier(.5, 0, .9, .5)' }, { transform: T(cx, cy) }], { duration: 640 });
         fly.style.opacity = ''; mcoin.style.opacity = '1'; holding = true;
         A(bang, [{ opacity: 0, transform: 'scale(.6)' }], { duration: 200 });
-        A(paws, [{ transform: TU(0, 2) }, { transform: TU(0, 0) }], { duration: 260 });
+        A(paws, [{ transform: TU(0, -5) }, { transform: TU(0, 2), offset: .4 }, { transform: TU(0, 0) }], { duration: 340 });   // patinhas descem com a moeda, sem tranco
         await squash(1.1, .88, 280);
         happy(true); bounceFruit(); await jump(6, 380); await wait(300); happy(false); await lookAt(0, 0, 300);
       },
