@@ -30,6 +30,8 @@ Bateria de cada rodada: 7 larguras (320 a 1920) × claro/escuro (360 com movimen
 
 - **Rodada 13 — revisão do meu próprio trabalho:** reli todo o código que mudei esta noite. Achei 1 problema meu: se você lançasse algo enquanto a Capi estava "de boa" (sem estar cochilando), um aviso interno de "acordar" ficava ligado e o próximo cochilo acabava no mesmo instante. Corrigido: o aviso vale só pra cena em que foi dado.
 
+- **Rodada 14 — espreguiçada de manhã:** entre 6h e 10h, de vez em quando a Capi se espreguiça no topo (fecha os olhinhos, levanta as patinhas e estica o corpo). Junto com o cochilo da madrugada, ela tem um "jeitinho" diferente conforme a hora. Também conferi a prévia publicada no ar (está com tudo desta noite) e o avatar do cumprimento, que reage ao toque.
+
 ## Noite da identidade da Capi (10/out)
 
 Tudo está na **prévia** (https://gusvilella.github.io/Capi/preview.html). O site principal não foi mexido. Nenhum dado mudou de formato.

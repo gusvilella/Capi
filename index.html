@@ -6662,6 +6662,16 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       await A(body, [{ transform: 'scale(1.03, .96)' }, { transform: 'scale(.97, 1.05)', offset: .5 }, { transform: 'scale(1, 1)' }], { duration: 420 });
       el.classList.remove('sleep'); await lookAt(0, 0, 300);
     }
+    // espreguiçada (de manhã): olhinhos fechados, patinhas pra cima, estica e volta
+    async function stretch() {
+      happy(true);
+      A(paws, [{ transform: TU(0, 0) }, { transform: TU(0, -10) }], { duration: 420, easing: 'ease-out' });
+      await A(body, [{ transform: 'scale(1, 1)' }, { transform: 'scale(.95, 1.07)' }], { duration: 520, easing: 'cubic-bezier(.3, 0, .3, 1)' });
+      await wait(650);
+      A(paws, [{ transform: TU(0, -10) }, { transform: TU(0, 0) }], { duration: 360 });
+      await A(body, [{ transform: 'scale(.95, 1.07)' }, { transform: 'scale(1.05, .95)', offset: .55 }, { transform: 'scale(1, 1)' }], { duration: 460 });
+      happy(false);
+    }
     // anda bamboleando (de frente, como um bichinho fofo): cada passo sobe e desce e o corpo balança
     async function walkTo(tx) {
       const dx = tx - x; if (Math.abs(dx) < 1) return;
@@ -6745,6 +6755,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         ];
         const h = new Date().getHours();
         if (h >= 22 || h < 6) bits.push(nap, nap);   // de madrugada: chance maior de um cochilo
+        else if (h >= 6 && h < 10) bits.push(stretch, stretch);   // de manhã: se espreguiça
         const pick = bits.sort(() => Math.random() - .5).slice(0, 2);
         for (const b of pick) { if (interrupt) break; await b(); }
         await lookAt(0, 0, 300);
