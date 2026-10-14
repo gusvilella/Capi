@@ -1262,12 +1262,13 @@ button.ob-person.on .av { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5.5px var(--ob-
 .donut-box { position: relative; width: 240px; height: 240px; }
 .ov .donut-box { width: 200px; height: 200px; }
 .dn-ic { position: absolute; width: 24px; height: 24px; margin: -12px 0 0 -12px; display: grid; place-items: center; pointer-events: none; }
-.dn-ic svg.i { width: 17px; height: 17px; stroke-width: 2.1; }
+.dn-ic svg.i { width: 17px; height: 17px; stroke-width: 2.6; filter: drop-shadow(0 0 1.5px rgba(20, 24, 30, .28)); }
+.dn-ic svg.i.mono { filter: drop-shadow(0 0 1.5px rgba(20, 24, 30, .28)); }
 .dn-sep line { stroke: var(--card); stroke-width: .42; stroke-linecap: butt; }
 .ov .dn-ic { width: 20px; height: 20px; margin: -10px 0 0 -10px; }
-.ov .dn-ic svg.i { width: 14px; height: 14px; }
+.ov .dn-ic svg.i { width: 14px; height: 14px; stroke-width: 2.7; }
 .dn-out { position: absolute; width: 23px; height: 23px; margin: -11.5px 0 0 -11.5px; border-radius: 50%; display: grid; place-items: center; pointer-events: none; box-shadow: 0 0 0 2px var(--card); }
-.dn-out svg.i { width: 13.5px; height: 13.5px; stroke-width: 2.1; }
+.dn-out svg.i { width: 13.5px; height: 13.5px; stroke-width: 2.5; }
 svg.i.mono { fill: currentColor; stroke: none; }
 .dn-ic svg.i.mono { width: 16px; height: 16px; }
 .ov .dn-ic svg.i.mono { width: 13px; height: 13px; }
@@ -2093,11 +2094,6 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       .filter(([, bn]) => bn.length >= 3 && (n === bn || n.startsWith(bn + ' ')))
       .sort((a, b) => b[1].length - a[1].length)[0]?.[0];
   };
-  // cor bem escura (o ícone em cima dela vai num tom claro dela mesma)
-  function darkColor(hex) {
-    const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
-    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.38;
-  }
   function lightColor(hex) {
     const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.72;
@@ -3062,12 +3058,12 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         stroke-dasharray="${Math.max(len, 0.01)} ${100 - Math.max(len, 0.01)}" stroke-dashoffset="${-offset}"><title>${esc(g.name)}: ${brl.format(g.value / 100)}</title></circle>`;
       // ícone no meio da fatia (só nas que têm espaço)
       if (groups.length > 1) seps.push(`<line x1="33.9" y1="21" x2="39.95" y2="21" style="transform:rotate(${(offset * 3.6).toFixed(3)}deg);--r0:${(start * 3.6).toFixed(3)}deg"/>`);
-      // ícone no meio exato da fatia (no ângulo e no centro da espessura do anel), no tom mais forte da cor dela
+      // ícone branco no meio exato da fatia (no ângulo e no centro da espessura do anel)
       const mid = offset + len / 2, popAt = 1000 + (marks.length + outs.length) * 45;
       if ((g.icon || g.mono || g.av) && len >= 6) {
         const a = mid / 100 * 2 * Math.PI, r = 15.915 / 42 * 100;
         const x = 50 + r * Math.sin(a), y = 50 - r * Math.cos(a);
-        marks.push(`<span class="dn-ic" style="--dl:${popAt}ms;left:${x.toFixed(3)}%;top:${y.toFixed(3)}%;color:${darkColor(g.color) ? mixC(g.color, '#ffffff', .8) : mixC(g.color, '#1b1e24', .62)}">${gi(g)}</span>`);
+        marks.push(`<span class="dn-ic" style="--dl:${popAt}ms;left:${x.toFixed(3)}%;top:${y.toFixed(3)}%;color:#fff">${gi(g)}</span>`);
       } else if (g.icon || g.mono || g.av) {
         outs.push({ g, deg: mid * 3.6, dl: popAt });
       }
