@@ -26,6 +26,8 @@ Bateria de cada rodada: 7 larguras (320 a 1920) × claro/escuro (360 com movimen
 
 - **Rodada 11 — cochilo de madrugada:** entre 22h e 6h, de vez em quando a Capi tira um cochilo no topo: fecha os olhinhos, abaixa um pouquinho, sobem uns "z z z" e ela acorda com uma esticadinha. De dia isso não acontece.
 
+- **Rodada 12 — dados estranhos e Capi que acorda:** abri o app com dados vazios, só uma receita, lançamentos sem categoria, campos estranhos (valor em texto, data inválida), formato antigo sem identificador e 3.000 lançamentos: tudo abre, sem erro e sem "NaN" na tela. E agora, se você lançar algo enquanto a Capi está de boa ou cochilando, ela para (acorda), e vai guardar a moedinha na hora; tocar nela também acorda.
+
 ## Noite da identidade da Capi (10/out)
 
 Tudo está na **prévia** (https://gusvilella.github.io/Capi/preview.html). O site principal não foi mexido. Nenhum dado mudou de formato.

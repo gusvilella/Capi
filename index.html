@@ -6651,11 +6651,14 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const puff = () => dust.forEach((c, i) => { const dx = (i < 2 ? -1 : 1) * (i % 2 ? 4 : 7); c.animate([{ opacity: .9, transform: 'translate(0px, 0px) scale(.4)' }, { opacity: .65, transform: `translate(${dx * .6}px, -1.5px) scale(1)`, offset: .45 }, { opacity: 0, transform: `translate(${dx}px, -2.5px) scale(1.25)` }], { duration: 480 + (i % 2) * 80, easing: 'ease-out' }); });
     // cochilo (só de madrugada): fecha os olhos, abaixa um pouco e sobem uns "z"; acorda com uma esticadinha
     const zz = [...el.querySelectorAll('.cs-zz text')];
+    let wakeUp = false;
     async function nap() {
       el.classList.add('sleep'); await lookAt(0, .5, 300);
       A(body, [{ transform: 'scale(1, 1)' }, { transform: 'scale(1.03, .96)' }], { duration: 700 });
       zz.forEach((z, i) => z.animate([{ opacity: 0, transform: 'translate(0px, 4px) scale(.6)' }, { opacity: 1, transform: 'translate(1px, 0px) scale(1)', offset: .3 }, { opacity: 0, transform: 'translate(4px, -6px) scale(1.1)' }], { duration: 1600, delay: i * 450, iterations: 2, easing: 'ease-out' }));
-      await wait(3600);
+      for (let t = 0; t < 3600 && !wakeUp; t += 100) await wait(100);   // tocar nela ou lançar algo acorda na hora
+      if (wakeUp) zz.forEach(z => z.getAnimations().forEach(a => a.cancel()));
+      wakeUp = false;
       await A(body, [{ transform: 'scale(1.03, .96)' }, { transform: 'scale(.97, 1.05)', offset: .5 }, { transform: 'scale(1, 1)' }], { duration: 420 });
       el.classList.remove('sleep'); await lookAt(0, 0, 300);
     }
@@ -6743,17 +6746,18 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         const h = new Date().getHours();
         if (h >= 22 || h < 6) bits.push(nap, nap);   // de madrugada: chance maior de um cochilo
         const pick = bits.sort(() => Math.random() - .5).slice(0, 2);
-        for (const b of pick) await b();
+        for (const b of pick) { if (interrupt) break; await b(); }
         await lookAt(0, 0, 300);
       },
       // toque: pulão feliz com a laranja voando
       async boing() { happy(true); bounceFruit(); await jump(15, 560); await jump(5, 340); await wait(250); happy(false); },
     };
+    let current = '', interrupt = false;   // cena que está rodando; interrupt = lançaram algo no meio de uma cena "de boa"
     async function run(name) {
       if (busy || reduced) return false;
-      busy = true; el.classList.add('busy');
+      busy = true; current = name; el.classList.add('busy');
       try { await scenes[name](); } catch (_) {}
-      busy = false; el.classList.remove('busy'); return true;
+      busy = false; current = ''; interrupt = false; el.classList.remove('busy'); return true;
     }
     let nearTop = true; addEventListener('scroll', () => { nearTop = scrollY < 220; }, { passive: true });   // guardado aqui: ler na hora forçaria recalcular a página toda
     const next = () => holding ? (Math.random() < .55 ? 'deposit' : 'idle') : (Math.random() < .7 ? 'findCoin' : 'idle');
@@ -6770,9 +6774,11 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       };
       addEventListener('pointermove', e => { px = e.clientX; py = e.clientY; if (!raf) raf = requestAnimationFrame(follow); }, { passive: true });
     }
-    el.addEventListener('click', () => { run('boing'); schedule(); });
+    el.addEventListener('click', () => { if (el.classList.contains('sleep')) { wakeUp = true; return; } run('boing'); schedule(); });
     // deu certo um lançamento: ela vai guardar uma moedinha (se estiver sem, primeiro acha uma)
-    el._cheer = async () => { if (reduced || busy || !nearTop) return; if (!holding) await run('findCoin'); await run('deposit'); schedule(); };
+    el._cheer = async () => {
+      if (current === 'idle') { interrupt = true; wakeUp = true; for (let t = 0; busy && t < 3000; t += 100) await wait(100); }   // de boa ou cochilando: para (acorda) e vai guardar a moedinha
+      if (reduced || busy || !nearTop) return; if (!holding) await run('findCoin'); await run('deposit'); schedule(); };
     if (!reduced) { setTimeout(() => run('deposit').then(() => schedule()), 1100); }
   }
   function introAnim() {
