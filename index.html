@@ -962,7 +962,7 @@ html.auth, html.auth body { overflow: hidden; }
 .ob-ic svg.i { width: 18px; height: 18px; }
 .ob-row { grid-template-columns: 38px minmax(0, 1fr) auto; }
 .ob-chips.on span { background: color-mix(in srgb, var(--ob-c) 14%, var(--card)); color: var(--ink); }
-.ob-chips span b { color: var(--ob-c); }
+.ob-chips span b { color: color-mix(in srgb, var(--ob-c) 72%, #000); } :root[data-theme="dark"] .ob-chips span b { color: color-mix(in srgb, var(--ob-c) 62%, #fff); }   /* contraste AA no fundo clarinho e no escuro */
 .ob-note > svg.i { color: var(--ob-c); }
 .ob-done { filter: drop-shadow(0 12px 22px color-mix(in srgb, var(--ob-c) 45%, transparent)); }
 .ob-person .av { box-shadow: 0 0 0 3px var(--bg), 0 10px 20px -10px var(--av); }
@@ -1988,7 +1988,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         <div class="card-head">
           <div class="title-wrap"><h2 id="tableTitle"></h2><p class="tab-hint" id="tableHint"></p></div>
           <div class="head-actions">
-            <button class="btn-soft" id="filterBtn"><svg class="i"><use href="#i-filter"/></svg><span class="t">Filtro</span></button>
+            <button class="btn-soft" id="filterBtn" aria-label="Filtro"><svg class="i"><use href="#i-filter"/></svg><span class="t">Filtro</span></button>
             <button class="btn-soft" id="addBtn" aria-label="Adicionar"><svg class="i"><use href="#i-plus"/></svg><span class="t2">Adicionar</span></button>
           </div>
           <div class="pop" id="filterPop" hidden>
@@ -3013,11 +3013,11 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         <div class="donut-box"><svg class="donut" viewBox="0 0 42 42">${arcs}</svg>${marks.join('')}</div>
         <div class="donut-center"><small>${label}</small><strong class="num" data-total="${total}">${money(total)}</strong></div>
       </div>
-      <ul class="legend">${groups.map(g => {
+      <ul class="legend" role="group" aria-label="Categorias">${groups.map(g => {
         const raw = g.value / total * 100, pct = raw > 0 && raw < 1 ? '<1' : Math.round(raw);   // fatia pequena: "<1%", não "0%"
         // com id de categoria: tocar filtra a lista por ela (tocar de novo tira o filtro)
         const pick = g.id !== undefined && g.id !== '' ? ` data-catpick="${esc(g.id)}" role="button" tabindex="0" title="Filtrar por ${esc(g.name)}" class="${view.cat === g.id ? 'on' : view.cat ? 'dim' : ''}"`
-          : g.go ? ` data-go="${g.go}" data-catpick="" role="button" tabindex="0" title="Ver ${esc(g.name)}"` : '';
+          : g.go ? ` data-go="${g.go}" data-catpick="" role="button" tabindex="0" title="Ver ${esc(g.name)}"` : ' role="none"';
         const mark = g.icon || g.mono ? `<span class="lic" style="background:${g.color};color:${lightColor(g.color) ? 'rgba(20,20,18,.72)' : '#fff'}">${gi(g)}</span>` : `<span class="ldot" style="background:${g.color}"></span>`;
         return `<li${pick}>${mark}<span class="pct">${pct}%</span><span class="lname" title="${esc(g.name)}">${esc(g.name)}<small class="lval num">${money(g.value)}</small></span></li>`;
       }).join('')}</ul>`;
@@ -3171,7 +3171,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const xl = [0, 10, 20, 30].map(i => `<text class="xl" x="${x(i)}" y="${H - 5}" text-anchor="${i === 0 ? 'start' : i === 30 ? 'end' : 'middle'}">${i === 0 ? 'hoje' : dm(days[i].iso)}</text>`).join('');
     // pontos dos dias com movimento (≥ 8px, anel na cor do fundo)
     const marks = days.map((d, i) => d.events.length ? `<circle cx="${x(i)}" cy="${y(d.bal)}" r="3.5" fill="${d.bal < 0 ? 'var(--amber)' : color}" stroke="var(--card)" stroke-width="2"/>` : '').join('');
-    wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Previsão do saldo nos próximos 30 dias">
+    wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="group" aria-label="Previsão do saldo nos próximos 30 dias">
       ${ticks.map(t => `<line class="${t === 0 ? 'zero' : 'grid-line'}" x1="${padL}" x2="${W}" y1="${y(t)}" y2="${y(t)}"/><text class="tick" x="${padL - 8}" y="${y(t) + 3.5}" text-anchor="end">${ui.hidden ? '•' : (t < 0 ? '–' : '') + compact(Math.abs(t))}</text>`).join('')}
       ${neg ? `<rect x="${padL}" y="${y(0)}" width="${plotW}" height="${Math.max(y(lo) - y(0), 0)}" fill="var(--amber)" opacity=".07"/>` : ''}
       <defs><linearGradient id="fcG" gradientUnits="userSpaceOnUse" x1="${padL}" x2="${W}" y1="0" y2="0"><stop offset="0" stop-color="#12a588"/><stop offset="1" stop-color="#0a85a8"/></linearGradient>
@@ -3181,7 +3181,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       ${marks}${xl}
       <line class="cross" id="fcCross" x1="0" x2="0" y1="${padT}" y2="${padT + plotH}"/>
       <circle class="dot" id="fcDot" r="4.5" fill="${color}" stroke="var(--card)" stroke-width="2"/>
-      <rect x="${padL}" y="0" width="${plotW}" height="${H}" fill="transparent" id="fcHit" tabindex="0" aria-label="Saldo de cada dia: use as setas para os lados"/></svg>
+      <rect x="${padL}" y="0" width="${plotW}" height="${H}" fill="transparent" id="fcHit" tabindex="0" role="slider" aria-valuemin="1" aria-valuemax="${days.length}" aria-valuenow="1" aria-label="Saldo de cada dia: use as setas para os lados"/></svg>
       <div class="fc-tip" id="fcTip"></div>`;
     const hit = wrap.querySelector('#fcHit'), tip = wrap.querySelector('#fcTip'), cross = wrap.querySelector('#fcCross'), dot = wrap.querySelector('#fcDot');
     const show = i => {
@@ -3191,6 +3191,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       tip.innerHTML = `<div class="tt">${new Date(d.iso + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })} · <span class="num" style="color:${d.bal < 0 ? 'var(--amber)' : 'inherit'}">${(d.bal < 0 && !ui.hidden ? '–' : '') + money(Math.abs(d.bal))}</span></div>`
         + (d.events.length ? d.events.map(e => `<div class="ev"><span>${esc(e.label)}</span><b style="color:${e.dir === 'in' ? 'var(--green)' : 'inherit'}">${e.dir === 'in' ? '+' : '–'}${money(e.amount)}</b></div>`).join('') : '<div class="ev"><span>Sem movimentos</span></div>');
       tip.style.display = 'block';
+      hit.setAttribute('aria-valuenow', i + 1); hit.setAttribute('aria-valuetext', tip.textContent.replace(/\s+/g, ' ').trim());   // leitor de tela lê o dia e o saldo
       const px = x(i) * k, tw = tip.offsetWidth;
       tip.style.left = (px + 12 + tw < wrap.clientWidth ? px + 12 : Math.max(px - tw - 12, 0)) + 'px';
     };
@@ -3204,7 +3205,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     hit.style.touchAction = 'pan-y';   // arrastar o dedo para os lados percorre os dias; para cima/baixo rola a página
     hit.addEventListener('focus', () => show(cur));
     hit.addEventListener('blur', hide);
-    hit.addEventListener('keydown', ev => { if (ev.key === 'ArrowRight') show(cur = Math.min(cur + 1, 30)); if (ev.key === 'ArrowLeft') show(cur = Math.max(cur - 1, 0)); });
+    hit.addEventListener('keydown', ev => { if (ev.key === 'ArrowRight') show(cur = Math.min(cur + 1, days.length - 1)); if (ev.key === 'ArrowLeft') show(cur = Math.max(cur - 1, 0)); });
   }
 
   let calSel = null;

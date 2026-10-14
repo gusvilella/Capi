@@ -22,6 +22,8 @@ Bateria de cada rodada: 7 larguras (320 a 1920) × claro/escuro (360 com movimen
 
 - **Rodada 9 — Capi na primeira tela do cadastro:** a tela "Oi! Bora organizar seu dinheiro?" não tinha a Capi. Agora ela aparece do ladinho do celular com um pulinho, fica respirando e pisca. Também conferi o cadeado: com a senha errada a Capi balança a cabeça certinho.
 
+- **Rodada 10 — acessibilidade (verificador automático axe, padrão WCAG AA):** rodei em todas as abas, no cadastro inteiro, nas configurações e no lançamento rápido, no claro e no escuro. Corrigi tudo o que apareceu: o botão "Filtro" no celular (só ícone) agora tem nome pra leitor de tela; o gráfico "Próximos 30 dias" virou um controle deslizante de verdade (o leitor de tela lê o dia e o saldo ao usar as setas, e agora dá pra ir até o último dia); a legenda das categorias deixou de ser uma lista com botões dentro (estrutura inválida); e o valor destacado na tela "Lançar é rapidinho" do cadastro ganhou contraste suficiente. Resultado: zero problemas.
+
 ## Noite da identidade da Capi (10/out)
 
 Tudo está na **prévia** (https://gusvilella.github.io/Capi/preview.html). O site principal não foi mexido. Nenhum dado mudou de formato.
