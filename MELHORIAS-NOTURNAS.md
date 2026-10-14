@@ -2,6 +2,29 @@
 
 ## Noite de 14/out: Capi oficial (rodadas)
 
+### Resumo da noite (em poucas palavras)
+- A Capi oficial ficou caprichada em todo lugar: **piscada nova** (fecha num risquinho), **lagoa** sem o corpo aparecendo pelos lados, **modo escuro** com a silhueta visível, e a **cena do topo sem trancos**.
+- A Capi ganhou **personalidade**: poeirinha quando aterrissa, **olhinhos que seguem o mouse** no computador, **cochilo de madrugada** e **espreguiçada de manhã**. Se você lança algo enquanto ela está de boa ou dormindo, ela acorda e vai guardar a moedinha na hora.
+- Ela também apareceu onde faltava: **primeira tela do cadastro** e **cabeçalho do resumo em PDF**.
+- **Acessibilidade:** verificador automático (axe, padrão WCAG AA) zerado em todas as telas, no claro e no escuro.
+- **Testes de cada rodada:** 7 larguras × claro/escuro, movimento reduzido, 8 abas, cadastro completo, lançar/editar/excluir/desfazer, troca de mês, 40 s da cena medidos quadro a quadro, dados estranhos (vazio, formato antigo, 3.000 lançamentos). Nenhum erro.
+- O site principal (`index.html` do branch principal) **não foi mexido**; tudo está na prévia.
+
+### Para você testar (prévia: https://gusvilella.github.io/Capi/preview.html)
+1. Abra o app: a Capi sai da lagoa e **pisca** (repare no olho fechando como risquinho).
+2. No topo, espere um pouco: ela vai até o cofrinho, guarda a moeda, o porquinho pisca e ela dá **tchauzinho**; nos pulos saem **nuvenzinhas de poeira**.
+3. No computador, mexa o mouse: os **olhinhos acompanham**.
+4. De madrugada ela às vezes **cochila** (z z z); de manhã às vezes **se espreguiça**. Lance algo nessa hora: ela acorda e vai guardar a moeda.
+5. Ative o **modo escuro** e veja a Capi no topo e numa aba vazia (ex.: Assinaturas).
+6. Num tablet ou janela de ~1000 px: a laranja não encosta mais no seletor de mês.
+7. Configurações → **Resumo do mês em PDF**: a Capi aparece no cabeçalho.
+8. Pra ver o cadastro de novo, abra a prévia numa janela anônima: a Capi aparece na primeira tela.
+
+### Pontos para você decidir
+- Se aprovar, dá pra levar tudo da prévia para o site principal (eu não mexo no `index.html` principal sem você pedir).
+- A sessão na nuvem desta noite fez a piscada nova e depois parou (por segurança ela não aceita ordens vindas de lembrete agendado). As outras rodadas foram feitas nesta conversa.
+
+
 Bateria de cada rodada: 7 larguras (320 a 1920) × claro/escuro (360 com movimento reduzido), as 8 abas, lançamento rápido, cadastro completo, cena do topo, abertura quadro a quadro, sem erros no console e sem rolagem para o lado.
 
 - **Piscada** (sessão na nuvem): o brilho do olho some antes, o olho desce e fecha num risquinho curvo; antes ficava um olho achatado e aparecia o fundo verde por um buraco.
@@ -31,6 +54,8 @@ Bateria de cada rodada: 7 larguras (320 a 1920) × claro/escuro (360 com movimen
 - **Rodada 13 — revisão do meu próprio trabalho:** reli todo o código que mudei esta noite. Achei 1 problema meu: se você lançasse algo enquanto a Capi estava "de boa" (sem estar cochilando), um aviso interno de "acordar" ficava ligado e o próximo cochilo acabava no mesmo instante. Corrigido: o aviso vale só pra cena em que foi dado.
 
 - **Rodada 14 — espreguiçada de manhã:** entre 6h e 10h, de vez em quando a Capi se espreguiça no topo (fecha os olhinhos, levanta as patinhas e estica o corpo). Junto com o cochilo da madrugada, ela tem um "jeitinho" diferente conforme a hora. Também conferi a prévia publicada no ar (está com tudo desta noite) e o avatar do cumprimento, que reage ao toque.
+
+- **Rodada 15 — conferências finais:** primeira tela do cadastro em celulares pequenos (320 e 360 px, com toque): a Capi não encosta no texto. Teclado: a Capi do topo recebe foco com Tab, mostra o contorno de foco e pula com Enter.
 
 ## Noite da identidade da Capi (10/out)
 
