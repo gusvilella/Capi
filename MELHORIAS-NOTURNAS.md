@@ -13,6 +13,9 @@ Bateria de cada rodada: 7 larguras (320 a 1920) × claro/escuro (360 com movimen
 
 - **Rodada 4 — tablet e desempenho:** em telas de ~800 a 1100 px (tablet deitado, notebook pequeno), a laranja da Capi encostava/entrava embaixo do seletor de mês. Agora a cena fica um pouco menor nessa faixa e não encosta em nada. Também medi a abertura: ~0,2 s no computador e <1 s num celular 4× mais lento; nada a corrigir.
 
+- **Rodada 5 — janelas e uso de verdade:** abri as configurações e as janelas no celular e no computador, e rodei um teste de uso: lançamento rápido ("uber 23,50 ontem"), recarregar a página, editar o valor, excluir, desfazer e trocar de mês. Tudo certo, sem erros.
+- **Rodada 6 — poeirinha nos pulos:** quando a Capi aterrissa de um pulo grande (comemorando a moeda ou quando você toca nela), saem duas nuvenzinhas de poeira dos pés, como nos personagens do Duolingo. Bem sutil, e não aparece para quem desativa animações.
+
 ## Noite da identidade da Capi (10/out)
 
 Tudo está na **prévia** (https://gusvilella.github.io/Capi/preview.html). O site principal não foi mexido. Nenhum dado mudou de formato.
