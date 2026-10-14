@@ -16,6 +16,8 @@ Bateria de cada rodada: 7 larguras (320 a 1920) × claro/escuro (360 com movimen
 - **Rodada 5 — janelas e uso de verdade:** abri as configurações e as janelas no celular e no computador, e rodei um teste de uso: lançamento rápido ("uber 23,50 ontem"), recarregar a página, editar o valor, excluir, desfazer e trocar de mês. Tudo certo, sem erros.
 - **Rodada 6 — poeirinha nos pulos:** quando a Capi aterrissa de um pulo grande (comemorando a moeda ou quando você toca nela), saem duas nuvenzinhas de poeira dos pés, como nos personagens do Duolingo. Bem sutil, e não aparece para quem desativa animações.
 
+- **Rodada 7 — olhinhos seguem o mouse:** no computador, quando a Capi está de boa no topo, os olhinhos dela acompanham o mouse (pra esquerda, direita, cima, baixo). No celular e com animações desligadas não muda nada. Também conferi que, com animações desligadas, a cena fica parada e nenhuma animação roda.
+
 ## Noite da identidade da Capi (10/out)
 
 Tudo está na **prévia** (https://gusvilella.github.io/Capi/preview.html). O site principal não foi mexido. Nenhum dado mudou de formato.
