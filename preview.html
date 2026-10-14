@@ -6757,7 +6757,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       if (busy || reduced) return false;
       busy = true; current = name; el.classList.add('busy');
       try { await scenes[name](); } catch (_) {}
-      busy = false; current = ''; interrupt = false; el.classList.remove('busy'); return true;
+      busy = false; current = ''; interrupt = wakeUp = false; el.classList.remove('busy'); return true;   // avisos valem só pra cena em que foram dados
     }
     let nearTop = true; addEventListener('scroll', () => { nearTop = scrollY < 220; }, { passive: true });   // guardado aqui: ler na hora forçaria recalcular a página toda
     const next = () => holding ? (Math.random() < .55 ? 'deposit' : 'idle') : (Math.random() < .7 ? 'findCoin' : 'idle');
