@@ -1263,6 +1263,13 @@ button.ob-person.on .av { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5.5px var(--ob-
 .ov .donut-box { width: 200px; height: 200px; }
 .dn-ic { position: absolute; width: 24px; height: 24px; margin: -12px 0 0 -12px; display: grid; place-items: center; pointer-events: none; }
 .dn-ic svg.i { width: 17px; height: 17px; stroke-width: 1.9; }
+/* selinho: bolinha clara no meio da fatia com o ícone na cor da fatia (mais escura) */
+.dn-ic.dn-badge { width: 27px; height: 27px; margin: -13.5px 0 0 -13.5px; border-radius: 50%; background: #fff; color: var(--ic); box-shadow: 0 1px 3px rgba(20, 30, 40, .12); }
+.dn-ic.dn-badge svg.i { width: 15px; height: 15px; stroke-width: 2.2; } .dn-ic.dn-badge svg.i.mono { width: 14px; height: 14px; }
+.ov .dn-ic.dn-badge { width: 23px; height: 23px; margin: -11.5px 0 0 -11.5px; } .ov .dn-ic.dn-badge svg.i { width: 13px; height: 13px; }
+:root[data-theme="dark"] .dn-ic.dn-badge { background: #f4f2ee; }
+.dn-sep line { stroke: var(--card); stroke-width: .42; stroke-linecap: butt; }
+.donut-wrap.draw .dn-sep line { animation: fade .25s ease var(--dl) both; }
 .ov .dn-ic { width: 20px; height: 20px; margin: -10px 0 0 -10px; }
 .ov .dn-ic svg.i { width: 14px; height: 14px; }
 .dn-out { position: absolute; width: 19px; height: 19px; margin: -9.5px 0 0 -9.5px; border-radius: 50%; display: grid; place-items: center; pointer-events: none; box-shadow: 0 0 0 2px var(--card); }
@@ -3040,26 +3047,28 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
 
   function donutHtml(groups, total, label, small = false) {
     groups = groups.map(g => ({ ...g, color: g.cc || (g.av ? g.color : g.mono ? (ui.palette === 'vivas' ? g.color : mixWhite(g.color, .3)) : pc(g.color)) }));
-    const gap = groups.length > 1 ? 0.4 : 0;   // só um fio entre as fatias (separado demais ficava feio)
-    let offset = 0;
+    // a maior fatia (a primeira) fica centralizada no topo: a rosca fica equilibrada dos dois lados
+    const start = groups.length > 1 ? -(groups[0].value / total * 100) / 2 : 0;
+    let offset = start;
+    const seps = [];   // separações retas, todas com a mesma largura (desenhadas por cima das fatias)
     const marks = [];
     const gi = g => g.av ? `<span class="dn-av" style="--avbg:${AVATARS[g.av].bg}"><svg viewBox="0 0 64 64" aria-hidden="true">${AVATARS[g.av].svg}</svg></span>` : g.mono || `<svg class="i"><use href="#c-${g.icon}"/></svg>`;
     const outs = [];   // fatias finas: o ícone vai num selo do lado de fora (posicionados depois, todos juntos)
     const arcs = groups.map(g => {
       const len = g.value / total * 100;
-      const t0 = 250 + offset * 7, dur = Math.max(len * 7, 120);   // ms: começa depois do giro e segue a volta
+      const t0 = 250 + (offset - start) * 7, dur = Math.max(len * 7, 120);   // ms: começa depois do giro e segue a volta
       const arc = `<circle cx="21" cy="21" r="15.915" fill="none" stroke="${g.color}" stroke-width="5.2" style="--dl:${t0}ms;--du:${dur}ms"
-        stroke-dasharray="${Math.max(len - gap, 0.01)} ${100 - Math.max(len - gap, 0.01)}" stroke-dashoffset="${-offset}"><title>${esc(g.name)}: ${brl.format(g.value / 100)}</title></circle>`;
+        stroke-dasharray="${Math.max(len, 0.01)} ${100 - Math.max(len, 0.01)}" stroke-dashoffset="${-offset}"><title>${esc(g.name)}: ${brl.format(g.value / 100)}</title></circle>`;
       // ícone no meio da fatia (só nas que têm espaço)
+      if (groups.length > 1) { const t = offset / 100 * 2 * Math.PI; seps.push(`<line x1="${(21 + 12.9 * Math.cos(t)).toFixed(3)}" y1="${(21 + 12.9 * Math.sin(t)).toFixed(3)}" x2="${(21 + 18.95 * Math.cos(t)).toFixed(3)}" y2="${(21 + 18.95 * Math.sin(t)).toFixed(3)}" style="--dl:${Math.round(250 + (offset - start) * 7)}ms"/>`); }
+      // selinho no meio exato da fatia (no ângulo e no centro da espessura do anel)
+      const mid = offset + len / 2;
       if ((g.icon || g.mono || g.av) && len >= 6) {
-        // fatia que passa pela parte de baixo do anel: ícone embaixo, no centro; as outras, no meio da fatia
-        const mid = offset < 50 - 3 && offset + len > 50 + 3 ? 50 : offset + (len - gap) / 2;
         const a = mid / 100 * 2 * Math.PI, r = 15.915 / 42 * 100;
         const x = 50 + r * Math.sin(a), y = 50 - r * Math.cos(a);
-        marks.push(`<span class="dn-ic" style="--dl:${Math.round(250 + (offset + len) * 7)}ms;left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;color:${lightColor(g.color) ? 'rgba(20,20,18,.72)' : '#fff'}">${gi(g)}</span>`);
+        marks.push(`<span class="dn-ic${g.av ? '' : ' dn-badge'}" style="--dl:${Math.round(250 + (offset - start + len) * 7)}ms;left:${x.toFixed(3)}%;top:${y.toFixed(3)}%;--ic:${mixC(g.color, '#1b1e24', .5)}">${gi(g)}</span>`);
       } else if (g.icon || g.mono || g.av) {
-        // centro visível da fatia (o traço começa no offset e tem len − gap)
-        outs.push({ g, deg: (offset + Math.max(len - gap, 0) / 2) * 3.6, dl: Math.round(250 + (offset + len) * 7) });
+        outs.push({ g, deg: mid * 3.6, dl: Math.round(250 + (offset - start + len) * 7) });
       }
       offset += len;
       return arc;
@@ -3082,7 +3091,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
 
     return `
       <div class="donut-wrap${donutAnim === 'soft' ? ' soft' : donutAnim ? ' draw' : ''}">
-        <div class="donut-box"><svg class="donut" viewBox="0 0 42 42">${arcs}</svg>${marks.join('')}</div>
+        <div class="donut-box"><svg class="donut" viewBox="0 0 42 42">${arcs}<g class="dn-sep">${seps.join('')}</g></svg>${marks.join('')}</div>
         <div class="donut-center"><small>${label}</small><strong class="num" data-total="${total}">${money(total)}</strong></div>
       </div>
       <ul class="legend" role="group" aria-label="Categorias">${groups.map(g => {
@@ -3332,7 +3341,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       // junta o resto em "Outros" (somando na categoria Outros, se ela já estiver entre as 5 maiores, pra não aparecer duas vezes)
       const top = list.slice(0, 5).map(g => ({ ...g })), restV = list.slice(5).reduce((s, g) => s + g.value, 0);
       const o = top.find(g => g.name === 'Outros');
-      if (o) o.value += restV; else top.push({ name: 'Outros', color: '#94a3b8', value: restV });
+      if (o) o.value += restV; else top.push({ name: 'Outros', color: '#94a3b8', cc: catColor(null, 'despesa'), icon: 'shopping-bag', value: restV });
       list = top.sort((a, b) => b.value - a.value);
     }
     const total = list.reduce((s, g) => s + g.value, 0);
