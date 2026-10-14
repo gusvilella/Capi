@@ -1267,6 +1267,9 @@ button.ob-person.on .av { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5.5px var(--ob-
 .ov .dn-ic svg.i { width: 14px; height: 14px; }
 .dn-out { position: absolute; width: 19px; height: 19px; margin: -9.5px 0 0 -9.5px; border-radius: 50%; display: grid; place-items: center; pointer-events: none; box-shadow: 0 0 0 2px var(--card); }
 .dn-out svg.i { width: 11px; height: 11px; stroke-width: 2.1; }
+.dn-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.dn-lines line { stroke-width: .6; stroke-linecap: round; }
+.donut-wrap.draw .dn-lines line { animation: fade .3s ease var(--dl) both; } .donut-wrap.soft .dn-lines { animation: fade .35s ease both; }
 svg.i.mono { fill: currentColor; stroke: none; }
 .dn-ic svg.i.mono { width: 16px; height: 16px; }
 .ov .dn-ic svg.i.mono { width: 13px; height: 13px; }
@@ -3061,16 +3064,21 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       offset += len;
       return arc;
     }).join('');
-    // Selos de fora: cada um fica exatamente em cima da sua fatia. Se encostaria no vizinho,
-    // vai um pouco mais pra fora, na mesma direção (alterna entre dois anéis)
-    const P = (deg, r) => [50 + r * Math.sin(deg * Math.PI / 180), 50 - r * Math.cos(deg * Math.PI / 180)];
-    let prev = null;
-    outs.forEach(o => {
-      const r = prev && o.deg - prev.deg < (small ? 11.5 : 10) && prev.r === 50 ? 59 : 50;   // 50%: logo depois da borda do anel
-      prev = { deg: o.deg, r };
-      const [x, y] = P(o.deg, r);
-      marks.push(`<span class="dn-out" title="${esc(o.g.name)}" style="--dl:${o.dl}ms;left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;background:${o.g.color};color:${lightColor(o.g.color) ? 'rgba(20,20,18,.75)' : '#fff'}">${gi(o.g)}</span>`);
+    // Selos de fora (fatias finas): todos na mesma distância, em cima da sua fatia. Se vizinhos se encostariam, o grupo
+    // se abre por igual para os dois lados (centralizado nas fatias) e uma linha fininha liga cada selo à sua fatia.
+    const SEP = small ? 17 : 15, P = (deg, r) => [50 + r * Math.sin(deg * Math.PI / 180), 50 - r * Math.cos(deg * Math.PI / 180)];
+    const clusters = [], lines = [];
+    outs.forEach(o => { const last = clusters[clusters.length - 1]; if (last && o.deg - last[last.length - 1].deg < SEP) last.push(o); else clusters.push([o]); });
+    clusters.forEach(cl => {
+      const mean = cl.reduce((t, o) => t + o.deg, 0) / cl.length;
+      cl.forEach((o, i) => {
+        const at = cl.length > 1 ? mean + (i - (cl.length - 1) / 2) * SEP : o.deg;
+        const [x, y] = P(at, 53);
+        if (Math.abs(at - o.deg) > 1) { const [x1, y1] = P(o.deg, 45), [x2, y2] = P(at, 49.5); lines.push(`<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="${o.g.color}" style="--dl:${o.dl}ms"/>`); }
+        marks.push(`<span class="dn-out" title="${esc(o.g.name)}" style="--dl:${o.dl}ms;left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;background:${o.g.color};color:${lightColor(o.g.color) ? 'rgba(20,20,18,.75)' : '#fff'}">${gi(o.g)}</span>`);
+      });
     });
+    if (lines.length) marks.unshift(`<svg class="dn-lines" viewBox="0 0 100 100" aria-hidden="true">${lines.join('')}</svg>`);
 
     return `
       <div class="donut-wrap${donutAnim === 'soft' ? ' soft' : donutAnim ? ' draw' : ''}">
@@ -6977,7 +6985,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     ['#kSaldo', '#kReceita', '#kDespesas', '#kSobra'].forEach((id, i) => { const el = $(id); if (el._v != null) countTo(el, el._v, el._fmt, 0, 380 + i * 60); });
     countUpMarked($('#overview')); animateEnter(0, true);
     // a rosca já tinha se desenhado escondida atrás da abertura: desenha de novo agora que aparece
-    donutAnim = true; render(); requestAnimationFrame(() => { countUpDonuts(); donutAnim = false; });
+    document.querySelectorAll('.donut-wrap').forEach(w => { w.classList.remove('draw', 'soft'); void w.offsetWidth; w.classList.add('draw'); });
+    countUpDonuts();
     clearTimeout(introAnim.t);
     introAnim.t = setTimeout(() => [top, kpis].forEach(el => el.classList.remove('intro')), 1600);
   }
