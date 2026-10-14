@@ -7,6 +7,8 @@ Bateria de cada rodada: 7 larguras (320 a 1920) × claro/escuro (360 com movimen
 - **Piscada** (sessão na nuvem): o brilho do olho some antes, o olho desce e fecha num risquinho curvo; antes ficava um olho achatado e aparecia o fundo verde por um buraco.
 - **Rodada 1 — Capi na lagoa (tela vazia, cadeado, fim do cadastro):** o corpo dela aparecia pelos lados, por baixo da água, como se a água fosse uma faixa. Agora o corpo some na linha da água. No fim do cadastro, o selo verde de "pronto" saiu de cima da orelha e foi para o cantinho da água.
 
+- **Rodada 2 — cena do topo sem trancos:** gravei 40 s da cena medindo a posição da Capi a cada quadro e achei três "pulos" de um quadro pro outro: (1) ao aterrissar o corpo amassava de uma vez, (2) ao pegar a moeda que cai do céu as patinhas desciam num tranco, (3) no tchauzinho a patinha subia rápido demais. Os três agora são suaves. A gotinha de suor (mês no vermelho) saiu de cima do contorno e ficou no rosto.
+
 ## Noite da identidade da Capi (10/out)
 
 Tudo está na **prévia** (https://gusvilella.github.io/Capi/preview.html). O site principal não foi mexido. Nenhum dado mudou de formato.
