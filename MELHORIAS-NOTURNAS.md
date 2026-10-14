@@ -28,6 +28,8 @@ Bateria de cada rodada: 7 larguras (320 a 1920) × claro/escuro (360 com movimen
 
 - **Rodada 12 — dados estranhos e Capi que acorda:** abri o app com dados vazios, só uma receita, lançamentos sem categoria, campos estranhos (valor em texto, data inválida), formato antigo sem identificador e 3.000 lançamentos: tudo abre, sem erro e sem "NaN" na tela. E agora, se você lançar algo enquanto a Capi está de boa ou cochilando, ela para (acorda), e vai guardar a moedinha na hora; tocar nela também acorda.
 
+- **Rodada 13 — revisão do meu próprio trabalho:** reli todo o código que mudei esta noite. Achei 1 problema meu: se você lançasse algo enquanto a Capi estava "de boa" (sem estar cochilando), um aviso interno de "acordar" ficava ligado e o próximo cochilo acabava no mesmo instante. Corrigido: o aviso vale só pra cena em que foi dado.
+
 ## Noite da identidade da Capi (10/out)
 
 Tudo está na **prévia** (https://gusvilella.github.io/Capi/preview.html). O site principal não foi mexido. Nenhum dado mudou de formato.
