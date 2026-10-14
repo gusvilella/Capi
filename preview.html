@@ -1068,6 +1068,14 @@ html.auth, html.auth body { overflow: hidden; }
 @keyframes ob-tilt { from { opacity: 0; transform: rotate(6deg) translateY(30px) scale(.9); } }
 /* tela 1: celular dobrável (abre como um livro) + cartão de lançamento por cima */
 .ob-hero { position: relative; height: 300px; display: grid; place-items: center; }
+/* a Capi aparece do ladinho do celular na primeira tela, dá um pulinho, respira e pisca */
+.ob-capi-peek { position: absolute; left: 4%; bottom: -10px; width: 82px; z-index: 3; pointer-events: none; animation: ob-capi-in .65s cubic-bezier(.2, .9, .3, 1.4) var(--d) both; }
+.ob-capi-peek svg { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 8px 10px rgba(8, 60, 50, .18)); animation: ob-capi-bob 3s ease-in-out calc(var(--d) + .8s) infinite; transform-origin: 50% 100%; }
+.ob-capi-peek .eyes .ep { animation: ep-blink1 4.6s linear calc(var(--d) + .4s) infinite; } .ob-capi-peek .eyes .glint { animation: gl-blink1 4.6s linear calc(var(--d) + .4s) infinite; } .ob-capi-peek .eyes .shut { animation: sh-blink1 4.6s linear calc(var(--d) + .4s) infinite; }
+@keyframes ob-capi-in { from { opacity: 0; transform: translateY(46px) scale(.6); } 70% { opacity: 1; } }
+@keyframes ob-capi-bob { 50% { transform: scale(1.015, 1.03); } }
+@media (max-width: 640px) { .ob-capi-peek { width: 70px; left: 2%; bottom: -6px; } }
+:root[data-theme="dark"] .ob-capi-peek svg { filter: drop-shadow(0 0 1px rgba(255, 236, 214, .45)) drop-shadow(0 8px 10px rgba(0, 0, 0, .3)); }
 .duo-tilt { --dw: min(340px, 84vw); transform: rotate(-5deg); animation: ob-phone 1s cubic-bezier(.2, .9, .3, 1.25) var(--d) both, ob-float 6s ease-in-out calc(var(--d) + 1.2s) infinite; }
 @keyframes ob-phone { from { opacity: 0; transform: rotate(-24deg) translateY(90px) scale(.7); } }
 @keyframes ob-float { 50% { translate: 0 -8px; } }
@@ -6885,6 +6893,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
                   <span class="duo-hint">abra pra ver tudo</span><i class="duo-home"></i></div></div>
                 <div class="duo-half duo-back" aria-hidden="true"><div class="duo-scr">${inner}</div></div>
               </div></button></div>
+            <div class="ob-capi-peek" style="--d:${wait + 700}ms" aria-hidden="true"><svg viewBox="0 0 149.3 200">${capiFull()}</svg></div>
             <div class="ob-floatw"><div class="ob-float" style="--d:${wait + 2100}ms"><span class="ob-ic" style="--c:#0a85a8"><svg class="i"><use href="#c-shopping-cart"/></svg></span><span><b>Mercado</b><small>agora mesmo</small></span><b class="neg">- ${R(4590)}</b></div></div>
           </div>`; } },
       { k: 'nome', c: ['#f2711c', '#e0533d'], q: true, panel: 'Seu perfil', next: 'Continuar', title: 'Como quer ser <em>chamado</em>?', sub: 'É assim que o app vai falar com você.',
