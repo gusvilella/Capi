@@ -5721,7 +5721,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const el = $('#toast');
     el.textContent = msg;
     // deu certo: a Capi aparece pulando de alegria no cantinho do aviso
-    if (/lançad|salv|pront|marcad|paga|recebid|guardad|adicionad|importad|ligad|instalad|juntei|boas-vindas|atualizad|copiad/i.test(msg) && !/não |inválid|ilegív|erro|deslig|apagad|excluíd|removid/i.test(msg)) {
+    if (/lançad|salv|pront|marcad|paga|recebid|guardad|alcançad|adicionad|importad|ligad|instalad|juntei|boas-vindas|atualizad|copiad/i.test(msg) && !/não |inválid|ilegív|erro|deslig|apagad|excluíd|removid/i.test(msg)) {
       const c = document.createElement('span'); c.className = 'toast-capi'; c.setAttribute('aria-hidden', 'true');
       c.innerHTML = `<svg viewBox="0 0 64 64">${AVATARS.capivara.svg}</svg>`; el.prepend(c);
       $('#capiScene')?._cheer?.();
