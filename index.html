@@ -1900,7 +1900,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     <symbol id="c-tv" viewBox="0 0 24 24"><path d="m17 2-5 5-5-5"/><rect width="20" height="15" x="2" y="7" rx="2"/></symbol>
     <symbol id="c-gamepad-2" viewBox="0 0 24 24"><line x1="6" x2="10" y1="11" y2="11"/><line x1="8" x2="8" y1="9" y2="13"/><line x1="15" x2="15.01" y1="12" y2="12"/><line x1="18" x2="18.01" y1="10" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/></symbol>
     <symbol id="c-shopping-bag" viewBox="0 0 24 24"><path d="M16 10a4 4 0 0 1-8 0"/><path d="M3.103 6.034h17.794"/><path d="M3.4 5.467a2 2 0 0 0-.4 1.2V20a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.667a2 2 0 0 0-.4-1.2l-2-2.667A2 2 0 0 0 17 2H7a2 2 0 0 0-1.6.8z"/></symbol>
-    <symbol id="c-shirt" viewBox="0 0 24 24"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></symbol>
+    <symbol id="c-shirt" viewBox="0 0 24 24"><path d="M9 3.5c.6 1.4 1.7 2.1 3 2.1s2.4-.7 3-2.1l4.6 2.1a1 1 0 0 1 .5 1.2l-1.2 3.1a1 1 0 0 1-1.3.6L17 10v9.5a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V10l-1.6.5a1 1 0 0 1-1.3-.6L2.9 6.8a1 1 0 0 1 .5-1.2Z"/></symbol>
+    <symbol id="c-laptop" viewBox="0 0 24 24"><rect x="4" y="4.5" width="16" height="11" rx="1.8"/><path d="M2 19.5h20M9.5 19.5l.5-1.5h4l.5 1.5"/></symbol>
     <symbol id="c-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></symbol>
     <symbol id="c-gift" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"/><rect x="3" y="7" width="18" height="4" rx="1"/></symbol>
     <symbol id="c-dumbbell" viewBox="0 0 24 24"><path d="M17.596 12.768a2 2 0 1 0 2.829-2.829l-1.768-1.767a2 2 0 0 0 2.828-2.829l-2.828-2.828a2 2 0 0 0-2.829 2.828l-1.767-1.768a2 2 0 1 0-2.829 2.829z"/><path d="m2.5 21.5 1.4-1.4"/><path d="m20.1 3.9 1.4-1.4"/><path d="M5.343 21.485a2 2 0 1 0 2.829-2.828l1.767 1.768a2 2 0 1 0 2.829-2.829l-6.364-6.364a2 2 0 1 0-2.829 2.829l1.768 1.767a2 2 0 0 0-2.828 2.829z"/><path d="m9.6 14.4 4.8-4.8"/></symbol>
@@ -2287,14 +2288,14 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   // Desenhos do Lucide (ISC). Cada categoria tem um ícone (escolhido ou deduzido pelo nome);
   // contas fixas deduzem pelo nome; marcas conhecidas (iFood, Netflix…) mostram o logo.
   const CAT_ICONS = ['shopping-cart', 'utensils', 'coffee', 'car', 'fuel', 'bus', 'train-front', 'bike', 'plane', 'heart-pulse', 'pill', 'receipt', 'zap', 'droplets',
-    'flame', 'wifi', 'smartphone', 'house', 'landmark', 'hammer', 'wrench', 'popcorn', 'film', 'ticket', 'music', 'tv', 'gamepad-2', 'shopping-bag', 'shirt', 'scissors',
+    'flame', 'wifi', 'smartphone', 'laptop', 'house', 'landmark', 'hammer', 'wrench', 'popcorn', 'film', 'ticket', 'music', 'tv', 'gamepad-2', 'shopping-bag', 'shirt', 'scissors',
     'gift', 'dumbbell', 'paw-print', 'baby', 'graduation-cap', 'book-open', 'briefcase', 'sparkles', 'trending-up', 'piggy-bank', 'hand-coins', 'circle-dollar-sign', 'badge-percent', 'tag'];
   const ICON_RULES = [
     ['shopping-cart', /mercado|supermerc|feira|hortifruti|atacad/], ['utensils', /comida|restaur|aliment|lanche|ifood|delivery|refei/], ['coffee', /cafe|padaria/],
     ['fuel', /combust|gasolina|posto/], ['car', /carro|transporte|uber|\b99\b|estacion|pedagio|ipva|seguro auto/], ['bus', /onibus|metro|passagem|bilhete/],
     ['plane', /viage|passage aerea|hotel/], ['pill', /farmac|remedio|drogaria/], ['heart-pulse', /saude|medic|plano de saude|unimed|hospital|dentist|odonto|terapia|psic/],
     ['zap', /\bluz\b|energia|enel|cemig|light|copel/], ['droplets', /agua|sabesp|saneamento/], ['flame', /\bgas\b|comgas/], ['wifi', /internet|wi-?fi|fibra/],
-    ['smartphone', /celular|\btim\b|\bvivo\b|\bclaro\b|\boi\b|telefon|pre-?pago|eletronic|computador|informatic|tecnolog|notebook|gadget/], ['house', /casa|aluguel|moradia|condomin|iptu|financiamento/],
+    ['laptop', /computador|notebook|informatic|\bpc\b|laptop|macbook/], ['smartphone', /celular|\btim\b|\bvivo\b|\bclaro\b|\boi\b|telefon|pre-?pago|eletronic|tecnolog|gadget/], ['house', /casa|aluguel|moradia|condomin|iptu|financiamento/],
     ['popcorn', /lazer|cinema|diver/], ['ticket', /show|ingresso|evento/], ['music', /musica|spotify|deezer/], ['tv', /streaming|netflix|tv\b|assinatura/],
     ['gamepad-2', /jogo|game|playstation|xbox|steam/], ['shopping-bag', /compra|shopping|loja|presentes?/], ['shirt', /roupa|vestu|calcad/], ['scissors', /cabel|barbe|salao|beleza|estetica/],
     ['gift', /presente|doacao|dizimo/], ['dumbbell', /academia|esporte|smart ?fit|treino/], ['paw-print', /\bpet|veterin|racao|cachorro|gato/], ['baby', /bebe|crianca|fralda|cadeirinha/],
@@ -2311,7 +2312,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     if (brand && BRANDS[brand]) return `<span class="tx-logo">${logoHtml({ brand })}</span>`;
     if (kind === 'fixa') return icoTile(iconForText(r.desc) || 'receipt', '#64748b');
     const c = cat(r.category);
-    if (c) return icoTile(catIcon(c), c.color);
+    if (c) return icoTile(catIcon(c), catColor(c));
     return icoTile(iconForText(r.desc) || 'tag', '#94a3b8');
   }
   const money = c => ui.hidden ? 'R$ •••••' : brl.format(c / 100);
@@ -2744,7 +2745,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
           const tabs = [...document.querySelectorAll('#tabs [data-tab]')].map(b => b.dataset.tab);
           const dir = pm !== view.month ? (view.month > pm ? 1 : -1) : Math.sign(tabs.indexOf(ui.tab) - tabs.indexOf(pt));
           requestAnimationFrame(() => animateEnter(dir));
-          donutAnim = 'soft'; requestAnimationFrame(() => { donutAnim = false; });
+          // a rosca se desenha de novo a cada aba/mês (antes só esmaecia e parecia sem animação)
+          if (!matchMedia('(prefers-reduced-motion: reduce)').matches) { donutAnim = true; requestAnimationFrame(() => { countUpDonuts(); donutAnim = false; }); }
         }
         lastKpiMonth = view.month; lastView = v;
       } }
@@ -2851,7 +2853,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
 
   function tagHtml(c) {
     if (!c) return `<span class="tag cat-t" style="--cc:var(--field-line)"><span class="tt">Sem categoria</span></span>`;
-    return `<span class="tag cat-t" style="--cc:${pc(c.color)}" title="${esc(c.name)}"><span class="tt">${esc(c.name)}</span></span>`;
+    return `<span class="tag cat-t" style="--cc:${catColor(c)}" title="${esc(c.name)}"><span class="tt">${esc(c.name)}</span></span>`;
   }
 
   function renderTable() {
@@ -2940,7 +2942,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       const src = ui.tab === 'receita' ? receitasOf(key).filter(r => !r.pending) : variaveisOf(key);
       const sums = new Map();
       src.forEach(r => { const id = cat(r.category) ? r.category : ''; sums.set(id, (sums.get(id) || 0) + r.amount); });
-      groups = [...sums].map(([id, value]) => { const c = cat(id); return { id: id || '', name: c?.name || 'Sem categoria', color: c?.color || '#94a3b8', value, icon: catIcon(c) }; });
+      groups = [...sums].map(([id, value]) => { const c = cat(id); return { id: id || '', name: c?.name || 'Sem categoria', color: c?.color || '#94a3b8', cc: catColor(c, ui.tab === 'receita' ? 'receita' : 'despesa'), value, icon: catIcon(c) }; });
     }
     groups = groups.filter(g => g.value > 0).sort((a, b) => b.value - a.value);
     const total = groups.reduce((s, g) => s + g.value, 0);
@@ -2990,6 +2992,29 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const ch = k => Math.round(((n >> k) & 255) * (1 - t) + 255 * t);
     return '#' + [16, 8, 0].map(k => ch(k).toString(16).padStart(2, '0')).join('');
   };
+  // Cor de cada categoria na tela: a da paleta, mas sem duas categorias do mesmo tipo com a mesma cor (ou quase igual)
+  let catColCache = { key: '', map: new Map() };
+  const rgbOf = h => { const n = parseInt(String(h).replace('#', '').slice(0, 6), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  const cdist = (a, b) => { const x = rgbOf(a), y = rgbOf(b); return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]); };
+  const near = (a, b) => cdist(a, b) < 14;   // paletas pastel têm cores próximas entre si: só conta como repetida se for quase igual
+  const mixC = (a, b, t) => { const x = rgbOf(a), y = rgbOf(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+  function catColor(c, kind = c?.kind || 'despesa') {
+    const key = ui.palette + '|' + state.categories.map(x => x.id + x.color + x.kind).join(',');
+    if (catColCache.key !== key) {
+      const map = new Map(), pal = PALETTES[ui.palette]?.cols || PALETTE;
+      // cores extras na mesma família da paleta: meio-termo entre vizinhas e versões um pouco mais escuras/claras
+      const extra = [...pal, ...pal.map((x, i) => mixC(x, pal[(i + 3) % pal.length], .5)), ...pal.map(x => mixC(x, '#2b2f36', .2)), ...pal.map(x => mixC(x, '#ffffff', .3))];
+      for (const k of ['despesa', 'receita']) {
+        const used = [];
+        // repetida: entre as cores da família, a mais diferente de todas as que já estão em uso
+        const pick = base => { let col = base; if (used.some(u => near(u, col))) col = extra.reduce((best, e) => { const d = Math.min(...used.map(u => cdist(u, e))); return d > best.d ? { e, d } : best; }, { e: col, d: -1 }).e; used.push(col); return col; };
+        for (const x of state.categories.filter(y => y.kind === k)) map.set(x.id, pick(pc(x.color)));
+        map.set('__none:' + k, pick(mixC('#9aa0a8', pal[0], .15)));   // "Sem categoria": cinza neutro, diferente das outras
+      }
+      catColCache = { key, map };
+    }
+    return c ? catColCache.map.get(c.id) || pc(c.color) : catColCache.map.get('__none:' + kind) || '#94a3b8';
+  }
   function pc(hex) {
     const pal = PALETTES[ui.palette]?.cols;
     if (!pal || !hex || hex[0] !== '#') return hex;
@@ -3011,7 +3036,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   }
 
   function donutHtml(groups, total, label, small = false) {
-    groups = groups.map(g => ({ ...g, color: g.av ? g.color : g.mono ? (ui.palette === 'vivas' ? g.color : mixWhite(g.color, .3)) : pc(g.color) }));
+    groups = groups.map(g => ({ ...g, color: g.cc || (g.av ? g.color : g.mono ? (ui.palette === 'vivas' ? g.color : mixWhite(g.color, .3)) : pc(g.color)) }));
     const gap = groups.length > 1 ? 0.4 : 0;   // só um fio entre as fatias (separado demais ficava feio)
     let offset = 0;
     const marks = [];
@@ -3290,7 +3315,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const groups = new Map();
     // extra: id da categoria (tocar filtra a aba Despesa variável) ou aba para onde ir
     const add = (name, color, v, extra = {}) => { if (!v) return; const g = groups.get(name) || { name, color, value: 0, ...extra }; g.value += v; groups.set(name, g); };
-    variaveisOf(key).filter(countable(key)).forEach(v => { const c = cat(v.category); add(c?.name || 'Sem categoria', c?.color || '#94a3b8', v.amount, c ? { id: c.id, icon: catIcon(c) } : { icon: 'tag' }); });
+    variaveisOf(key).filter(countable(key)).forEach(v => { const c = cat(v.category); add(c?.name || 'Sem categoria', c?.color || '#94a3b8', v.amount, c ? { id: c.id, icon: catIcon(c), cc: catColor(c) } : { icon: 'tag', cc: catColor(null, 'despesa') }); });
     add('Contas fixas', '#475569', fixasOf(key).filter(countable(key)).reduce((s, f) => s + f.amount, 0), { go: 'fixa', icon: 'receipt' });
     add('Assinaturas', '#d97706', assinaturasOf(key).filter(countable(key)).reduce((s, a) => s + a.amount, 0), { go: 'assin', icon: 'tv' });
     add('Faturas do cartão', '#1d4ed8', totals(key).faturas, { go: 'cartoes', icon: 'credit-card' });
@@ -4617,7 +4642,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     <div class="money"><span>R$</span><input id="${id}" inputmode="numeric" value="${centsText(cents || 0)}" data-cents="${cents || 0}" autocomplete="off" /></div>`;
   const checkField = (id, title, text, checked) => `<label class="check"><input type="checkbox" id="${id}" ${checked ? 'checked' : ''}/>
     <span class="box">${ico('check')}</span><span><strong>${title}</strong>${text ? `<small>${text}</small>` : ''}</span></label>`;
-  const catChipsHtml = (kind, selected) => catsOf(kind).map(c => `<button type="button" class="cat-chip${c.id === selected ? ' on' : ''}" data-cat="${c.id}">${icoTile(catIcon(c), pc(c.color))}<span>${esc(c.name)}</span></button>`).join('')
+  const catChipsHtml = (kind, selected) => catsOf(kind).map(c => `<button type="button" class="cat-chip${c.id === selected ? ' on' : ''}" data-cat="${c.id}">${icoTile(catIcon(c), catColor(c))}<span>${esc(c.name)}</span></button>`).join('')
     + `<button type="button" class="cat-chip add" data-cat="__new">${ico('plus')}<span>Nova</span></button>`;
   const catSelect = (kind, selected, label) => `<label class="fl">${label}</label>
     <select class="select sr-only" id="fCategory" tabindex="-1" aria-hidden="true"><option value="">Selecione…</option>${catsOf(kind).map(c => `<option value="${c.id}" ${c.id === selected ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
@@ -6951,6 +6976,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     [top, kpis].forEach(el => { el.classList.remove('intro'); void el.offsetWidth; el.classList.add('intro'); });
     ['#kSaldo', '#kReceita', '#kDespesas', '#kSobra'].forEach((id, i) => { const el = $(id); if (el._v != null) countTo(el, el._v, el._fmt, 0, 380 + i * 60); });
     countUpMarked($('#overview')); animateEnter(0, true);
+    // a rosca já tinha se desenhado escondida atrás da abertura: desenha de novo agora que aparece
+    donutAnim = true; render(); requestAnimationFrame(() => { countUpDonuts(); donutAnim = false; });
     clearTimeout(introAnim.t);
     introAnim.t = setTimeout(() => [top, kpis].forEach(el => el.classList.remove('intro')), 1600);
   }
