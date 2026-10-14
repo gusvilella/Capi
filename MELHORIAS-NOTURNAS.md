@@ -1,5 +1,12 @@
 # Melhorias noturnas
 
+## Noite de 14/out: Capi oficial (rodadas)
+
+Bateria de cada rodada: 7 larguras (320 a 1920) × claro/escuro (360 com movimento reduzido), as 8 abas, lançamento rápido, cadastro completo, cena do topo, abertura quadro a quadro, sem erros no console e sem rolagem para o lado.
+
+- **Piscada** (sessão na nuvem): o brilho do olho some antes, o olho desce e fecha num risquinho curvo; antes ficava um olho achatado e aparecia o fundo verde por um buraco.
+- **Rodada 1 — Capi na lagoa (tela vazia, cadeado, fim do cadastro):** o corpo dela aparecia pelos lados, por baixo da água, como se a água fosse uma faixa. Agora o corpo some na linha da água. No fim do cadastro, o selo verde de "pronto" saiu de cima da orelha e foi para o cantinho da água.
+
 ## Noite da identidade da Capi (10/out)
 
 Tudo está na **prévia** (https://gusvilella.github.io/Capi/preview.html). O site principal não foi mexido. Nenhum dado mudou de formato.
