@@ -9,6 +9,8 @@ Bateria de cada rodada: 7 larguras (320 a 1920) × claro/escuro (360 com movimen
 
 - **Rodada 2 — cena do topo sem trancos:** gravei 40 s da cena medindo a posição da Capi a cada quadro e achei três "pulos" de um quadro pro outro: (1) ao aterrissar o corpo amassava de uma vez, (2) ao pegar a moeda que cai do céu as patinhas desciam num tranco, (3) no tchauzinho a patinha subia rápido demais. Os três agora são suaves. A gotinha de suor (mês no vermelho) saiu de cima do contorno e ficou no rosto.
 
+- **Rodada 3 — Capi no modo escuro:** o contorno marrom dela sumia no fundo escuro (orelhas e pés sem borda). Agora tem um brilho claro bem sutil em volta dela no escuro (cena do topo, telas vazias, cadeado) e no aviso de "lançado", que é escuro nos dois temas. A cena continua a 60 quadros por segundo.
+
 ## Noite da identidade da Capi (10/out)
 
 Tudo está na **prévia** (https://gusvilella.github.io/Capi/preview.html). O site principal não foi mexido. Nenhum dado mudou de formato.
