@@ -20,6 +20,8 @@ Bateria de cada rodada: 7 larguras (320 a 1920) × claro/escuro (360 com movimen
 
 - **Rodada 8 — Capi no resumo em PDF:** o "Resumo do mês em PDF" agora tem a carinha da Capi ao lado do nome do app no cabeçalho (gerei o PDF e conferi). O contorno do porquinho e do balãozinho "!" da cena passou a usar o mesmo marrom do contorno da Capi.
 
+- **Rodada 9 — Capi na primeira tela do cadastro:** a tela "Oi! Bora organizar seu dinheiro?" não tinha a Capi. Agora ela aparece do ladinho do celular com um pulinho, fica respirando e pisca. Também conferi o cadeado: com a senha errada a Capi balança a cabeça certinho.
+
 ## Noite da identidade da Capi (10/out)
 
 Tudo está na **prévia** (https://gusvilella.github.io/Capi/preview.html). O site principal não foi mexido. Nenhum dado mudou de formato.
