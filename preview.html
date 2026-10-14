@@ -1802,6 +1802,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
 .capi-scene .cs-pig { transform-origin: 133px 88px; }
 .capi-scene .cs-tilt { transform-origin: 32px 92px; } .capi-scene .cs-wsh { transform-origin: 39.4px 92.6px; }
 .capi-scene .cs-dust circle { opacity: 0; fill: #c9b393; transform-box: fill-box; transform-origin: 50% 50%; } :root[data-theme="dark"] .capi-scene .cs-dust circle { fill: #5d5a52; }
+.capi-scene .cs-zz text { opacity: 0; font: 800 7px var(--font), sans-serif; fill: #6b8f86; transform-box: fill-box; transform-origin: 50% 50%; } :root[data-theme="dark"] .capi-scene .cs-zz text { fill: #9fd8c8; }
+.capi-scene.sleep .eyes .ep, .capi-scene.sleep .eyes .glint { animation: none; opacity: 0; } .capi-scene.sleep .eyes .shut { animation: none; opacity: 1; }   /* cochilando: olhinhos fechados */
 .capi-scene .cs-bang { opacity: 0; transform-origin: 52px 9px; } .capi-scene .cs-fs { transform-origin: 0 0; }
 .capi-scene .cs-ground { stroke: rgba(20, 60, 50, .12); stroke-width: 1.2; stroke-linecap: round; } .capi-scene .cs-grass { fill: rgba(10, 131, 112, .28); }
 :root[data-theme="dark"] .capi-scene .cs-ground { stroke: rgba(255, 255, 255, .08); } :root[data-theme="dark"] .capi-scene .cs-grass { fill: rgba(79, 216, 184, .22); }
@@ -6610,7 +6612,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     el.innerHTML = `<svg viewBox="0 0 222 100" aria-hidden="true">
       <path class="cs-ground" d="M2 93.2H220" /><g class="cs-grass"><path d="M4 93q1.6-5 2.6 0q.8-6 2.4 0q1.4-4 2.4 0z"/><path d="M98 93q1.4-4.6 2.4 0q.9-5.6 2.4 0z"/><path d="M150 93q1.6-5 2.6 0q.8-6 2.4 0q1.4-4 2.4 0z"/><ellipse cx="88" cy="93.4" rx="2.4" ry="1.2"/><ellipse cx="160" cy="93.6" rx="1.8" ry="1"/><ellipse cx="22" cy="93.8" rx="1.6" ry=".9"/></g>
       <ellipse class="cs-sh" cx="191" cy="91.8" rx="26" ry="3.8"/>
-      <g class="cs-walk"><ellipse class="cs-sh cs-wsh" cx="39.4" cy="92.6" rx="29" ry="3.8"/><g class="cs-dust"><circle cx="17" cy="91" r="2.6"/><circle cx="21.5" cy="92" r="1.7"/><circle cx="61.8" cy="91" r="2.6"/><circle cx="57.3" cy="92" r="1.7"/></g><g transform="translate(8 1) scale(.98)"><g class="cs-hop"><g class="cs-tilt"><g class="cs-capi"><g class="cs-body"><g transform="matrix(.52 0 0 .52 -6.79 -7.8)">${CAPI.body}<g class="cs-paws"><g class="cs-mcoin">${capiCoin()}</g><g class="cs-pl">${CAPI.pl}</g><g class="cs-pr">${CAPI.pr}</g></g><g class="cs-bl">${CAPI.blush}</g><g class="cs-eo"><g class="cs-look">${CAPI.eyes}</g></g>${CAPI.happy.replace('<path ', '<path class="cs-eh" ')}<path class="cs-brow" d="M43.8 58.4l10.4-3.2M105.4 58.4l-10.4-3.2" fill="none" stroke="#4b1a0d" stroke-width="2.6" stroke-linecap="round"/><path class="cs-sweat" d="M110.6 62.4q-3.8 5.2-3.8 7.6a3.8 3.8 0 0 0 7.6 0q0-2.4-3.8-7.6z" fill="#8fdcf7" stroke="#3aa6d6" stroke-width="1.3"/><g class="cs-fruit">${CAPI.fruit}</g></g></g></g></g></g><g class="cs-bang"><rect x="47" y="-4" width="11" height="13" rx="4" fill="#fff" stroke="#4b1a0d" stroke-width="1.6"/><path d="M52.5-1.2v5" stroke="#4b1a0d" stroke-width="2.2" stroke-linecap="round"/><circle cx="52.5" cy="6.6" r="1.2" fill="#4b1a0d"/></g></g></g></g>
+      <g class="cs-walk"><ellipse class="cs-sh cs-wsh" cx="39.4" cy="92.6" rx="29" ry="3.8"/><g class="cs-dust"><circle cx="17" cy="91" r="2.6"/><circle cx="21.5" cy="92" r="1.7"/><circle cx="61.8" cy="91" r="2.6"/><circle cx="57.3" cy="92" r="1.7"/></g><g transform="translate(8 1) scale(.98)"><g class="cs-hop"><g class="cs-tilt"><g class="cs-capi"><g class="cs-body"><g transform="matrix(.52 0 0 .52 -6.79 -7.8)">${CAPI.body}<g class="cs-paws"><g class="cs-mcoin">${capiCoin()}</g><g class="cs-pl">${CAPI.pl}</g><g class="cs-pr">${CAPI.pr}</g></g><g class="cs-bl">${CAPI.blush}</g><g class="cs-eo"><g class="cs-look">${CAPI.eyes}</g></g>${CAPI.happy.replace('<path ', '<path class="cs-eh" ')}<path class="cs-brow" d="M43.8 58.4l10.4-3.2M105.4 58.4l-10.4-3.2" fill="none" stroke="#4b1a0d" stroke-width="2.6" stroke-linecap="round"/><path class="cs-sweat" d="M110.6 62.4q-3.8 5.2-3.8 7.6a3.8 3.8 0 0 0 7.6 0q0-2.4-3.8-7.6z" fill="#8fdcf7" stroke="#3aa6d6" stroke-width="1.3"/><g class="cs-fruit">${CAPI.fruit}</g></g></g></g></g></g><g class="cs-zz"><text x="52" y="16">z</text><text x="57" y="9">z</text><text x="62" y="2">z</text></g><g class="cs-bang"><rect x="47" y="-4" width="11" height="13" rx="4" fill="#fff" stroke="#4b1a0d" stroke-width="1.6"/><path d="M52.5-1.2v5" stroke="#4b1a0d" stroke-width="2.2" stroke-linecap="round"/><circle cx="52.5" cy="6.6" r="1.2" fill="#4b1a0d"/></g></g></g></g>
       <g class="cs-fly"><g class="cs-fs"><g transform="matrix(.51 0 0 .51 -38 -62.1)">${capiCoin()}</g></g></g>
       <g transform="matrix(1.2 0 0 1.2 31.4 -17.8)"><g class="cs-pig"><path class="cs-tail" d="M152.8 64q6-5 6 1q0 5 4 2" fill="none" stroke="#4b1a0d" stroke-width="1.8" stroke-linecap="round"/><rect x="120" y="77" width="7.4" height="12" rx="3.6" fill="#ff9ab2" stroke="#4b1a0d" stroke-width="1.8"/><rect x="139.2" y="77" width="7.4" height="12" rx="3.6" fill="#ff9ab2" stroke="#4b1a0d" stroke-width="1.8"/><path d="M118.4 57.4l-1.8-9 8.8 5.2z" fill="#ff9ab2" stroke="#4b1a0d" stroke-width="1.8" stroke-linejoin="round"/><ellipse cx="133" cy="68" rx="20.6" ry="15.6" fill="#ffb6c6" stroke="#4b1a0d" stroke-width="2.2"/><ellipse cx="139.6" cy="60.6" rx="8" ry="3.8" fill="#fff" opacity=".35"/><path d="M120 79.6q13 5 27 0" fill="none" stroke="#f08aa4" stroke-width="2" stroke-linecap="round" opacity=".6"/><ellipse cx="112.6" cy="69" rx="4.8" ry="6" fill="#ff9ab2" stroke="#4b1a0d" stroke-width="1.8"/><ellipse cx="111.4" cy="67.2" rx=".9" ry="1.5" fill="#4b1a0d"/><ellipse cx="111.4" cy="70.8" rx=".9" ry="1.5" fill="#4b1a0d"/><ellipse class="cs-peye" cx="121.6" cy="63" rx="2" ry="1.25" fill="#1d0a05"/><path class="cs-pwink" d="M119.4 63.6q2.2-2 4.4 0" fill="none" stroke="#1d0a05" stroke-width="1.3" stroke-linecap="round" opacity="0"/><ellipse cx="123.4" cy="69.8" rx="3.2" ry="2.1" fill="#ff7f9b" opacity=".6"/><rect x="128.6" y="51.2" width="12" height="3.4" rx="1.7" fill="#4b1a0d"/></g>
         <g class="cs-spark" stroke="#ffc23d" stroke-width="2" stroke-linecap="round"><path d="M127 46l-3-4M134.5 43.5v-5M142 46l3-4"/></g>
@@ -6647,6 +6649,16 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     // poeirinha: as bolinhas dos lados dos pés saem pra fora, crescem e somem
     const dust = [...el.querySelectorAll('.cs-dust circle')];
     const puff = () => dust.forEach((c, i) => { const dx = (i < 2 ? -1 : 1) * (i % 2 ? 4 : 7); c.animate([{ opacity: .9, transform: 'translate(0px, 0px) scale(.4)' }, { opacity: .65, transform: `translate(${dx * .6}px, -1.5px) scale(1)`, offset: .45 }, { opacity: 0, transform: `translate(${dx}px, -2.5px) scale(1.25)` }], { duration: 480 + (i % 2) * 80, easing: 'ease-out' }); });
+    // cochilo (só de madrugada): fecha os olhos, abaixa um pouco e sobem uns "z"; acorda com uma esticadinha
+    const zz = [...el.querySelectorAll('.cs-zz text')];
+    async function nap() {
+      el.classList.add('sleep'); await lookAt(0, .5, 300);
+      A(body, [{ transform: 'scale(1, 1)' }, { transform: 'scale(1.03, .96)' }], { duration: 700 });
+      zz.forEach((z, i) => z.animate([{ opacity: 0, transform: 'translate(0px, 4px) scale(.6)' }, { opacity: 1, transform: 'translate(1px, 0px) scale(1)', offset: .3 }, { opacity: 0, transform: 'translate(4px, -6px) scale(1.1)' }], { duration: 1600, delay: i * 450, iterations: 2, easing: 'ease-out' }));
+      await wait(3600);
+      await A(body, [{ transform: 'scale(1.03, .96)' }, { transform: 'scale(.97, 1.05)', offset: .5 }, { transform: 'scale(1, 1)' }], { duration: 420 });
+      el.classList.remove('sleep'); await lookAt(0, 0, 300);
+    }
     // anda bamboleando (de frente, como um bichinho fofo): cada passo sobe e desce e o corpo balança
     async function walkTo(tx) {
       const dx = tx - x; if (Math.abs(dx) < 1) return;
@@ -6728,6 +6740,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
           async () => { bounceFruit(); await squash(1.04, .96, 300); await wait(300); },                // ajeita a laranja
           async () => { happy(true); await squash(1.03, .97, 500); await wait(700); happy(false); },     // fecha os olhinhos de boa
         ];
+        const h = new Date().getHours();
+        if (h >= 22 || h < 6) bits.push(nap, nap);   // de madrugada: chance maior de um cochilo
         const pick = bits.sort(() => Math.random() - .5).slice(0, 2);
         for (const b of pick) await b();
         await lookAt(0, 0, 300);
