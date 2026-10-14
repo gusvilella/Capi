@@ -11,6 +11,8 @@ Bateria de cada rodada: 7 larguras (320 a 1920) × claro/escuro (360 com movimen
 
 - **Rodada 3 — Capi no modo escuro:** o contorno marrom dela sumia no fundo escuro (orelhas e pés sem borda). Agora tem um brilho claro bem sutil em volta dela no escuro (cena do topo, telas vazias, cadeado) e no aviso de "lançado", que é escuro nos dois temas. A cena continua a 60 quadros por segundo.
 
+- **Rodada 4 — tablet e desempenho:** em telas de ~800 a 1100 px (tablet deitado, notebook pequeno), a laranja da Capi encostava/entrava embaixo do seletor de mês. Agora a cena fica um pouco menor nessa faixa e não encosta em nada. Também medi a abertura: ~0,2 s no computador e <1 s num celular 4× mais lento; nada a corrigir.
+
 ## Noite da identidade da Capi (10/out)
 
 Tudo está na **prévia** (https://gusvilella.github.io/Capi/preview.html). O site principal não foi mexido. Nenhum dado mudou de formato.
