@@ -570,7 +570,10 @@ html.locked .lock { place-items: normal; overflow-y: auto; }
   font-size: .88rem;
 }
 .row.head { font-size: .72rem; color: var(--muted); font-weight: 600; padding-top: 4px; padding-bottom: 8px; }
-.row.head .sort { border: 0; background: none; padding: 0; color: inherit; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; }
+.row.head .sort { border: 0; background: none; padding: 0; color: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; font-size: inherit; cursor: pointer; }
+.row.head .sort.on { font-weight: 700; color: var(--ink-2); } .row.head .sort .ar { font-size: .9em; opacity: .9; } .row.head .sort:not(.on) .ar { opacity: 0; } .row.head .sort:hover .ar { opacity: .55; } .row.head .sort.on:hover .ar { opacity: 1; }
+.row.head .val .sort { margin-left: auto; }
+.f-val { display: grid; grid-template-columns: auto 1fr 1fr; gap: 6px; align-items: center; margin-top: 8px; font-size: .8rem; color: var(--muted); } .f-val .input { min-width: 0; }
 .row .date { color: var(--muted); font-size: .8rem; }
 .row .name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row .name small { color: var(--muted); font-weight: 500; margin-left: 4px; }
@@ -1997,6 +2000,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
             <h4>Filtrar</h4>
             <input class="input" id="fSearch" placeholder="Buscar pelo nome…" autocomplete="off" />
             <select class="select" id="fCat" style="margin-top:8px"></select>
+            <div class="f-val" id="fValBox"><span>Valor</span><input class="input" id="fMin" inputmode="decimal" placeholder="de R$" autocomplete="off" aria-label="Valor mínimo" /><input class="input" id="fMax" inputmode="decimal" placeholder="até R$" autocomplete="off" aria-label="Valor máximo" /></div>
             <label class="check" id="fAllBox" style="margin-top:8px"><input type="checkbox" id="fAll" /><span class="box"><svg class="i"><use href="#i-check"/></svg></span><span><strong>Buscar em todos os meses</strong></span></label>
             <button class="btn-soft" id="fClear" style="margin-top:10px;width:100%;justify-content:center">Limpar filtro</button>
           </div>
@@ -2261,7 +2265,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   if (!ui.look2) { if (ui.font === 'Urbanist') ui.font = 'Instrument Sans'; ui.look2 = 1; }
   const saveUi = () => { try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch (_) {} };
 
-  let view = { month: mkey(today.getFullYear(), today.getMonth()), query: '', cat: '', allMonths: false };
+  let view = { month: mkey(today.getFullYear(), today.getMonth()), query: '', cat: '', allMonths: false, min: 0, max: 0 };   // min/max em centavos (0 = sem limite)
 
   const cat = id => state.categories.find(c => c.id === id);
   const catsOf = kind => state.categories.filter(c => c.kind === kind);
@@ -2789,7 +2793,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     $('#manageBtn').innerHTML = ui.tab === 'invest'
       ? `${ico('invest')}CDI ${fmtRate(state.cdi.rate)} ao ano${state.cdi.date ? ` · ${state.cdi.date}` : ''} ${ico('pencil', 'width:12px;height:12px')}`
       : `${ico('tag')}Gerenciar categorias`;
-    $('#filterBtn').classList.toggle('on', !!(view.query || view.cat));
+    $('#filterBtn').classList.toggle('on', !!(view.query || view.cat || view.min || view.max));
 
     const geral = ui.tab === 'geral';
     $('#overview').hidden = !geral;
@@ -2803,15 +2807,27 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   const fmtPct = p => (Math.round(p * 10) / 10).toLocaleString('pt-BR') + '%';
 
   // Busca em todos os meses (Receita e Despesa variável): com texto ou categoria no filtro e a opção marcada
-  const searchAll = () => view.allMonths && !!(view.query.trim() || view.cat) && ['receita', 'variavel'].includes(ui.tab);
+  const searchAll = () => view.allMonths && !!(view.query.trim() || view.cat || view.min || view.max) && ['receita', 'variavel'].includes(ui.tab);
+  // ordem da tabela: data (padrão), nome, categoria ou valor; ui.sortAsc = crescente
+  const SORT_DEF = { date: false, name: true, cat: true, amount: false };   // direção inicial de cada coluna
+  function sortRows(rows) {
+    const key = ui.sortKey || 'date', dir = ui.sortAsc ? 1 : -1;
+    const tie = (a, b) => b.shownDate.localeCompare(a.shownDate) || (b.created || 0) - (a.created || 0);   // empate: mais recente primeiro
+    const cmp = key === 'name' ? (a, b) => (a.desc || '').localeCompare(b.desc || '', 'pt-BR', { sensitivity: 'base' })
+      : key === 'cat' ? (a, b) => (cat(a.category)?.name || '\uffff').localeCompare(cat(b.category)?.name || '\uffff', 'pt-BR', { sensitivity: 'base' })
+      : key === 'amount' ? (a, b) => a.amount - b.amount
+      : (a, b) => a.shownDate.localeCompare(b.shownDate) || (a.created || 0) - (b.created || 0);
+    return rows.sort((a, b) => dir * cmp(a, b) || (key === 'date' ? 0 : tie(a, b)));
+  }
   function rowsForTab() {
     const q = norm(view.query);
     let rows = searchAll() ? (ui.tab === 'receita' ? state.receitas : state.variaveis).map(r => ({ ...r, shownDate: r.date }))
       : ui.tab === 'receita' ? receitasOf(view.month) : ui.tab === 'fixa' ? fixasOf(view.month) : variaveisOf(view.month);
     if (q) rows = rows.filter(r => norm(r.desc).includes(q) || norm(cat(r.category)?.name).includes(q));
     if (view.cat && ui.tab !== 'fixa') rows = rows.filter(r => r.category === view.cat);
-    const dir = ui.sortAsc ? 1 : -1;
-    return rows.sort((a, b) => dir * (a.shownDate.localeCompare(b.shownDate) || (a.created || 0) - (b.created || 0)));
+    if (view.min) rows = rows.filter(r => r.amount >= view.min);
+    if (view.max) rows = rows.filter(r => r.amount <= view.max);
+    return sortRows(rows);
   }
 
   function tagHtml(c) {
@@ -2830,8 +2846,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const found = rowsForTab();
     // todos os meses: mostra os 300 mais recentes (e só então aplica a ordem escolhida)
     let rows = found;
-    if (all && found.length > 300) { rows = found.slice().sort((a, b) => b.shownDate.localeCompare(a.shownDate)).slice(0, 300); if (ui.sortAsc) rows.reverse(); }
-    const filtered = !!(view.query || view.cat);
+    if (all && found.length > 300) rows = sortRows(found.slice().sort((a, b) => b.shownDate.localeCompare(a.shownDate)).slice(0, 300));
+    const filtered = !!(view.query || view.cat || view.min || view.max);
     if (all) $('#tableTitle').textContent += ' · todos os meses';
 
     if (!rows.length) {
@@ -2844,9 +2860,11 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     }
 
     const isFixa = ui.tab === 'fixa';
+    const sk = ui.sortKey && (!isFixa || ui.sortKey !== 'cat') ? ui.sortKey : 'date';
+    const sb = (key, label) => `<button type="button" class="sort${sk === key ? ' on' : ''}" data-sort="${key}" title="Ordenar por ${label.toLowerCase()}" aria-label="Ordenar por ${label.toLowerCase()}${sk === key ? (ui.sortAsc ? ', crescente' : ', decrescente') : ''}">${label}<span class="ar" aria-hidden="true">${sk === key && ui.sortAsc ? '↑' : '↓'}</span></button>`;
     const head = `<div class="row head">
-      <button class="sort" id="sortBtn" title="Ordenar por data">${isFixa ? 'Venc.' : 'Data'} ${ico('sort', 'width:11px;height:11px')}</button>
-      <span>Nome</span><span class="cat">${isFixa ? 'Status' : 'Categoria'}</span><span class="val">Valor</span><span></span></div>`;
+      ${sb('date', isFixa ? 'Venc.' : 'Data')}
+      <span>${sb('name', 'Nome')}</span><span class="cat">${isFixa ? 'Status' : sb('cat', 'Categoria')}</span><span class="val">${sb('amount', 'Valor')}</span><span></span></div>`;
 
     const body = rows.map(r => {
       let label, extra = '';
@@ -4770,7 +4788,10 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
             state.variaveis.push({ ...data, id: uid(), created: Date.now() + i, date: dateIn(key, +data.date.slice(8)),
               amount: base + (i === 0 ? rest : 0), installment: { group, i: i + 1, n } });
           }
-          undoToast(`Parcelado em ${n}x`, undoSnap);
+          const keys = Array.from({ length: n }, (_, i) => addMonths(monthOf(data.date), i));
+          const stay = keys.includes(view.month);   // alguma parcela cai no mês aberto: fica nele (antes pulava pro mês da 1ª parcela e "sumia" o resto)
+          undoToast(`Parcelado em ${n}x` + (stay ? '' : ` · começa em ${monthName(keys[0])} de ${keys[0].slice(0, 4)}`), undoSnap);
+          if (stay) { commit(); return; }
         } else {
           state.variaveis.push({ ...data, id: uid(), created: Date.now() });
           undoToast('Gasto adicionado', undoSnap);
@@ -5560,7 +5581,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
 
   $('#table').addEventListener('click', e => {
     if (e.target.closest('[data-add]')) return openAdd();
-    if (e.target.closest('#sortBtn') && !['invest', 'assin', 'cartoes', 'metas'].includes(ui.tab)) { ui.sortAsc = !ui.sortAsc; saveUi(); return renderTable(); }
+    const sortB = e.target.closest('[data-sort]');
+    if (sortB && !['invest', 'assin', 'cartoes', 'metas'].includes(ui.tab)) { const k = sortB.dataset.sort; if ((ui.sortKey || 'date') === k) ui.sortAsc = !ui.sortAsc; else { ui.sortKey = k; ui.sortAsc = SORT_DEF[k]; } saveUi(); return renderTable(); }
     const fpay = e.target.closest('[data-fpay]');
     if (fpay) return toggleFaturaPaid(fpay.dataset.fpay, fpay.dataset.key);
     const fat = e.target.closest('[data-fatura]');
@@ -5669,6 +5691,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const sel = $('#fCat');
     sel.hidden = ['fixa', 'invest', 'assin', 'cartoes', 'metas'].includes(ui.tab);
     $('#fAllBox').hidden = !['receita', 'variavel'].includes(ui.tab);
+    $('#fValBox').hidden = !['receita', 'fixa', 'variavel'].includes(ui.tab);
     $('#fAll').checked = view.allMonths;
     const kind = ui.tab === 'receita' ? 'receita' : 'despesa';
     sel.innerHTML = `<option value="">Todas as categorias</option>` + catsOf(kind).map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
@@ -5677,10 +5700,14 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   $('#fSearch').addEventListener('input', e => { view.query = e.target.value; render(); });
   $('#fCat').addEventListener('change', e => { view.cat = e.target.value; render(); });
   $('#fAll').addEventListener('change', e => { view.allMonths = e.target.checked; render(); });
+  // "50" → R$ 50,00; "1.234,56" → R$ 1.234,56; "12.5" → R$ 12,50
+  const parseBRL = t => { t = String(t).replace(/[^\d.,]/g, ''); if (!t) return 0; if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.'); else if (/\.\d{3}$/.test(t)) t = t.replace(/\./g, ''); return Math.round((parseFloat(t) || 0) * 100); };
+  $('#fMin').addEventListener('input', e => { view.min = parseBRL(e.target.value); render(); });
+  $('#fMax').addEventListener('input', e => { view.max = parseBRL(e.target.value); render(); });
   const catPick = li => { view.cat = view.cat === li.dataset.catpick ? '' : li.dataset.catpick; $('#fCat').value = view.cat; render(); };
   $('#chart').addEventListener('click', e => { const li = e.target.closest('[data-catpick]'); if (li) catPick(li); });
   $('#chart').addEventListener('keydown', e => { const li = e.target.closest('[data-catpick]'); if (li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); catPick(li); } });
-  $('#fClear').addEventListener('click', () => { view.query = ''; view.cat = ''; view.allMonths = false; $('#fAll').checked = false; $('#fSearch').value = ''; $('#fCat').value = ''; render(); togglePop($('#filterPop'), false); });
+  $('#fClear').addEventListener('click', () => { view.query = ''; view.cat = ''; view.allMonths = false; view.min = view.max = 0; $('#fMin').value = $('#fMax').value = ''; $('#fAll').checked = false; $('#fSearch').value = ''; $('#fCat').value = ''; render(); togglePop($('#filterPop'), false); });
 
   // Atalhos: N = novo, Q = rápido, / = buscar, H = mês atual, ← → = mês, Esc = fechar
   document.addEventListener('keydown', e => {
