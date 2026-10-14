@@ -1262,24 +1262,16 @@ button.ob-person.on .av { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5.5px var(--ob-
 .donut-box { position: relative; width: 240px; height: 240px; }
 .ov .donut-box { width: 200px; height: 200px; }
 .dn-ic { position: absolute; width: 24px; height: 24px; margin: -12px 0 0 -12px; display: grid; place-items: center; pointer-events: none; }
-.dn-ic svg.i { width: 17px; height: 17px; stroke-width: 1.9; }
-/* selinho: bolinha clara no meio da fatia com o ícone na cor da fatia (mais escura) */
-.dn-ic.dn-badge { width: 27px; height: 27px; margin: -13.5px 0 0 -13.5px; border-radius: 50%; background: #fff; color: var(--ic); box-shadow: 0 1px 3px rgba(20, 30, 40, .12); }
-.dn-ic.dn-badge svg.i { width: 15px; height: 15px; stroke-width: 2.2; } .dn-ic.dn-badge svg.i.mono { width: 14px; height: 14px; }
-.ov .dn-ic.dn-badge { width: 23px; height: 23px; margin: -11.5px 0 0 -11.5px; } .ov .dn-ic.dn-badge svg.i { width: 13px; height: 13px; }
-:root[data-theme="dark"] .dn-ic.dn-badge { background: #f4f2ee; }
+.dn-ic svg.i { width: 17px; height: 17px; stroke-width: 2.1; }
 .dn-sep line { stroke: var(--card); stroke-width: .42; stroke-linecap: butt; }
 .ov .dn-ic { width: 20px; height: 20px; margin: -10px 0 0 -10px; }
 .ov .dn-ic svg.i { width: 14px; height: 14px; }
-.dn-out { position: absolute; width: 19px; height: 19px; margin: -9.5px 0 0 -9.5px; border-radius: 50%; display: grid; place-items: center; pointer-events: none; box-shadow: 0 0 0 2px var(--card); }
-.dn-out svg.i { width: 11px; height: 11px; stroke-width: 2.1; }
-.dn-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.dn-lines line { stroke-width: .6; stroke-linecap: round; }
-.donut-wrap.draw .dn-lines line { animation: fade .3s ease var(--dl) both; } .donut-wrap.soft .dn-lines { animation: fade .35s ease both; }
+.dn-out { position: absolute; width: 23px; height: 23px; margin: -11.5px 0 0 -11.5px; border-radius: 50%; display: grid; place-items: center; pointer-events: none; box-shadow: 0 0 0 2px var(--card); }
+.dn-out svg.i { width: 13.5px; height: 13.5px; stroke-width: 2.1; }
 svg.i.mono { fill: currentColor; stroke: none; }
 .dn-ic svg.i.mono { width: 16px; height: 16px; }
 .ov .dn-ic svg.i.mono { width: 13px; height: 13px; }
-.dn-out svg.i.mono { width: 10px; height: 10px; }
+.dn-out svg.i.mono { width: 12px; height: 12px; }
 .legend .lic svg.i.mono { width: 11px; height: 11px; }
 .dn-lg { width: 26px !important; height: 26px !important; margin: -13px 0 0 -13px !important; border-radius: 8px; background: var(--card); box-shadow: 0 0 0 2px var(--card), 0 2px 6px rgba(0, 0, 0, .12); overflow: hidden; }
 .dn-lg .logo { width: 100%; height: 100%; border-radius: 8px; box-shadow: none; font-size: .6rem; }
@@ -1288,8 +1280,8 @@ svg.i.mono { fill: currentColor; stroke: none; }
 .legend .llg .logo { width: 22px; height: 22px; border-radius: 7px; font-size: .55rem; }
 
 
-.ov .dn-out { width: 18px; height: 18px; margin: -9px 0 0 -9px; }
-.ov .dn-out svg.i { width: 11px; height: 11px; }
+.ov .dn-out { width: 20px; height: 20px; margin: -10px 0 0 -10px; }
+.ov .dn-out svg.i { width: 12px; height: 12px; }
 .donut-wrap { padding-top: 18px; padding-bottom: 20px; }
 .legend .lic { width: 22px; height: 22px; border-radius: 7px; flex: none; display: grid; place-items: center; }
 .legend .lic svg.i { width: 12px; height: 12px; stroke-width: 2; }
@@ -1896,7 +1888,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     <symbol id="c-train-front" viewBox="0 0 24 24"><path d="M8 3.1V7a4 4 0 0 0 8 0V3.1"/><path d="m9 15-1-1"/><path d="m15 15 1-1"/><path d="M9 19c-2.8 0-5-2.2-5-5v-4a8 8 0 0 1 16 0v4c0 2.8-2.2 5-5 5Z"/><path d="m8 19-2 3"/><path d="m16 19 2 3"/></symbol>
     <symbol id="c-bike" viewBox="0 0 24 24"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></symbol>
     <symbol id="c-plane" viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></symbol>
-    <symbol id="c-heart-pulse" viewBox="0 0 24 24"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/><path d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></symbol>
+    <symbol id="c-heart-pulse" viewBox="0 0 24 24"><path d="M12 20.5 4.6 13.3C3.1 11.8 2 10.4 2 8.4 2 5.6 4.2 3.5 6.9 3.5c1.9 0 3.4.9 5.1 2.6 1.7-1.7 3.2-2.6 5.1-2.6 2.7 0 4.9 2.1 4.9 4.9 0 2-1.1 3.4-2.6 4.9z"/><path d="M12 8.6v5.2M9.4 11.2h5.2"/></symbol>
     <symbol id="c-pill" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></symbol>
     <symbol id="c-receipt" viewBox="0 0 24 24"><path d="M12 17V7"/><path d="M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8"/><path d="M4 3a1 1 0 0 1 1-1 1.3 1.3 0 0 1 .7.2l.933.6a1.3 1.3 0 0 0 1.4 0l.934-.6a1.3 1.3 0 0 1 1.4 0l.933.6a1.3 1.3 0 0 0 1.4 0l.933-.6a1.3 1.3 0 0 1 1.4 0l.934.6a1.3 1.3 0 0 0 1.4 0l.933-.6A1.3 1.3 0 0 1 19 2a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1 1.3 1.3 0 0 1-.7-.2l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.934.6a1.3 1.3 0 0 1-1.4 0l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-1.4 0l-.934-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-.7.2 1 1 0 0 1-1-1z"/></symbol>
     <symbol id="c-zap" viewBox="0 0 24 24"><path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z"/></symbol>
@@ -1937,7 +1929,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     <symbol id="c-life-buoy" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/><circle cx="12" cy="12" r="4"/></symbol>
     <symbol id="c-tree-palm" viewBox="0 0 24 24"><path d="M13 8c0-2.76-2.46-5-5.5-5S2 5.24 2 8h2l1-1 1 1h4"/><path d="M13 7.14A5.82 5.82 0 0 1 16.5 6c3.04 0 5.5 2.24 5.5 5h-3l-1-1-1 1h-3"/><path d="M5.89 9.71c-2.15 2.15-2.3 5.47-.35 7.43l4.24-4.25.7-.7.71-.71 2.12-2.12c-1.95-1.96-5.27-1.8-7.42.35"/><path d="M11 15.5c.5 2.5-.17 4.5-1 6.5h4c2-5.5-.5-12-1-14"/></symbol>
     <symbol id="c-gem" viewBox="0 0 24 24"><path d="M10.5 3 8 9l4 13 4-13-2.5-6"/><path d="M17 3a2 2 0 0 1 1.6.8l3 4a2 2 0 0 1 .013 2.382l-7.99 10.986a2 2 0 0 1-3.247 0l-7.99-10.986A2 2 0 0 1 2.4 7.8l2.998-3.997A2 2 0 0 1 7 3z"/><path d="M2 9h20"/></symbol>
-    <symbol id="c-laptop" viewBox="0 0 24 24"><path d="M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z"/><path d="M20.054 15.987H3.946"/></symbol>
+    
     <symbol id="c-star" viewBox="0 0 24 24"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></symbol>
     <symbol id="c-cloud-alert" viewBox="0 0 24 24"><path d="M12 12v4"/><path d="M12 20h.01"/><path d="M8.128 16.949A7 7 0 1 1 15.71 8h1.79a1 1 0 0 1 0 9h-1.642"/></symbol>
     <symbol id="c-save" viewBox="0 0 24 24"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></symbol>
@@ -2101,6 +2093,11 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       .filter(([, bn]) => bn.length >= 3 && (n === bn || n.startsWith(bn + ' ')))
       .sort((a, b) => b[1].length - a[1].length)[0]?.[0];
   };
+  // cor bem escura (o ícone em cima dela vai num tom claro dela mesma)
+  function darkColor(hex) {
+    const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.38;
+  }
   function lightColor(hex) {
     const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.72;
@@ -3065,12 +3062,12 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         stroke-dasharray="${Math.max(len, 0.01)} ${100 - Math.max(len, 0.01)}" stroke-dashoffset="${-offset}"><title>${esc(g.name)}: ${brl.format(g.value / 100)}</title></circle>`;
       // ícone no meio da fatia (só nas que têm espaço)
       if (groups.length > 1) seps.push(`<line x1="33.9" y1="21" x2="39.95" y2="21" style="transform:rotate(${(offset * 3.6).toFixed(3)}deg);--r0:${(start * 3.6).toFixed(3)}deg"/>`);
-      // selinho no meio exato da fatia (no ângulo e no centro da espessura do anel)
+      // ícone no meio exato da fatia (no ângulo e no centro da espessura do anel), no tom mais forte da cor dela
       const mid = offset + len / 2, popAt = 1000 + (marks.length + outs.length) * 45;
       if ((g.icon || g.mono || g.av) && len >= 6) {
         const a = mid / 100 * 2 * Math.PI, r = 15.915 / 42 * 100;
         const x = 50 + r * Math.sin(a), y = 50 - r * Math.cos(a);
-        marks.push(`<span class="dn-ic${g.av ? '' : ' dn-badge'}" style="--dl:${popAt}ms;left:${x.toFixed(3)}%;top:${y.toFixed(3)}%;--ic:${mixC(g.color, '#1b1e24', .5)}">${gi(g)}</span>`);
+        marks.push(`<span class="dn-ic" style="--dl:${popAt}ms;left:${x.toFixed(3)}%;top:${y.toFixed(3)}%;color:${darkColor(g.color) ? mixC(g.color, '#ffffff', .8) : mixC(g.color, '#1b1e24', .62)}">${gi(g)}</span>`);
       } else if (g.icon || g.mono || g.av) {
         outs.push({ g, deg: mid * 3.6, dl: popAt });
       }
@@ -3078,20 +3075,18 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       return arc;
     }).join('');
     // Selos de fora (fatias finas): todos na mesma distância, em cima da sua fatia. Se vizinhos se encostariam, o grupo
-    // se abre por igual para os dois lados (centralizado nas fatias) e uma linha fininha liga cada selo à sua fatia.
+    // se abre por igual para os dois lados (centralizado nas fatias), coladinho na rosca e na mesma ordem das fatias.
     const SEP = small ? 17 : 15, P = (deg, r) => [50 + r * Math.sin(deg * Math.PI / 180), 50 - r * Math.cos(deg * Math.PI / 180)];
-    const clusters = [], lines = [];
+    const clusters = [];
     outs.forEach(o => { const last = clusters[clusters.length - 1]; if (last && o.deg - last[last.length - 1].deg < SEP) last.push(o); else clusters.push([o]); });
     clusters.forEach(cl => {
       const mean = cl.reduce((t, o) => t + o.deg, 0) / cl.length;
       cl.forEach((o, i) => {
         const at = cl.length > 1 ? mean + (i - (cl.length - 1) / 2) * SEP : o.deg;
-        const [x, y] = P(at, 53);
-        if (Math.abs(at - o.deg) > 1) { const [x1, y1] = P(o.deg, 45), [x2, y2] = P(at, 49.5); lines.push(`<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="${o.g.color}" style="--dl:${o.dl}ms"/>`); }
+        const [x, y] = P(at, small ? 51.5 : 50.5);
         marks.push(`<span class="dn-out" title="${esc(o.g.name)}" style="--dl:${o.dl}ms;left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;background:${o.g.color};color:${lightColor(o.g.color) ? 'rgba(20,20,18,.75)' : '#fff'}">${gi(o.g)}</span>`);
       });
     });
-    if (lines.length) marks.unshift(`<svg class="dn-lines" viewBox="0 0 100 100" aria-hidden="true">${lines.join('')}</svg>`);
 
     return `
       <div class="donut-wrap${donutAnim === 'soft' ? ' soft' : donutAnim ? ' draw' : ''}">
