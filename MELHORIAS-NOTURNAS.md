@@ -18,6 +18,8 @@ Bateria de cada rodada: 7 larguras (320 a 1920) × claro/escuro (360 com movimen
 
 - **Rodada 7 — olhinhos seguem o mouse:** no computador, quando a Capi está de boa no topo, os olhinhos dela acompanham o mouse (pra esquerda, direita, cima, baixo). No celular e com animações desligadas não muda nada. Também conferi que, com animações desligadas, a cena fica parada e nenhuma animação roda.
 
+- **Rodada 8 — Capi no resumo em PDF:** o "Resumo do mês em PDF" agora tem a carinha da Capi ao lado do nome do app no cabeçalho (gerei o PDF e conferi). O contorno do porquinho e do balãozinho "!" da cena passou a usar o mesmo marrom do contorno da Capi.
+
 ## Noite da identidade da Capi (10/out)
 
 Tudo está na **prévia** (https://gusvilella.github.io/Capi/preview.html). O site principal não foi mexido. Nenhum dado mudou de formato.
