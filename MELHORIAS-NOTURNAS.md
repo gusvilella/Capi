@@ -60,6 +60,8 @@ Bateria de cada rodada: 7 larguras (320 a 1920) × claro/escuro (360 com movimen
 
 - **Rodada 16 — meta alcançada com festa:** ao bater uma meta aparecia o aviso "Meta Viagem alcançada!", mas sem a Capi e sem comemoração (a palavra "alcançada" não estava na lista de coisas boas). Agora a Capi aparece no aviso e vai guardar a moedinha no cofrinho, comemorando.
 
+- **Rodada 17 — Capi comemora as coisas certas:** revisei todos os ~50 avisos do app. O aviso de erro "Planilha .xls antiga: abra no Excel e salve…" comemorava (por causa da palavra "salve") e "O app já está instalado" também; agora não. E coisas boas que não comemoravam passaram a comemorar: backup restaurado, transferência feita, lançamentos exportados e compra parcelada.
+
 ## Noite da identidade da Capi (10/out)
 
 Tudo está na **prévia** (https://gusvilella.github.io/Capi/preview.html). O site principal não foi mexido. Nenhum dado mudou de formato.
