@@ -5,7 +5,7 @@
 ### Resumo da noite (em poucas palavras)
 - A Capi oficial ficou caprichada em todo lugar: **piscada nova** (fecha num risquinho), **lagoa** sem o corpo aparecendo pelos lados, **modo escuro** com a silhueta visível, e a **cena do topo sem trancos**.
 - A Capi ganhou **personalidade**: poeirinha quando aterrissa, **olhinhos que seguem o mouse** no computador, **cochilo de madrugada** e **espreguiçada de manhã**. Se você lança algo enquanto ela está de boa ou dormindo, ela acorda e vai guardar a moedinha na hora.
-- Ela também apareceu onde faltava: **primeira tela do cadastro** e **cabeçalho do resumo em PDF**.
+- Ela também apareceu onde faltava: **primeira tela do cadastro**, **cabeçalho do resumo em PDF** e na hora em que você **bate uma meta** (antes esse aviso não tinha comemoração).
 - **Acessibilidade:** verificador automático (axe, padrão WCAG AA) zerado em todas as telas, no claro e no escuro.
 - **Testes de cada rodada:** 7 larguras × claro/escuro, movimento reduzido, 8 abas, cadastro completo, lançar/editar/excluir/desfazer, troca de mês, 40 s da cena medidos quadro a quadro, dados estranhos (vazio, formato antigo, 3.000 lançamentos). Nenhum erro.
 - O site principal (`index.html` do branch principal) **não foi mexido**; tudo está na prévia.
@@ -18,7 +18,8 @@
 5. Ative o **modo escuro** e veja a Capi no topo e numa aba vazia (ex.: Assinaturas).
 6. Num tablet ou janela de ~1000 px: a laranja não encosta mais no seletor de mês.
 7. Configurações → **Resumo do mês em PDF**: a Capi aparece no cabeçalho.
-8. Pra ver o cadastro de novo, abra a prévia numa janela anônima: a Capi aparece na primeira tela.
+8. Em Metas, guarde o que falta numa meta: aparece "Meta … alcançada!" com a Capi e ela comemora no topo.
+9. Pra ver o cadastro de novo, abra a prévia numa janela anônima: a Capi aparece na primeira tela.
 
 ### Pontos para você decidir
 - Se aprovar, dá pra levar tudo da prévia para o site principal (eu não mexo no `index.html` principal sem você pedir).
@@ -56,6 +57,8 @@ Bateria de cada rodada: 7 larguras (320 a 1920) × claro/escuro (360 com movimen
 - **Rodada 14 — espreguiçada de manhã:** entre 6h e 10h, de vez em quando a Capi se espreguiça no topo (fecha os olhinhos, levanta as patinhas e estica o corpo). Junto com o cochilo da madrugada, ela tem um "jeitinho" diferente conforme a hora. Também conferi a prévia publicada no ar (está com tudo desta noite) e o avatar do cumprimento, que reage ao toque.
 
 - **Rodada 15 — conferências finais:** primeira tela do cadastro em celulares pequenos (320 e 360 px, com toque): a Capi não encosta no texto. Teclado: a Capi do topo recebe foco com Tab, mostra o contorno de foco e pula com Enter.
+
+- **Rodada 16 — meta alcançada com festa:** ao bater uma meta aparecia o aviso "Meta Viagem alcançada!", mas sem a Capi e sem comemoração (a palavra "alcançada" não estava na lista de coisas boas). Agora a Capi aparece no aviso e vai guardar a moedinha no cofrinho, comemorando.
 
 ## Noite da identidade da Capi (10/out)
 
