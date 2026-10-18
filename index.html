@@ -1729,6 +1729,10 @@ button.kpi-label:hover { color: var(--ink); text-decoration-color: currentColor;
 @media (max-width: 980px) {
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .grid { grid-template-columns: minmax(0, 1fr); }
+  /* uma coluna (celular): primeiro a rosca, depois os lançamentos (e os botões de categorias), depois os gráficos */
+  #mainGrid > div:last-child { display: contents; }
+  #mainGrid #chart { order: -1; } #mainGrid .table-card { order: 0; } #mainGrid .manage { order: 1; margin-top: -10px; }
+  .ov-where { order: 1; } .ov-cal { order: 2; } .ov-cards { order: 3; } .ov-goals { order: 4; } .ov-forecast { order: 5; }
 }
 @media (max-width: 640px) {
   .app { padding: 18px 14px 96px; }   /* embaixo: espaço pro botão + não cobrir o fim da página */
