@@ -175,6 +175,9 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .kmeter { display: flex; height: 6px; margin: 10px 0 0; border-radius: 99px; background: var(--green-soft); overflow: hidden; }
 .kmeter i { height: 100%; } .kmeter .out { background: #9fb0c4; } .kmeter .save { background: var(--blue, #5b84c4); opacity: .55; } .kmeter .over { background: var(--amber); opacity: .75; }
 .kpi.sobra .kpi-value.pos { color: var(--green); }
+.dup-ask { margin: 6px 0 10px; padding: 10px 12px; border-radius: 12px; background: var(--field); font-size: .78rem; color: var(--ink-2); line-height: 1.45; }
+.dup-ask b { font-weight: 600; } .dup-act { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 8px; }
+.nowrap { white-space: nowrap; }
 .adjust {
   margin-left: auto; border: 0; border-radius: 999px;
   background: var(--blue); color: #fff; font-size: .72rem; font-weight: 700;
@@ -224,6 +227,14 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .flag img { width: 100%; height: 100%; display: block; }
 .card-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; margin-top: 3px; white-space: normal; color: var(--muted); font-size: .75rem; font-weight: 500; }
 .card-sub .flag { width: 24px; height: 15px; }
+/* limite do cartão: barrinha do que já foi usado + quanto ainda está livre */
+.cl-meter { display: flex; align-items: center; gap: 8px; margin-top: 7px; font-size: .74rem; color: var(--muted); white-space: nowrap; }
+.cl-meter b { font-weight: 600; color: var(--ink-2); }
+.cl-bar { width: 72px; height: 5px; flex: none; border-radius: 99px; background: var(--field); overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
+.cl-bar i { display: block; height: 100%; border-radius: inherit; background: var(--accent); opacity: .8; }
+.cl-meter.low b { color: var(--amber); } .cl-meter.low .cl-bar i { background: var(--amber); }
+.cards-note { margin: 8px 2px 0; font-size: .74rem; color: var(--muted); }
+@media (max-width: 640px) { .cl-of { display: none; } .cl-bar { width: 52px; } }
 .cc-preview { position: relative; aspect-ratio: 1.586; max-width: 300px; margin: 4px auto 6px; border-radius: 16px; padding: 16px 18px; color: #fff; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; box-shadow: 0 12px 30px rgba(20, 23, 28, .22); transition: background .3s; }
 .cc-preview::after { content: ""; position: absolute; width: 220px; height: 220px; right: -70px; top: -90px; border-radius: 50%; background: rgba(255, 255, 255, .12); }
 .cc-top, .cc-bottom { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
@@ -3397,24 +3408,41 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       }).join('') : '<div class="ov-empty">Nenhum cartão cadastrado.</div>');
   }
 
+  // Patrimônio = contas + investimentos. Investimento marcado "já está no saldo das contas" (inAcc) não entra de novo
+  function worth() {
+    const acc = state.accounts.reduce((s, a) => s + accBalance(a), 0), inv = state.investments.reduce((s, i) => s + estimate(i), 0);
+    const extra = state.investments.filter(i => !i.inAcc).reduce((s, i) => s + estimate(i), 0);
+    return { acc, inv, extra, total: acc + extra };
+  }
   function renderOvGoals() {
     const box = $('#ovGoals');
-    const inv = state.investments.reduce((s, i) => s + estimate(i), 0), acc = state.accounts.reduce((s, a) => s + accBalance(a), 0);
-    box.innerHTML = `<h3>Metas e patrimônio <button class="ov-link" data-go="metas">Ver metas</button></h3><p class="ov-sub">Contas ${money(acc)} · Investimentos ${money(inv)}</p>
-      <div class="stat-hero" style="padding:0 0 6px;text-align:left"><small>Patrimônio</small><strong${acc + inv >= 0 ? ` data-cu="${acc + inv}"` : ''}>${(acc + inv < 0 && !ui.hidden ? '–' : '') + money(Math.abs(acc + inv))}</strong></div>`
+    const { acc, inv, extra, total } = worth();
+    // mesmo valor nas contas e nos investimentos (sem nenhum marcado): provavelmente é o mesmo dinheiro lançado duas vezes
+    const dupAsk = acc > 0 && extra > 0 && extra === inv && Math.abs(acc - inv) <= Math.max(100, acc * .005) && !ui.dupWorthNo;
+    box.innerHTML = `<h3>Metas e patrimônio <button class="ov-link" data-go="metas">Ver metas</button></h3><p class="ov-sub">Contas ${money(acc)} · Investimentos ${money(inv)}${inv && extra < inv ? ` <span class="nowrap">(${extra ? `${money(inv - extra)} já` : 'já'} no saldo das contas)</span>` : ''}</p>
+      <div class="stat-hero" style="padding:0 0 6px;text-align:left"><small>Patrimônio</small><strong${total >= 0 ? ` data-cu="${total}"` : ''}>${(total < 0 && !ui.hidden ? '–' : '') + money(Math.abs(total))}</strong></div>`
+      + (dupAsk ? `<div class="dup-ask"><b>Contas e investimentos têm o mesmo valor.</b> É o mesmo dinheiro? Aí o patrimônio conta só uma vez.
+        <div class="dup-act"><button type="button" class="btn-soft" id="dupYes">É o mesmo dinheiro</button><button type="button" class="link" id="dupNo">Não, são diferentes</button></div></div>` : '')
       + (state.metas.length ? state.metas.map(g => {
         const i = goalInfo(g);
         return `<div class="ov-row">${goalTile(g)}<div class="grow"><b>${esc(g.name)}</b>
           <small>${i.done ? 'Alcançada' : i.perMonth ? `${money(i.perMonth)}/mês até ${monthLabel(g.deadline)}` : `${Math.round(i.pct * 100)}%`}</small>
           <div class="meter ${i.done ? '' : i.late ? 'over' : 'info'}"><i style="width:${i.pct * 100}%"></i></div></div><span class="amt">${Math.round(i.pct * 100)}%</span></div>`;
       }).join('') : '<div class="ov-empty">Nenhuma meta ainda.</div>');
+    box.querySelector('#dupYes')?.addEventListener('click', () => {
+      const snap = JSON.stringify(state.investments);
+      state.investments.forEach(i => { i.inAcc = true; });
+      commit();
+      toast('Pronto: o patrimônio conta esse dinheiro uma vez só', 'Desfazer', () => { state.investments = JSON.parse(snap); commit(); });
+    });
+    box.querySelector('#dupNo')?.addEventListener('click', () => { ui.dupWorthNo = true; saveUi(); render(); });
   }
 
   // ================= Evolução mês a mês =================
   // Patrimônio (contas + investimentos): guarda um retrato por mês quando o app é aberto
   function snapshot() {
     if (!state.accounts.length && !state.investments.length) return;
-    const val = state.accounts.reduce((s, a) => s + accBalance(a), 0) + state.investments.reduce((s, i) => s + estimate(i), 0);
+    const val = worth().total;
     state.snapshots ||= {};
     if (state.snapshots[curKey()] !== val) { state.snapshots[curKey()] = val; save(true); }
   }
@@ -4086,14 +4114,18 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       const st = FSTATE[faturaState(c, c.fk, f)];
       const status = !f ? `<button class="tag status none" data-fatura="${c.id}" data-key="${c.fk}">Lançar fatura</button>`
         : `<button class="tag status ${st[0]}" data-fpay="${c.id}" data-key="${c.fk}" title="${f.paid ? 'Marcar como não paga' : 'Marcar como paga'}">${st[1]}</button>`;
-      const avail = c.limit ? c.limit - cardUsed(c) : 0;
-      const limit = c.limit ? ` · disponível <b style="color:${avail < c.limit * 0.1 ? 'var(--amber)' : 'inherit'}">${money(Math.max(avail, 0))}</b> de ${money(c.limit)}` : '';
+      // Linha limpa: nome, datas da fatura e uma barrinha do limite. Bandeira e final do cartão ficam no "title"
+      // (o final aparece se dois cartões tiverem o mesmo nome); o que já está dentro da fatura aparece ao abrir a fatura.
+      const avail = c.limit ? Math.max(c.limit - cardUsed(c), 0) : 0;
+      const limit = c.limit ? `<div class="cl-meter${avail < c.limit * 0.1 ? ' low' : ''}"><span class="cl-bar"><i style="width:${Math.min(100, (1 - avail / c.limit) * 100).toFixed(1)}%"></i></span><span><b class="num">${money(avail)}</b> livres<span class="cl-of"> de ${money(c.limit)}</span></span></div>` : '';
       const prev = !f ? faturaPreview(c.id, c.fk) : 0;
+      const twin = c.last4 && rows.some(o => o.id !== c.id && norm(o.name) === norm(c.name) && whoOf(o) === whoOf(c));
+      const tip = [FLAGS[c.flag]?.name, c.last4 ? '•••• ' + c.last4 : '', c.count === false ? 'fora das despesas' : ''].filter(Boolean).join(' · ');
       return `<div class="row atop">
         <span class="date">${logoHtml({ brand: c.bank, name: c.name, color: c.color })}</span>
-        <div class="name"><span>${whoBadge(c)}${esc(c.name)}${c.count === false ? `<small>fora das despesas</small>` : ''}</span>
-          <div class="card-sub">${flagHtml(c.flag)}${c.last4 ? `•••• ${esc(c.last4)} · ` : ''}${c.fk !== view.month ? `fatura de ${monthName(c.fk)} · ` : ''}fecha ${dm(c.dates.close)} · vence ${dm(c.dates.due)}${limit}</div>
-          ${(() => { const its = itemsOnCard(c.id, c.fk); return its.length ? `<div class="card-sub">inclui ${its.slice(0, 3).map(i => esc(i.label)).join(', ')}${its.length > 3 ? ` +${its.length - 3}` : ''}</div>` : ''; })()}
+        <div class="name"><span title="${esc(tip)}">${whoBadge(c)}${esc(c.name)}${twin ? ` <small>•${esc(c.last4)}</small>` : ''}</span>
+          <div class="card-sub">${c.fk !== view.month ? `Fatura de ${monthName(c.fk)} · vence ${dm(c.dates.due)}` : `Vence ${dm(c.dates.due)} · fecha ${dm(c.dates.close)}`}</div>
+          ${limit}
           <div class="tag-m">${status}</div></div>
         <span class="cat">${status}</span>
         <span class="val num">${f ? money(f.amount) : prev ? `<span style="color:var(--muted)">≈ ${money(prev)}<small style="display:block;font-size:.68rem">prévia</small></span>` : '<span style="color:var(--muted)">—</span>'}</span>
@@ -4102,9 +4134,11 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     }).join('');
     const total = rows.reduce((s, c) => s + (c.fatura ? c.fatura.amount : 0), 0);
     const open = rows.reduce((s, c) => s + (c.fatura && !c.fatura.paid ? c.fatura.amount : 0), 0);
+    const outN = rows.filter(c => c.count === false).length;
     $('#table').innerHTML = head + body + `
       <div class="total"><span>${view.month === curKey() ? 'Total das faturas atuais' : `Total das faturas que vencem em ${monthName(view.month)}`}</span><strong class="num negc">${money(total)}</strong></div>
-      <div class="yield"><span>${open ? 'Em aberto' : total ? 'Tudo pago' : ''}</span><span>${open ? `<strong class="num" style="color:var(--amber)">${money(open)}</strong>` : ''}</span></div>`;
+      <div class="yield"><span>${open ? 'Em aberto' : total ? 'Tudo pago' : ''}</span><span>${open ? `<strong class="num" style="color:var(--amber)">${money(open)}</strong>` : ''}</span></div>
+      ${outN ? `<p class="cards-note">${outN === rows.length ? (outN > 1 ? 'Estas faturas ficam' : 'Esta fatura fica') : `${outN} ${outN > 1 ? 'faturas ficam' : 'fatura fica'}`} fora do "Saiu da conta": as compras já estão lançadas em Gastos.</p>` : ''}`;
   }
 
   function renderCardsChart() {
@@ -4334,7 +4368,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       const tag = `<span class="tag rate">${rateText(i)}</span>`;
       return `<div class="row">
         <span class="date num" title="Última vez que você informou o saldo">${ddmm(i.updatedAt)}</span>
-        <div class="name has-ic">${investMark(i)}<div class="nm"><span>${esc(i.name)}${i.institution ? `<span class="ex"><small class="inst">${esc(i.institution)}</small></span>` : ''}</span><div class="tag-m">${tag}${i.institution ? `<span class="ex-m"><small class="inst">${esc(i.institution)}</small></span>` : ''}</div></div></div>
+        <div class="name has-ic">${investMark(i)}<div class="nm"><span>${esc(i.name)}${i.institution || i.inAcc ? `<span class="ex"><small class="inst">${[i.institution, i.inAcc ? 'já no saldo das contas' : ''].filter(Boolean).map(esc).join(' · ')}</small></span>` : ''}</span><div class="tag-m">${tag}${i.institution ? `<span class="ex-m"><small class="inst">${esc(i.institution)}</small></span>` : ''}</div></div></div>
         <span class="cat">${tag}</span>
         <span class="val num">${money(i.now)}</span>
         <button class="edit" data-edit="${i.id}" aria-label="Editar">${ico('pencil', 'width:14px;height:14px')}</button>
@@ -4377,6 +4411,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       <p class="help" id="mvHelp"></p>
       ${state.accounts.length ? `<label class="fl" for="fMvAcc" id="mvAccLbl">Sai da conta</label>
       <select class="select" id="fMvAcc"><option value="">Não mexer nas contas</option>${state.accounts.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('')}</select>` : ''}` : ''}
+      ${state.accounts.length ? checkField('fInAcc', 'Esse dinheiro já está no saldo de uma conta', 'Marque se o valor já faz parte do saldo que você colocou em Bancos (ex.: o banco mostra o investimento junto do saldo). Assim o patrimônio não conta duas vezes.', !!inv.inAcc) : ''}
       ${footer(editing)}</form>`, m => {
       const type = m.querySelector('#fType'), rate = m.querySelector('#fRate'), amount = m.querySelector('#fAmount');
       let mv = 'in';
@@ -4415,7 +4450,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         if (editing) { const mvC = cents(m.querySelector('#fMove')); balance += mv === 'in' ? mvC : -mvC; }
         if (balance < 0) return showErr('O resgate é maior que o saldo.');
         const data = { name, institution: m.querySelector('#fInst').value.trim(), type: type.value,
-          rate: Math.max(0, +rate.value || 0), balance, updatedAt: todayIso };
+          rate: Math.max(0, +rate.value || 0), balance, updatedAt: todayIso, inAcc: !!m.querySelector('#fInAcc')?.checked };
         if (editing) {
           Object.assign(state.investments.find(x => x.id === item.id), data);
           // aporte tirado de uma conta / resgate que caiu numa conta: o saldo da conta acompanha (vira uma transferência)
@@ -5558,7 +5593,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const cards = cardsOf(key).map(c => { const f = c.fatura, prev = f ? 0 : faturaPreview(c.id, key);
       return tr(`vence ${dm(faturaDates(c, key).due)}`, esc(c.name) + (c.last4 ? ` <small>•${esc(c.last4)}</small>` : ''), `<small class="st">${f ? FSTATE[faturaState(c, key, f)][1] : prev ? 'prévia' : 'sem fatura'}</small>`, f ? R(f.amount) : prev ? '≈ ' + R(prev) : '—'); });
     const recs = receitasOf(key).sort((a, b) => b.amount - a.amount).map(r => tr(ddmm(r.shownDate), esc(r.desc || cat(r.category)?.name || 'Receita'), `<small>${r.pending ? 'a receber' : esc(cat(r.category)?.name || '')}</small>`, R(r.amount)));
-    const acc = state.accounts.reduce((s, a) => s + accBalance(a), 0), inv = state.investments.reduce((s, i) => s + estimate(i), 0);
+    const { acc, inv, total: worthTotal } = worth();
     const goals = state.metas.map(g => { const i = goalInfo(g); return `<div class="r-goal"><span>${esc(g.name)}</span><span class="bar"><i style="width:${i.pct * 100}%"></i></span><b>${Math.round(i.pct * 100)}%</b></div>`; }).join('');
     const tips = insights().replace(/<span class="ic"[^>]*>.*?<\/span>/g, '');
     const lbl = new Date(+key.slice(0, 4), +key.slice(5) - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
@@ -5581,7 +5616,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         ${table('Cartões', cards, 'Nenhum cartão cadastrado.')}
         ${table('Entradas', recs, 'Nenhuma entrada.')}
       </div>
-      <section class="r-sec"><h2>Patrimônio e metas</h2><div class="r-kpis r-kpis-3">${kpi('Contas', acc, '', '#111827')}${kpi('Investimentos', inv, '', '#111827')}${kpi('Total', acc + inv, '', '#111827')}</div>${goals}</section>
+      <section class="r-sec"><h2>Patrimônio e metas</h2><div class="r-kpis r-kpis-3">${kpi('Contas', acc, '', '#111827')}${kpi('Investimentos', inv, '', '#111827')}${kpi('Total', worthTotal, inv + acc !== worthTotal ? '<small>sem contar duas vezes o que já está nas contas</small>' : '', '#111827')}</div>${goals}</section>
       <p class="r-note">Itens pagos no cartão entram pelo valor da fatura, sem contar duas vezes.</p>`;
   }
   function printReport() {
