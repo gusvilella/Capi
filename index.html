@@ -216,7 +216,7 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
 .two > div, .three > div { min-width: 0; }
 .input[type=month], .input[type=date] { min-width: 0; }
-.seg2 button.on[data-src], .seg2 button.on[data-cy], .seg2 button.on[data-next] { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+.seg2 button.on[data-src], .seg2 button.on[data-cy], .seg2 button.on[data-next], .seg2 button.on[data-lag] { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
 .picked { display: flex; align-items: center; gap: 12px; background: var(--field); border-radius: 14px; padding: 10px 12px; }
 .picked .input { background: var(--card); }
 .picked .grow { flex: 1; min-width: 0; }
@@ -2494,7 +2494,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     // durante o render, separa os gastos por mês uma vez só em vez de varrer a lista inteira a cada mês pedido
     const list = memo ? (cached('vidx', () => { const m = new Map(); for (const v of state.variaveis) { const k = monthOf(v.date); if (!m.has(k)) m.set(k, []); m.get(k).push(v); } return m; }).get(key) || [])
       : state.variaveis.filter(v => monthOf(v.date) === key);
-    return list.map(v => ({ ...v, shownDate: v.date }));
+    // parcela: buyDate = dia da compra (data da 1ª parcela); a lista mostra e ordena por ela
+    return list.map(v => ({ ...v, shownDate: v.date, ...(v.installment && v.installment.i > 1 ? { buyDate: dateIn(addMonths(monthOf(v.date), 1 - v.installment.i), +v.date.slice(8)) } : {}) }));
   });
   // Despesa fixa pertence ao mês "key" (conta nas despesas dele); se "vence no mês seguinte", a data de pagamento é no próximo mês
   const fixasOf = key => cached('f' + key, () => state.fixas.filter(f => activeIn(f, key) && !(f.skip || []).includes(key))
@@ -2624,8 +2625,11 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   const countable = key => i => !inFatura(i, key);
 
   function totals(key) { return cached('t' + key, () => totalsRaw(key)); }
+  // payLag: "com o salário de um mês eu pago as contas do mês anterior". Aí as contas de outubro são comparadas com o que
+  // cai em novembro (o balanço do mês junta cada conta com o dinheiro que vai pagá-la). A aba Entradas continua mostrando o que caiu em cada mês.
+  const incomeKey = key => state.payLag ? addMonths(key, 1) : key;
   function totalsRaw(key) {
-    const rec = receitasOf(key);
+    const rec = receitasOf(incomeKey(key));
     const receita = rec.filter(r => !r.pending).reduce((s, r) => s + r.amount, 0);
     const aReceber = rec.filter(r => r.pending).reduce((s, r) => s + r.amount, 0);
     const fixas = fixasOf(key).filter(countable(key)).reduce((s, f) => s + f.amount, 0);
@@ -2635,7 +2639,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const pct = investPct(key);
     const investir = Math.round(receita * pct / 100);
     const despesas = fixas + variaveis + assinaturas + faturas;
-    return { receita, aReceber, fixas, variaveis, assinaturas, faturas, despesas, pct, investir, saldo: receita - investir - despesas };
+    return { receita, aReceber, fixas, variaveis, assinaturas, faturas, despesas, pct, investir, saldo: receita - investir - despesas, incomeKey: incomeKey(key) };
   }
 
 
@@ -2816,7 +2820,9 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const t = totals(view.month);
     const cnt = (el, v, fmt = money) => countTo(el, v, fmt, countZero ? 0 : el._v);
     cnt($('#kReceita'), t.receita);
-    const byWho = multi() ? members().map(m => [m, receitasOf(view.month).filter(r => !r.pending && whoOf(r) === m.id).reduce((x, r) => x + r.amount, 0)]).filter(([, v]) => v) : [];
+    // com payLag, o card mostra o dinheiro do mês seguinte (o que paga as contas deste mês)
+    $('[data-explain="entrou"]').textContent = t.incomeKey === view.month ? 'Caiu na conta' : `${t.incomeKey <= curKey() ? 'Caiu' : 'Cai'} em ${monthName(t.incomeKey)}`;
+    const byWho = multi() ? members().map(m => [m, receitasOf(t.incomeKey).filter(r => !r.pending && whoOf(r) === m.id).reduce((x, r) => x + r.amount, 0)]).filter(([, v]) => v) : [];
     // Divisão do valor: uma barrinha com a proporção de cada parte e, embaixo, uma linha por parte (nome à esquerda, valor à direita)
     const splitHtml = parts => { parts = parts.filter(p => p.v > 0); if (!parts.length) return '';
       return `<div class="kbar" aria-hidden="true">${parts.map(p => `<i style="flex:${p.v};background:${p.c}"></i>`).join('')}</div>
@@ -2853,12 +2859,13 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     $('#kSobra').classList.toggle('pos', t.saldo > 0);
     { const used = t.despesas + t.investir, top = Math.max(t.receita, used);
       const cap = !t.receita && !used ? 'Lance o que entra e o que sai pra ver o balanço'
-        : !t.receita ? 'Ainda não entrou nada este mês'
+        : !t.receita ? (t.incomeKey !== view.month ? `Nada lançado em ${monthName(t.incomeKey)} ainda` : 'Ainda não entrou nada este mês')
         : used > t.receita ? `Saiu ${Math.round((used / t.receita - 1) * 100)}% a mais do que entrou`
         : `${vc('Você usou', 'Vocês usaram')} ${Math.round(used / t.receita * 100)}% do que entrou`;
       const seg = (v, cls) => v > 0 ? `<i class="${cls}" style="width:${(v / top * 100).toFixed(2)}%"></i>` : '';
       $('#kSobraSub').innerHTML = (top ? `<div class="kmeter" aria-hidden="true">${seg(Math.min(t.despesas, t.receita), 'out')}${seg(Math.min(t.investir, Math.max(t.receita - t.despesas, 0)), 'save')}${seg(used - Math.min(used, t.receita), 'over')}</div>` : '')
-        + `<div class="knote">${esc(cap)}${t.pct ? ` · guardando ${esc(money(t.investir))}` : ''}</div>`; }
+        + `<div class="knote">${esc(cap)}${t.pct ? ` · guardando ${esc(money(t.investir))}` : ''}</div>`
+        + (t.incomeKey !== view.month ? `<div class="knote">Contas de ${monthName(view.month)} com o dinheiro de ${monthName(t.incomeKey)}</div>` : ''); }
     renderHeadline(t);
 
     $('#eyeBtn').innerHTML = ico(ui.hidden ? 'eye-off' : 'eye');
@@ -2895,11 +2902,12 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   const SORT_DEF = { date: false, name: true, cat: true, amount: false };   // direção inicial de cada coluna
   function sortRows(rows) {
     const key = ui.sortKey || 'date', dir = ui.sortAsc ? 1 : -1;
-    const tie = (a, b) => b.shownDate.localeCompare(a.shownDate) || (b.created || 0) - (a.created || 0);   // empate: mais recente primeiro
+    const sd = r => r.buyDate || r.shownDate;   // parcela antiga fica na data em que foi comprada, não na data da parcela
+    const tie = (a, b) => sd(b).localeCompare(sd(a)) || (b.created || 0) - (a.created || 0);   // empate: mais recente primeiro
     const cmp = key === 'name' ? (a, b) => (a.desc || '').localeCompare(b.desc || '', 'pt-BR', { sensitivity: 'base' })
       : key === 'cat' ? (a, b) => (cat(a.category)?.name || '\uffff').localeCompare(cat(b.category)?.name || '\uffff', 'pt-BR', { sensitivity: 'base' })
       : key === 'amount' ? (a, b) => a.amount - b.amount
-      : (a, b) => a.shownDate.localeCompare(b.shownDate) || (a.created || 0) - (b.created || 0);
+      : (a, b) => sd(a).localeCompare(sd(b)) || (a.created || 0) - (b.created || 0);
     return rows.sort((a, b) => dir * cmp(a, b) || (key === 'date' ? 0 : tie(a, b)));
   }
   function rowsForTab() {
@@ -2970,7 +2978,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       const neg = r.amount < 0, sign = (ui.tab === 'receita') !== neg ? '+ ' : '- ';
       const cls = ui.tab === 'receita' ? (r.pending ? '' : 'pos') : '';
       return `<div class="row">
-        <span class="date num">${isFixa ? (r.dueNext ? `${ddmm(r.shownDate)}<small style="display:block;font-size:.66rem">mês seguinte</small>` : 'Dia ' + (r.shownDate ? r.shownDate.slice(8, 10) : pad(r.day))) : ddmm(r.shownDate)}${all ? `<small style="display:block;font-size:.66rem">${r.shownDate.slice(0, 4)}</small>` : ''}</span>
+        <span class="date num">${isFixa ? (r.dueNext ? `${ddmm(r.shownDate)}<small style="display:block;font-size:.66rem">mês seguinte</small>` : 'Dia ' + (r.shownDate ? r.shownDate.slice(8, 10) : pad(r.day))) : r.buyDate ? `<span title="Comprado em ${ddmm(r.buyDate)}/${r.buyDate.slice(0, 4)} · a parcela ${r.installment.i}/${r.installment.n} cai em ${ddmm(r.shownDate)}">${ddmm(r.buyDate)}</span>` : ddmm(r.shownDate)}${all || (r.buyDate && r.buyDate.slice(0, 4) !== view.month.slice(0, 4)) ? `<small style="display:block;font-size:.66rem">${(r.buyDate || r.shownDate).slice(0, 4)}</small>` : ''}</span>
         <div class="name has-ic">${txIcon(r, ui.tab)}<div class="nm"><span title="${esc(r.desc || '')}">${whoBadge(r)}${esc(r.desc || cat(r.category)?.name || '—')}${extra ? ` <span class="ex">${extra}</span>` : ''}</span>${via ? `<div class="sub-via">${via}</div>` : ''}<div class="tag-m">${label}${extraM ? `<span class="ex-m">${extraM}</span>` : ''}</div></div></div>
         <span class="cat">${label}</span>
         ${ui.tab === 'receita' ? `<span class="val num ${cls}${r.est ? ' est' : ''}">${ui.hidden ? '' : r.est ? '≈ ' : sign}${money(Math.abs(r.amount))}${r.est ? '<small>estimado</small>' : ''}</span>` : valHtml(r, view.month, (ui.hidden ? '' : r.est ? '≈ ' : sign) + money(Math.abs(r.amount)))}
@@ -5344,6 +5352,9 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       <div class="pal-pick" id="mPal">${Object.entries(PALETTES).map(([k, v]) => `<button type="button" data-pal="${k}" class="${k === ui.palette ? 'on' : ''}"><span class="sw">${(v.cols || PALETTE).slice(0, 5).map(c => `<i style="background:${c}"></i>`).join('')}</span>${v.name}</button>`).join('')}</div>
       <p class="fl">Fonte</p>
       <div class="font-pick" id="mFonts">${FONTS.map(f => `<button type="button" data-font="${f}" style="font-family:'${f}'" class="${f === ui.font ? 'on' : ''}"><span>Aa</span>${f}</button>`).join('')}</div>
+      <p class="fl">Com o salário de um mês, ${vc('você paga', 'vocês pagam')}…</p>
+      <div class="seg2" id="mLag"><button type="button" data-lag="0" class="${state.payLag ? '' : 'on'}">as contas do mesmo mês</button><button type="button" data-lag="1" class="${state.payLag ? 'on' : ''}">as contas do mês anterior</button></div>
+      <p class="help" style="margin-top:-2px">No "mês anterior", o balanço de cada mês usa o dinheiro que cai no mês seguinte (ex.: contas de outubro com o salário de novembro).</p>
       <button class="menu-item" id="mFamily">Uso do app <span style="margin-left:auto;font-weight:500;font-size:.78rem;color:var(--muted)">${familyOn() ? (multi() ? esc(familyNames()) : 'em família') : 'só eu'}</span></button>
       <p class="fl">App</p>
       <button class="menu-item" id="mInstall">Instalar como app</button>
@@ -5366,6 +5377,11 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       };
       m.querySelector('#mAccount').onclick = () => openAccountSettings();
       m.querySelector('#mFamily').onclick = () => openFamily();
+      m.querySelector('#mLag').onclick = e => {
+        const b = e.target.closest('[data-lag]'); if (!b) return;
+        state.payLag = b.dataset.lag === '1'; save(); render();
+        m.querySelectorAll('#mLag button').forEach(x => x.classList.toggle('on', x === b));
+      };
       m.querySelector('#mPal').onclick = e => {
         const b = e.target.closest('[data-pal]'); if (!b) return;
         ui.palette = b.dataset.pal; saveUi(); render();
