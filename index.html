@@ -1997,12 +1997,12 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         <div class="kpi-sub" id="kSaldoSub"></div>
       </div>
       <div class="kpi receita">
-        <div class="kpi-head"><button type="button" class="kpi-label" data-explain="entrou">Entrou</button></div>
+        <div class="kpi-head"><button type="button" class="kpi-label" data-explain="entrou">Caiu na conta</button></div>
         <div class="kpi-value num" id="kReceita"></div>
         <div class="kpi-sub" id="kReceitaSub"></div>
       </div>
       <div class="kpi despesas">
-        <div class="kpi-head"><button type="button" class="kpi-label" data-explain="saiu">Saiu</button></div>
+        <div class="kpi-head"><button type="button" class="kpi-label" data-explain="saiu">Saiu da conta</button></div>
         <div class="kpi-value num" id="kDespesas"></div>
         <div class="kpi-sub" id="kDespesasSub"></div>
       </div>
@@ -3379,7 +3379,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     }
     const total = list.reduce((s, g) => s + g.value, 0);
     box.innerHTML = `<h3>Para onde vai o dinheiro <button class="ov-link" data-pdf>Resumo em PDF</button></h3>`
-      + (total ? donutHtml(list, total, 'Saiu', true) : '<div class="ov-empty">Sem despesas neste mês ainda.</div>');
+      + (total ? donutHtml(list, total, 'Saiu da conta', true) : '<div class="ov-empty">Sem despesas neste mês ainda.</div>');
   }
 
   function renderOvCards() {
@@ -3442,7 +3442,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     box.innerHTML = `<div class="evo-head"><h2>Evolução</h2>
       <div class="evo-ctl"><div class="pills" id="evoRange">${[6, 12].map(x => `<button type="button" data-n="${x}" class="${x === n ? 'on' : ''}">${x} meses</button>`).join('')}</div>
         <button class="btn-soft" id="evoTableBtn" type="button">${table ? 'Ver gráfico' : 'Ver tabela'}</button></div></div>
-      <div class="evo-body"><div>${table ? evoTable(data) : `<div class="evo-legend"><span><i style="background:var(--in)"></i>Entrou</span><span><i style="background:var(--out)"></i>Saiu</span></div><div class="evo-chart" id="evoChart"></div>`}</div>
+      <div class="evo-body"><div>${table ? evoTable(data) : `<div class="evo-legend"><span><i style="background:var(--in)"></i>Caiu na conta</span><span><i style="background:var(--out)"></i>Saiu da conta</span></div><div class="evo-chart" id="evoChart"></div>`}</div>
         <div class="insights">${insights()}</div></div>`;
     if (!table) drawEvoChart(data);
     box.querySelector('#evoRange').onclick = e => { const b = e.target.closest('[data-n]'); if (b && +b.dataset.n !== n) { ui.evoRange = +b.dataset.n; saveUi(); evoSwap(); } };
@@ -3502,8 +3502,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const show = g => {
       const d = data[+g.dataset.i];
       tip.innerHTML = `<div class="tt">${monthLabel(d.k)}</div>
-        <div class="r"><span><i style="background:var(--in)"></i>Entrou</span><b>${money(d.receita)}</b></div>
-        <div class="r"><span><i style="background:var(--out)"></i>Saiu</span><b>${money(d.despesas)}</b></div>
+        <div class="r"><span><i style="background:var(--in)"></i>Caiu na conta</span><b>${money(d.receita)}</b></div>
+        <div class="r"><span><i style="background:var(--out)"></i>Saiu da conta</span><b>${money(d.despesas)}</b></div>
         <div class="r"><span>Sobra</span><b style="color:${d.saldo < 0 ? 'var(--amber)' : 'inherit'}">${d.saldo < 0 && !ui.hidden ? '–' : ''}${money(Math.abs(d.saldo))}</b></div>`;
       // abre ao lado da coluna (à esquerda se couber, senão à direita), sem cobrir o mês que você está olhando
       const i = +g.dataset.i, k = wrap.clientWidth / W, slotL = (padL + slot * i) * k, slotR = slotL + slot * k;
@@ -5546,7 +5546,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const top = niceScale(Math.max(...series.map(s => Math.max(s.receita, s.despesas)), 1)).max;
     const evo = `<div class="r-evo">${series.map(s => `<div class="col${s.k === key ? ' cur' : ''}"><div class="bars">
       <i class="in" style="height:${s.receita / top * 100}%"></i><i class="out" style="height:${s.despesas / top * 100}%"></i></div><span>${shortMonth(s.k)}</span></div>`).join('')}</div>
-      <div class="r-leg"><span><i class="in"></i>Entrou</span><span><i class="out"></i>Saiu</span><span class="grow"></span><span>escala até ${R(top)}</span></div>`;
+      <div class="r-leg"><span><i class="in"></i>Caiu na conta</span><span><i class="out"></i>Saiu da conta</span><span class="grow"></span><span>escala até ${R(top)}</span></div>`;
     // Listas
     const table = (title, rows, empty, foot) => `<section class="r-sec"><h2>${title}</h2>${rows.length ? `<table>${rows.join('')}</table>${foot || ''}` : `<p class="r-empty">${empty}</p>`}</section>`;
     const tr = (...cells) => `<tr>${cells.map((c, i) => `<td${i === cells.length - 1 ? ' class="v"' : ''}>${c}</td>`).join('')}</tr>`;
@@ -5563,8 +5563,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const tips = insights().replace(/<span class="ic"[^>]*>.*?<\/span>/g, '');
     const lbl = new Date(+key.slice(0, 4), +key.slice(5) - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
     return `<header class="r-head"><div><p><svg class="r-logo" viewBox="0 0 64 64" aria-hidden="true">${CAPI_BUST}</svg>Capi</p><h1>Resumo de ${lbl}</h1></div><small>Gerado em ${new Date().toLocaleDateString('pt-BR')}</small></header>
-      <div class="r-kpis">${kpi('Entrou', t.receita, delta(t.receita, tp.receita, true) + (t.aReceber ? `<small>+ ${R(t.aReceber)} a receber</small>` : ''), '#15803d')}
-        ${kpi('Saiu', t.despesas, delta(t.despesas, tp.despesas, false), '#111827')}
+      <div class="r-kpis">${kpi('Caiu na conta', t.receita, delta(t.receita, tp.receita, true) + (t.aReceber ? `<small>+ ${R(t.aReceber)} a receber</small>` : ''), '#15803d')}
+        ${kpi('Saiu da conta', t.despesas, delta(t.despesas, tp.despesas, false), '#111827')}
         ${kpi('Pretende guardar', t.investir, t.pct ? `<small>${fmtPct(t.pct)} do que entrou</small>` : '', '#1d4ed8')}
         ${t.saldo < 0 ? kpi('Faltou', -t.saldo, '<small>pra fechar o mês sem se apertar</small>', '#8f620a')
           : kpi('Sobrou', t.saldo, t.receita ? `<small>${Math.round(t.saldo / t.receita * 100)}% do que entrou</small>` : '', '#111827')}</div>
@@ -7048,8 +7048,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   // "Entenda": explicações curtas dos números do topo, como uma conversa
   const EXPLAIN = {
     contas: ['Seu dinheiro hoje', 'É o dinheiro que você tem agora, somando os bancos que cadastrou em <b>Bancos</b>.', 'Ele muda sozinho quando você lança uma entrada ou um gasto pago com aquela conta. Se ficar diferente do app do banco, é só tocar em Bancos e corrigir o valor.'],
-    entrou: ['Entrou', 'Tudo que entrou no mês: salário, pix, vendas, rendimentos.', 'O que você ainda vai receber aparece embaixo, como "a receber", e só entra na conta quando você marcar como recebido.'],
-    saiu: ['Saiu', 'Tudo que saiu no mês: contas fixas, gastos do dia a dia, assinaturas e faturas de cartão.', 'O que você pagou no cartão entra pela fatura, pra não contar duas vezes.'],
+    entrou: ['Caiu na conta', 'Tudo que caiu na conta no mês: salário, pix, vendas, rendimentos.', 'O que você ainda vai receber aparece embaixo, como "a receber", e só entra na conta quando você marcar como recebido.'],
+    saiu: ['Saiu da conta', 'Tudo que saiu da conta no mês: contas fixas, gastos do dia a dia, assinaturas e faturas de cartão.', 'O que você pagou no cartão entra pela fatura, pra não contar duas vezes.'],
     sobra: ['Balanço do mês', 'É o que entrou, menos o que saiu, menos o que você planejou guardar (se planejou). Com "+" sobrou; com "–" faltou.', 'A barrinha mostra quanto do que entrou já saiu. Se passar do que entrou, o pedaço a mais fica em amarelo: é quanto falta pra fechar o mês sem se apertar. Na Visão geral tem ideias pra resolver.'],
   };
   document.addEventListener('click', e => {
@@ -7149,7 +7149,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
           // tela de dentro (aberto): uma tela só, de ponta a ponta; a metade da tampa mostra a parte esquerda dela
           const inner = `<div class="duo-in"><div class="duo-col">
               <small>${greet()}</small><b class="duo-l">Sobra do mês</b><b class="num duo-big">${R(105000)}</b>
-              <div class="duo-mini">${[['Entrou', 320000, '#12a588'], ['Saiu', 215000, '#ff7a1a']].map(([l, v, c]) => `<div style="--c:${c}"><small>${l}</small><b class="num">${R(v)}</b></div>`).join('')}</div><i class="duo-plus">+</i></div>
+              <div class="duo-mini">${[['Caiu na conta', 320000, '#12a588'], ['Saiu da conta', 215000, '#ff7a1a']].map(([l, v, c]) => `<div style="--c:${c}"><small>${l}</small><b class="num">${R(v)}</b></div>`).join('')}</div><i class="duo-plus">+</i></div>
             <div class="duo-col"><small class="duo-k">Últimos 6 meses</small>
               <div class="ob-bars">${[42, 64, 38, 80, 56, 92].map((h, n) => `<i style="--h:${h}%;--d:${n * 70}ms;--c:${STK_COLORS[(n + 2) % 8][0]};--c2:${STK_COLORS[(n + 2) % 8][1]}"></i>`).join('')}</div>
               ${rows.map(([ic, n, v, pos, c], k) => `<div class="duo-row" style="--d:${300 + k * 90}ms"><span class="ob-ic" style="--c:${c}"><svg class="i"><use href="#c-${ic}"/></svg></span><span>${n}</span><b class="${pos ? 'pos' : ''}">${pos ? '+' : '-'} ${R(v)}</b></div>`).join('')}</div>
@@ -7188,7 +7188,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
           const arcs = sl.map(([len, col], n) => { const c = `<circle cx="21" cy="21" r="15.915" fill="none" stroke="${col}" stroke-width="6" stroke-dasharray="${len - .5} ${100 - len + .5}" stroke-dashoffset="${-o}" style="--d:${n * 160}ms"/>`; o += len; return c; }).join('');
           o = 0; const icons = sl.map(([len, , ic], n) => { const a = (o + (len - .5) / 2) / 100 * Math.PI * 2; o += len; return `<span class="ob-dic" style="left:${(50 + 37.9 * Math.sin(a)).toFixed(1)}%;top:${(50 - 37.9 * Math.cos(a)).toFixed(1)}%;--d:${700 + n * 120}ms"><svg class="i"><use href="#c-${ic}"/></svg></span>`; }).join('');
           return `<div class="ob-donut"><svg viewBox="0 0 42 42">${arcs}</svg>${icons}
-          <div class="ob-dc"><small>Saiu</small><b>${R(215000)}</b></div></div>
+          <div class="ob-dc"><small>Saiu da conta</small><b>${R(215000)}</b></div></div>
           <div class="ob-note">${ico('bell', 'width:15px;height:15px')}<span><b>Amanhã vence a conta de luz</b><small>R$ 180,00 · o app te lembra antes de vencer</small></span></div>`; } },
       { k: 'pronto', c: ['#0fae90', '#22c55e'], last: true, next: 'Começar a usar', title: () => `Tudo pronto, <em>${esc(nickOf())}</em>!`, sub: () => invited ? 'Agora é só digitar o código do convite que te passaram.' : 'Seus dados ficam só neste aparelho. Se quiser, dá pra colocar senha ou usar em outro celular depois, em ⚙.',
         art: () => `<div class="ob-confetti" aria-hidden="true">${Array.from({ length: 34 }, (_, n) => { const a = n / 34 * Math.PI * 2 + (n % 3) * .2, r = 110 + (n * 47) % 90;
