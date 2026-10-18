@@ -358,6 +358,14 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .pills { display: inline-flex; background: var(--field); border-radius: 10px; padding: 3px; }
 .pills button { border: 0; background: transparent; border-radius: 8px; padding: 5px 10px; font-size: .78rem; font-weight: 600; color: var(--muted); }
 .pills button.on { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+/* troca "por pessoa"/"por tipo": a pílula escolhida acende e a legenda entra de novo, uma linha por vez */
+.chart-by.swap .pills button.on { animation: pill-on .3s cubic-bezier(.3, 1.3, .5, 1) both; }
+@keyframes pill-on { from { background: transparent; box-shadow: none; transform: scale(.94); } }
+.chart-by.swap ~ .donut-wrap + .legend li { animation: leg-in .4s cubic-bezier(.2, .8, .3, 1) both; }
+.chart-by.swap ~ .donut-wrap + .legend li:nth-child(2) { animation-delay: .05s; } .chart-by.swap ~ .donut-wrap + .legend li:nth-child(3) { animation-delay: .1s; }
+.chart-by.swap ~ .donut-wrap + .legend li:nth-child(4) { animation-delay: .15s; } .chart-by.swap ~ .donut-wrap + .legend li:nth-child(n+5) { animation-delay: .2s; }
+@keyframes leg-in { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .chart-by.swap .pills button.on, .chart-by.swap ~ .donut-wrap + .legend li { animation: none; } }
 .evo-body { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 22px; align-items: start; }
 .evo-legend { display: flex; gap: 16px; font-size: .78rem; color: var(--ink-2); margin-bottom: 6px; }
 .evo-legend span { display: inline-flex; align-items: center; gap: 6px; }
@@ -2698,7 +2706,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     metas: 'Objetivos com valor e prazo. O app calcula quanto guardar por mês.',
   };
   let lastView = '';
-  let donutAnim = true, sameView = false;
+  let donutAnim = true, sameView = false, inBySwap = false;
   // Barras de progresso enchem da esquerda pra direita (e um brilho passa no fim) ao abrir e ao trocar de aba/mês
   function fillAnim() {
     const root = document.documentElement;
@@ -3016,8 +3024,13 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         groups = [...sums].filter(([, v]) => v > 0).map(([w, value]) => w ? { name: memberName(w), color: memberColor(w), value, av: memberAv(member(w)) } : { name: 'Da família', color: '#94a3b8', value, icon: 'users' })
           .sort((a, b) => b.value - a.value);
       }
-      $('#chart').innerHTML = `<div class="chart-by"><div class="pills" id="inBy"><button type="button" data-by="pessoa" class="${byP ? 'on' : ''}">Por pessoa</button><button type="button" data-by="tipo" class="${byP ? '' : 'on'}">Por tipo</button></div></div>` + donutHtml(groups, total, label) + extra;
-      $('#inBy').onclick = e => { const b = e.target.closest('[data-by]'); if (b) { ui.inBy = b.dataset.by; saveUi(); renderChart(); } };
+      $('#chart').innerHTML = `<div class="chart-by${inBySwap ? ' swap' : ''}"><div class="pills" id="inBy"><button type="button" data-by="pessoa" class="${byP ? 'on' : ''}">Por pessoa</button><button type="button" data-by="tipo" class="${byP ? '' : 'on'}">Por tipo</button></div></div>` + donutHtml(groups, total, label) + extra;
+      // trocar "por pessoa"/"por tipo": a rosca abre de novo como leque e o total conta outra vez
+      $('#inBy').onclick = e => { const b = e.target.closest('[data-by]'); if (!b || b.dataset.by === (ui.inBy || 'pessoa')) return;
+        ui.inBy = b.dataset.by; saveUi();
+        const anim = !reduced(); if (anim) { donutAnim = true; inBySwap = true; }
+        renderChart(); inBySwap = false;
+        if (anim) requestAnimationFrame(() => { countUpDonuts(); donutAnim = false; }); };
       return;
     }
     $('#chart').innerHTML = donutHtml(groups, total, label) + extra;
