@@ -354,7 +354,14 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .evo { margin-top: 22px; padding: 18px 20px 20px; position: relative; }
 .evo-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
 .evo-head h2 { margin: 0; font-size: .95rem; font-weight: 700; }
-.evo-ctl { display: flex; gap: 8px; align-items: center; }
+.evo-ctl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.evo-nav { display: flex; align-items: center; gap: 2px; font-size: .78rem; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+.evo-nav span { min-width: 74px; text-align: center; }
+.evo-nav button { width: 28px; height: 28px; border: 0; border-radius: 8px; background: transparent; color: var(--ink-2); display: grid; place-items: center; }
+.evo-nav button:hover:not(:disabled) { background: var(--field); } .evo-nav button:disabled { opacity: .3; }
+.evo-nav button svg.i { width: 15px; height: 15px; }
+.evo-chart { touch-action: pan-y; overflow: hidden; }
+.evo-empty { position: absolute; inset: 0 0 30px 44px; display: grid; place-items: center; font-size: .8rem; color: var(--muted); pointer-events: none; }
 .pills { display: inline-flex; background: var(--field); border-radius: 10px; padding: 3px; }
 .pills button { border: 0; background: transparent; border-radius: 8px; padding: 5px 10px; font-size: .78rem; font-weight: 600; color: var(--muted); }
 .pills button.on { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
@@ -1427,7 +1434,7 @@ button.kpi-label:hover { color: var(--ink); text-decoration-color: currentColor;
 /* Evolução e previsão animadas */
 @keyframes bar-up { from { transform: scaleY(0); } }
 @keyframes line-draw { from { stroke-dashoffset: 1; } }
-.fill-anim .eb { transform-box: fill-box; transform-origin: 50% 100%; animation: bar-up .7s cubic-bezier(.22, .8, .25, 1) var(--d) both; }
+/* as barras da Evolução crescem por JS (growEvo): nascem como bolinha e sobem sem deformar o topo arredondado */
 .evo-out { opacity: 0; transform: translateY(4px); transition: opacity .14s ease, transform .14s ease; }
 .evo-in { animation: rise .45s cubic-bezier(.2, .75, .25, 1) both; }
 .evo-in .evo-table tbody tr, .evo-in .evo-table tfoot tr { animation: rise .4s cubic-bezier(.2, .75, .25, 1) both; }
@@ -3484,22 +3491,64 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
 
   function renderEvo() {
     snapshot();
-    const n = ui.evoRange || 6;
-    const end = view.month > curKey() ? view.month : curKey();
+    const n = ui.evoRange || 6, off = view.evoOff || 0;
+    const end = addMonths(view.month > curKey() ? view.month : curKey(), -off * n);   // páginas pra trás: ‹ › ou arrastando o gráfico
     const months = Array.from({ length: n }, (_, i) => addMonths(end, i - n + 1));
     const data = months.map(k => { const t = totals(k); return { k, receita: t.receita, despesas: t.despesas, saldo: t.receita - t.despesas }; });
     const box = $('#evo');
-    if (!data.some(d => d.receita || d.despesas)) { box.hidden = true; return; }
+    if (!off && !data.some(d => d.receita || d.despesas)) { box.hidden = true; return; }
     box.hidden = false;
     const table = ui.evoTable;
     box.innerHTML = `<div class="evo-head"><h2>Evolução</h2>
-      <div class="evo-ctl"><div class="pills" id="evoRange">${[6, 12].map(x => `<button type="button" data-n="${x}" class="${x === n ? 'on' : ''}">${x} meses</button>`).join('')}</div>
+      <div class="evo-ctl">${table ? '' : `<div class="evo-nav"><button type="button" id="evoPrev" aria-label="Meses anteriores" ${months[0] <= firstKey() ? 'disabled' : ''}>${ico('left')}</button><span>${(() => { const ya = months[0].slice(0, 4), yb = months[n - 1].slice(0, 4), cross = ya !== yb || yb !== curKey().slice(0, 4);
+        return `${shortMonth(months[0])}${cross ? ` '${ya.slice(2)}` : ''} – ${shortMonth(months[n - 1])}${cross ? ` '${yb.slice(2)}` : ''}`; })()}</span><button type="button" id="evoNext" aria-label="Meses seguintes" ${off ? '' : 'disabled'}>${ico('right')}</button></div>`}<div class="pills" id="evoRange">${[6, 12].map(x => `<button type="button" data-n="${x}" class="${x === n ? 'on' : ''}">${x} meses</button>`).join('')}</div>
         <button class="btn-soft" id="evoTableBtn" type="button">${table ? 'Ver gráfico' : 'Ver tabela'}</button></div></div>
       <div class="evo-body"><div>${table ? evoTable(data) : `<div class="evo-legend"><span><i style="background:var(--in)"></i>Caiu na conta</span><span><i style="background:var(--out)"></i>Saiu da conta</span></div><div class="evo-chart" id="evoChart"></div>`}</div>
         <div class="insights">${insights()}</div></div>`;
     if (!table) drawEvoChart(data);
-    box.querySelector('#evoRange').onclick = e => { const b = e.target.closest('[data-n]'); if (b && +b.dataset.n !== n) { ui.evoRange = +b.dataset.n; saveUi(); evoSwap(); } };
+    box.querySelector('#evoRange').onclick = e => { const b = e.target.closest('[data-n]'); if (b && +b.dataset.n !== n) { ui.evoRange = +b.dataset.n; saveUi(); view.evoOff = 0; if (table) evoSwap(); else { renderEvo(); growEvo(); } } };
+    box.querySelector('#evoPrev')?.addEventListener('click', () => evoPage(-1));
+    box.querySelector('#evoNext')?.addEventListener('click', () => evoPage(1));
     box.querySelector('#evoTableBtn').onclick = () => { ui.evoTable = !ui.evoTable; saveUi(); evoSwap(); };
+  }
+  // mês do lançamento mais antigo (a Evolução não volta páginas além dele)
+  function firstKey() {
+    const ks = [...state.receitas.map(r => monthOf(r.date)), ...state.variaveis.map(v => monthOf(v.date)), ...state.fixas.map(f => f.start).filter(Boolean),
+      ...Object.values(state.faturas || {}).flatMap(o => Object.keys(o))].filter(Boolean).sort();
+    return ks[0] || curKey();
+  }
+  // Barras que nascem como bolinhas no chão e crescem com o topo arredondado (como o Bem-estar digital)
+  function growEvo(delay = 0) {
+    const svg = $('#evoChart svg'); if (!svg || reduced()) return;
+    const bars = [...svg.querySelectorAll('rect.eb')], base = +svg.dataset.base;
+    const h0 = b => Math.min(+b.dataset.h, +b.getAttribute('rx') * 2 + 2);
+    const put = (b, h) => { b.setAttribute('y', (base - h).toFixed(2)); b.setAttribute('height', (h + +b.getAttribute('rx')).toFixed(2)); };
+    bars.forEach(b => put(b, h0(b)));
+    const t0 = performance.now() + delay, dur = 560;
+    cancelAnimationFrame(growEvo.raf);
+    const step = now => {
+      let done = true;
+      bars.forEach((b, j) => {
+        const k = Math.max(0, Math.min((now - t0 - j * 22) / dur, 1)); if (k < 1) done = false;
+        const e = 1 - Math.pow(1 - k, 3), a = h0(b); put(b, a + (+b.dataset.h - a) * e);
+      });
+      if (!done) growEvo.raf = requestAnimationFrame(step);
+    };
+    growEvo.raf = requestAnimationFrame(step);
+  }
+  // Página anterior/seguinte: o gráfico atual desliza pra fora e o novo entra deslizando, com as barras crescendo
+  function evoPage(dir) {
+    const off = view.evoOff || 0, next = Math.max(0, off - dir);
+    if (next === off) return;
+    const old = $('#evoChart svg');
+    const go = () => {
+      view.evoOff = next; renderEvo();
+      const svg = $('#evoChart svg'); if (!svg || reduced()) return;
+      svg.animate([{ transform: `translateX(${dir * 28}%)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 380, easing: 'cubic-bezier(.2, .8, .25, 1)' });
+      growEvo(60);
+    };
+    if (!old || reduced()) return go();
+    old.animate([{ transform: old.style.transform || 'none', opacity: 1 }, { transform: `translateX(${-dir * 32}%)`, opacity: 0 }], { duration: 150, easing: 'ease-in', fill: 'forwards' }).onfinish = go;
   }
   // troca suave: o conteúdo some rapidinho, volta subindo e as barras crescem de novo
   function evoSwap() {
@@ -3534,23 +3583,39 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const slot = plotW / data.length;
     const bw = Math.min(24, Math.max(6, (slot - 14) / 2));       // colunas finas, no máximo 24px
     const ticks = Array.from({ length: Math.round(max / step) + 1 }, (_, i) => i * step);
-    const bar = (x, v, color, i = 0) => {
+    const base = padT + plotH, r = Math.min(4, bw / 2);
+    // topo arredondado e base reta: retângulo todo arredondado que passa um pouco da base, cortado nela (o clipPath)
+    const bar = (x, v, color) => {
       if (!v) return '';
-      const top = y(v), h = padT + plotH - top, r = Math.min(4, h, bw / 2);
-      // topo arredondado 4px, base reta
-      return `<path d="M${x},${padT + plotH} V${top + r} Q${x},${top} ${x + r},${top} H${x + bw - r} Q${x + bw},${top} ${x + bw},${top + r} V${padT + plotH} Z" fill="${color}" class="eb" style="--d:${300 + i * 70}ms"/>`;
+      const h = Math.max(base - y(v), 1);
+      return `<rect class="eb" x="${x}" y="${(base - h).toFixed(2)}" width="${bw}" height="${(h + r).toFixed(2)}" rx="${r}" fill="${color}" data-h="${h.toFixed(2)}" clip-path="url(#evoClip)"/>`;
     };
-    const svg = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Receita e despesas por mês">
+    const svg = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Receita e despesas por mês" data-base="${base}"><defs><clipPath id="evoClip"><rect x="0" y="0" width="${W}" height="${base}"/></clipPath></defs>
       ${ticks.map(t => `<line class="grid-line" x1="${padL}" x2="${W}" y1="${y(t)}" y2="${y(t)}"/><text class="tick" x="${padL - 8}" y="${y(t) + 3.5}" text-anchor="end">${ui.hidden ? '•' : compact(t)}</text>`).join('')}
       ${data.map((d, i) => {
         const cx = padL + slot * i + slot / 2, x1 = cx - bw - 1, x2 = cx + 1;   // 2px entre as colunas
         return `<g class="m" tabindex="0" data-i="${i}" aria-label="${monthLabel(d.k)}: receita ${brl.format(d.receita / 100)}, despesas ${brl.format(d.despesas / 100)}">
           <rect class="band" x="${padL + slot * i + 2}" y="${padT}" width="${slot - 4}" height="${plotH}" rx="6"/>
-          ${bar(x1, d.receita, 'var(--in)', i * 2)}${bar(x2, d.despesas, 'var(--out)', i * 2 + 1)}
+          ${bar(x1, d.receita, 'var(--in)')}${bar(x2, d.despesas, 'var(--out)')}
           <text class="xl ${d.k === view.month ? 'cur' : ''}" x="${cx}" y="${H - 8}" text-anchor="middle">${shortMonth(d.k)}</text>
           <rect class="hit" x="${padL + slot * i}" y="0" width="${slot}" height="${H}"/></g>`;
-      }).join('')}</svg><div class="evo-tip" id="evoTip"></div>`;
+      }).join('')}</svg>${data.some(d => d.receita || d.despesas) ? '' : '<div class="evo-empty">Nada lançado nesse período</div>'}<div class="evo-tip" id="evoTip"></div>`;
     wrap.innerHTML = svg;
+    if (document.documentElement.classList.contains('fill-anim')) growEvo(250);
+    // arrastar o gráfico pro lado troca de período (ele acompanha o dedo; soltou longe o bastante, vira a página)
+    { const sv = wrap.querySelector('svg'); let x0 = null, y0 = 0, dx = 0, lock = '';
+      wrap.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch') return; x0 = e.clientX; y0 = e.clientY; dx = 0; lock = ''; });
+      wrap.addEventListener('pointermove', e => {
+        if (x0 == null) return; dx = e.clientX - x0;
+        if (!lock) { if (Math.abs(dx) > 8 || Math.abs(e.clientY - y0) > 8) lock = Math.abs(dx) > Math.abs(e.clientY - y0) ? 'x' : 'y'; else return; }
+        if (lock !== 'x') return;
+        const atEnd = dx < 0 && !(view.evoOff || 0);
+        sv.style.transform = `translateX(${atEnd ? dx * .15 : dx * .6}px)`;
+      });
+      const end = () => { if (x0 == null) return; x0 = null;
+        if (lock === 'x' && Math.abs(dx) > 50 && !(dx < 0 && !(view.evoOff || 0))) { evoPage(dx < 0 ? 1 : -1); return; }
+        if (sv.style.transform) { sv.animate([{ transform: sv.style.transform }, { transform: 'none' }], { duration: 220, easing: 'ease-out' }); sv.style.transform = ''; } };
+      wrap.addEventListener('pointerup', end); wrap.addEventListener('pointercancel', end); }
     const tip = wrap.querySelector('#evoTip');
     const show = g => {
       const d = data[+g.dataset.i];
