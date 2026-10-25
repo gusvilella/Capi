@@ -2402,6 +2402,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   try { ui = { ...ui, ...JSON.parse(localStorage.getItem(UI_KEY) || '{}') }; } catch (_) {}
   // preferências de uma versão antiga/estranha voltam ao padrão (aba que não existe, tema inválido…)
   if (!['geral', 'receita', 'fixa', 'variavel', 'assin', 'cartoes', 'invest', 'metas'].includes(ui.tab)) ui.tab = 'geral';
+  // celular: o app sempre abre no Início (a última parte de Saídas fica lembrada em ui.lastOut pra quando você tocar em Saídas)
+  if (matchMedia('(max-width: 640px)').matches) { if (['fixa', 'variavel', 'assin', 'cartoes'].includes(ui.tab)) ui.lastOut = ui.tab; ui.tab = 'geral'; }
   if (!['light', 'dark'].includes(ui.theme)) ui.theme = null;
   if (![6, 12].includes(ui.evoRange)) delete ui.evoRange;
   if (typeof ui.name !== 'string') delete ui.name;
