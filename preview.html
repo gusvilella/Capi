@@ -1957,18 +1957,28 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   html[data-tab="geral"] .top .hello { width: 100%; font-size: 1.22rem; font-weight: 600; color: var(--ink); letter-spacing: -.02em; line-height: 1.2; text-wrap: wrap; }
   html[data-tab="geral"] .capi-scene { grid-area: scene; position: relative; right: auto; top: auto; bottom: auto; width: 112px; height: 50px; align-self: center; margin: 0 6px 0 0; }
   html[data-tab="geral"] .top-right { grid-area: bar; margin-top: 4px; }
-  .kpis { grid-template-columns: 1fr 1fr !important; gap: 10px !important; margin-bottom: 18px; }
-  .kpi.sobra { order: -1; grid-column: 1 / -1; padding: 16px 18px; }
-  .kpi.sobra .kpi-value { font-size: 1.9rem; margin-top: 6px; }
+  /* ordem do Início: o dinheiro que vocês têm, a rosca de para onde vai, entradas/saídas, o balanço e o resto.
+     Os cards do resumo e os quadros da visão geral viram itens da mesma grade (display: contents) pra poder intercalar. */
+  html[data-tab="geral"] .app { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 10px; row-gap: 12px; align-content: start; }
+  html[data-tab="geral"] .app > * { grid-column: 1 / -1; }
+  html[data-tab="geral"] .kpis, html[data-tab="geral"] .overview { display: contents; }
+  html[data-tab="geral"] .kpi, html[data-tab="geral"] .overview > .ov { grid-column: 1 / -1; margin: 0; }
+  html[data-tab="geral"] .top { order: 0; margin-bottom: 2px; }
+  html[data-tab="geral"] .ov-steps { order: 1; }
+  html[data-tab="geral"] .kpi.contas { order: 2; padding: 18px 18px 16px; }
+  html[data-tab="geral"] .kpi.contas .kpi-value { font-size: 2.1rem !important; margin-top: 8px; }
+  html[data-tab="geral"] .ov-where { order: 3; }
+  html[data-tab="geral"] .kpi.receita, html[data-tab="geral"] .kpi.despesas { order: 4; grid-column: auto; }
+  html[data-tab="geral"] .kpi.sobra { order: 5; }
+  html[data-tab="geral"] .ov-cal { order: 6; } html[data-tab="geral"] .ov-cards { order: 7; } html[data-tab="geral"] .ov-goals { order: 8; } html[data-tab="geral"] .ov-forecast { order: 9; }
+  html[data-tab="geral"] #evo { order: 10; }
+  .kpi.sobra { padding: 16px 18px; }
+  .kpi.sobra .kpi-value { font-size: 1.6rem; margin-top: 6px; }
   .kpi.receita, .kpi.despesas { padding: 13px 14px; position: relative; cursor: pointer; }
   .kpi.receita .kpi-value, .kpi.despesas .kpi-value { font-size: 1.15rem; margin-top: 6px; }
   .kpi.receita .kleg, .kpi.despesas .kleg, .kpi.receita .knote { display: none; }
   .kpi.receita .kbar, .kpi.despesas .kbar { margin: 10px 0 0; height: 5px; }
   .kpi.receita::after, .kpi.despesas::after { content: "›"; position: absolute; right: 12px; top: 10px; font-size: 1.1rem; color: var(--muted); }
-  .kpi.contas { grid-column: 1 / -1; order: 5; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 12px; padding: 14px 16px; }
-  .kpi.contas .kpi-head { grid-column: 1 / -1; min-height: 0; }
-  .kpi.contas .kpi-value { font-size: 1.4rem !important; margin-top: 4px; }
-  .kpi.contas .kpi-sub { margin: 0; justify-self: end; }
 }
   </style>
 </head>
