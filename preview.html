@@ -7656,7 +7656,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   // Botão de instalar no topo: aparece quando o navegador deixa instalar e, no celular, sempre que o app não está instalado
   // (aí ele abre o passo a passo — ex.: link aberto dentro do WhatsApp/Instagram, que não instala)
   const syncInstallBtn = () => { const b = $('#installBtn'); if (b) b.hidden = standalone() || !(installPrompt || phone()); };
-  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; syncInstallBtn(); });
+  // No Samsung Internet não segura o aviso: assim ele mostra o próprio ícone de instalar na barra de endereço
+  window.addEventListener('beforeinstallprompt', e => { if (!/SamsungBrowser/i.test(navigator.userAgent)) e.preventDefault(); installPrompt = e; syncInstallBtn(); });
   window.addEventListener('appinstalled', () => { installPrompt = null; syncInstallBtn(); toast('App instalado'); });
   $('#installBtn')?.addEventListener('click', () => installApp());
   syncInstallBtn();
@@ -7674,9 +7675,15 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const local = location.protocol === 'file:';
     openModal(`${modalHead('Instalar como app', 'Fica com ícone na tela inicial, abre em tela cheia e funciona sem internet.')}
       ${local ? `<p class="help" style="font-size:.85rem;color:var(--amber)">Você abriu o arquivo direto do computador. Pra instalar, o app precisa estar publicado num endereço (ex.: GitHub Pages). Veja o passo a passo no README.</p>` : ''}
-      ${(android || ios) ? `<div class="inst-tip"><b>Não aparece a opção de instalar?</b> Se você abriu o link por outro app (WhatsApp, Instagram, Claude…), ele abre numa janelinha que não instala. Toque nos <b>⋮</b> dessa janelinha e escolha <b>${ios ? 'Abrir no Safari' : 'Abrir no Chrome'}</b>${inApp ? ' (parece que é o seu caso agora)' : ''}. Aí siga o passo abaixo.</div>` : ''}
-      <p class="fl">${ios ? 'No iPhone (Safari)' : samsung ? 'No Samsung Internet' : 'No celular Android (Chrome)'}</p>
-      <p class="help" style="font-size:.85rem">${ios ? 'Toque em <b>Compartilhar</b> (o quadrado com a seta) e depois em <b>Adicionar à Tela de Início</b>.' : samsung ? 'Toque no menu <b>≡</b> embaixo, depois em <b>Adicionar página a</b> → <b>Tela inicial</b>.' : 'Toque nos <b>⋮</b> no canto de cima e depois em <b>Instalar app</b> (ou <b>Adicionar à tela inicial</b> → <b>Instalar</b>).'}</p>
+      ${(android || ios) ? `<div class="inst-tip"><b>Não aparece a opção de instalar?</b> Se você abriu o link por outro app (WhatsApp, Instagram, Claude…), ele abre numa janelinha que não instala. Toque nos <b>⋮</b> dessa janelinha e escolha <b>${ios ? 'Abrir no Safari' : 'Abrir no navegador'}</b> (Chrome ou Samsung Internet)${inApp ? ' (parece que é o seu caso agora)' : ''}. Aí siga o passo abaixo.</div>` : ''}
+      ${ios ? `<p class="fl">No iPhone (Safari)</p>
+      <p class="help" style="font-size:.85rem">Toque em <b>Compartilhar</b> (o quadrado com a seta) e depois em <b>Adicionar à Tela de Início</b>.</p>` : ''}
+      ${android ? (() => {
+        // primeiro o passo do navegador que está aberto agora; o outro fica como alternativa
+        const sam = t => `<p class="fl">${t}</p><p class="help" style="font-size:.85rem">Toque no ícone de <b>instalar</b> que aparece na barra de endereço (uma setinha para baixo). Se ele não aparecer, toque no menu <b>≡</b> (embaixo, à direita) → <b>Adicionar página a</b> → <b>Tela inicial</b>.</p>`;
+        const chr = t => `<p class="fl">${t}</p><p class="help" style="font-size:.85rem">Toque nos <b>⋮</b> no canto de cima e depois em <b>Instalar app</b> (ou <b>Adicionar à tela inicial</b> → <b>Instalar</b>).</p>`;
+        return samsung ? sam('No Samsung Internet') + chr('Se preferir o Chrome') : chr('No Chrome') + sam('No Samsung Internet');
+      })() : ''}
       ${phone() ? '' : `<p class="fl">No computador (Chrome ou Edge)</p>
       <p class="help" style="font-size:.85rem">Clique no ícone de instalar na barra de endereço (um monitor com uma seta) ou no menu <b>⋮ → Instalar Capi</b>.</p>`}
       <div class="actions"><span class="grow"></span><button class="btn save" data-close>Entendi</button></div>`);
