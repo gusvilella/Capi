@@ -361,6 +361,8 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .evo-nav button:hover:not(:disabled) { background: var(--field); } .evo-nav button:disabled { opacity: .3; }
 .evo-nav button svg.i { width: 15px; height: 15px; }
 .evo-chart { touch-action: pan-y; overflow: hidden; }
+.ghost-ico[hidden] { display: none !important; }
+.inst-tip { margin: 2px 0 12px; padding: 10px 12px; border-radius: 12px; background: var(--field); font-size: .82rem; line-height: 1.5; color: var(--ink-2); }
 .evo-empty { position: absolute; inset: 0 0 30px 44px; display: grid; place-items: center; font-size: .8rem; color: var(--muted); pointer-events: none; }
 .pills { display: inline-flex; background: var(--field); border-radius: 10px; padding: 3px; }
 .pills button { border: 0; background: transparent; border-radius: 8px; padding: 5px 10px; font-size: .78rem; font-weight: 600; color: var(--muted); }
@@ -1997,6 +1999,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       <button type="button" class="capi-scene" id="capiScene" aria-label="Capi guardando dinheiro no cofrinho" title="Guardar mais uma moedinha"></button>
       <div class="top-right">
         <div style="display:flex;gap:4px">
+          <button class="ghost-ico" id="installBtn" title="Instalar o app no aparelho" aria-label="Instalar o app no aparelho" hidden><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M12 3v11M7.5 9.5 12 14l4.5-4.5M5 20h14"/></svg></button>
           <button class="ghost-ico" id="eyeBtn" title="Esconder valores" aria-label="Esconder valores"><svg class="i"><use href="#i-eye"/></svg></button>
           <div class="bell" style="position:relative">
             <button class="ghost-ico" id="bellBtn" title="Contas a vencer" aria-label="Contas a vencer"><svg class="i" style="width:18px;height:18px"><use href="#i-bell"/></svg></button>
@@ -7648,9 +7651,15 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
 
   // ================= Instalar como app (PWA) =================
   let installPrompt = null;
-  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; });
-  window.addEventListener('appinstalled', () => { installPrompt = null; toast('App instalado'); });
   const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  const phone = () => /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+  // Botão de instalar no topo: aparece quando o navegador deixa instalar e, no celular, sempre que o app não está instalado
+  // (aí ele abre o passo a passo — ex.: link aberto dentro do WhatsApp/Instagram, que não instala)
+  const syncInstallBtn = () => { const b = $('#installBtn'); if (b) b.hidden = standalone() || !(installPrompt || phone()); };
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; syncInstallBtn(); });
+  window.addEventListener('appinstalled', () => { installPrompt = null; syncInstallBtn(); toast('App instalado'); });
+  $('#installBtn')?.addEventListener('click', () => installApp());
+  syncInstallBtn();
   async function installApp() {
     if (standalone()) return toast('O app já está instalado neste aparelho');
     if (installPrompt) {
@@ -7660,14 +7669,16 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       if (outcome === 'accepted') closeModal();
       return;
     }
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent), android = /android/i.test(navigator.userAgent);
+    const inApp = /\bwv\b|FBAN|FBAV|Instagram|WhatsApp|Line\/|Telegram|Snapchat|TikTok/i.test(navigator.userAgent), samsung = /SamsungBrowser/i.test(navigator.userAgent);
     const local = location.protocol === 'file:';
     openModal(`${modalHead('Instalar como app', 'Fica com ícone na tela inicial, abre em tela cheia e funciona sem internet.')}
       ${local ? `<p class="help" style="font-size:.85rem;color:var(--amber)">Você abriu o arquivo direto do computador. Pra instalar, o app precisa estar publicado num endereço (ex.: GitHub Pages). Veja o passo a passo no README.</p>` : ''}
-      <p class="fl">${ios ? 'No iPhone (Safari)' : 'No celular Android (Chrome)'}</p>
-      <p class="help" style="font-size:.85rem">${ios ? 'Toque em <b>Compartilhar</b> (o quadrado com a seta) e depois em <b>Adicionar à Tela de Início</b>.' : 'Toque nos <b>⋮</b> no canto de cima e depois em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.'}</p>
-      <p class="fl">No computador (Chrome ou Edge)</p>
-      <p class="help" style="font-size:.85rem">Clique no ícone de instalar na barra de endereço (um monitor com uma seta) ou no menu <b>⋮ → Instalar Capi</b>.</p>
+      ${(android || ios) ? `<div class="inst-tip"><b>Não aparece a opção de instalar?</b> Se você abriu o link por outro app (WhatsApp, Instagram, Claude…), ele abre numa janelinha que não instala. Toque nos <b>⋮</b> dessa janelinha e escolha <b>${ios ? 'Abrir no Safari' : 'Abrir no Chrome'}</b>${inApp ? ' (parece que é o seu caso agora)' : ''}. Aí siga o passo abaixo.</div>` : ''}
+      <p class="fl">${ios ? 'No iPhone (Safari)' : samsung ? 'No Samsung Internet' : 'No celular Android (Chrome)'}</p>
+      <p class="help" style="font-size:.85rem">${ios ? 'Toque em <b>Compartilhar</b> (o quadrado com a seta) e depois em <b>Adicionar à Tela de Início</b>.' : samsung ? 'Toque no menu <b>≡</b> embaixo, depois em <b>Adicionar página a</b> → <b>Tela inicial</b>.' : 'Toque nos <b>⋮</b> no canto de cima e depois em <b>Instalar app</b> (ou <b>Adicionar à tela inicial</b> → <b>Instalar</b>).'}</p>
+      ${phone() ? '' : `<p class="fl">No computador (Chrome ou Edge)</p>
+      <p class="help" style="font-size:.85rem">Clique no ícone de instalar na barra de endereço (um monitor com uma seta) ou no menu <b>⋮ → Instalar Capi</b>.</p>`}
       <div class="actions"><span class="grow"></span><button class="btn save" data-close>Entendi</button></div>`);
   }
   // O service worker só funciona quando o app está publicado (http/https), não abrindo o arquivo direto
