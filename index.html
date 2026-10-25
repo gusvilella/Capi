@@ -362,6 +362,20 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .evo-nav button svg.i { width: 15px; height: 15px; }
 .evo-chart { touch-action: pan-y; overflow: hidden; }
 .ghost-ico[hidden] { display: none !important; }
+.plan-tag { display: inline-block; margin-right: 8px; padding: 2px 8px; border-radius: 99px; background: var(--accent-soft, var(--field)); color: var(--accent-ink, var(--accent)); font-weight: 700; font-size: .72rem; }
+.mk-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mk-grid button { position: relative; border: 0; border-radius: 12px; background: var(--field); padding: 12px 6px 10px; font-size: .82rem; font-weight: 600; color: var(--ink-2); line-height: 1.2; }
+.mk-grid button small { display: block; font-size: .66rem; font-weight: 500; color: var(--muted); }
+.mk-grid button em { display: block; font-style: normal; font-size: .64rem; font-weight: 700; color: var(--accent-ink, var(--accent)); margin-top: 2px; }
+.mk-grid button.on { background: var(--accent); color: #fff; } .mk-grid button.on em, .mk-grid button.on small { color: #fff; }
+.mk-grid.plan button { background: transparent; box-shadow: inset 0 0 0 1px var(--line); }
+.mk-grid.plan button.on { background: var(--accent); box-shadow: none; }
+@media (max-width: 640px) {
+  /* no mês atual não tem seta pro futuro: pra planejar, toque no nome do mês */
+  html[data-when="now"] #nextMonth, html[data-when="future"] #nextMonth { visibility: hidden; }
+  .month .label { cursor: pointer; }
+  .month .label::after { content: " ▾"; font-size: .7em; color: var(--muted); }
+}
 /* ===== Celular: barra fixa embaixo, topo enxuto e listas agrupadas por dia (no computador nada disso aparece) ===== */
 .bnav, .subnav, .day-h { display: none; }
 @media (max-width: 640px) {
@@ -1472,7 +1486,10 @@ button.kpi-label:hover { color: var(--ink); text-decoration-color: currentColor;
 @keyframes meter-fill { from { transform: scaleX(0); } }
 @keyframes meter-shine { from { transform: translateX(-120%); } to { transform: translateX(220%); } }
 .meter i, .steps-bar i { position: relative; overflow: hidden; transform-origin: left center; }
-.fill-anim .meter i, .fill-anim .steps-bar i { animation: meter-fill 1.1s cubic-bezier(.22, .8, .25, 1) .3s both; }
+/* animações que esperam o quadro aparecer na tela (rolando): ficam paradas no começo (rv-wait) e rodam ao aparecer (rv-go) */
+.rv-wait, .rv-wait * { animation-play-state: paused !important; }
+.fill-anim .meter i, .fill-anim .steps-bar i, .fill-anim .cl-bar i, .rv-go .meter i, .rv-go .steps-bar i, .rv-go .cl-bar i { transform-origin: left center; animation: meter-fill 1.1s cubic-bezier(.22, .8, .25, 1) .3s both; }
+.rv-go .cl-bar i { animation-delay: .15s; }
 .fill-anim .meter i::after, .fill-anim .steps-bar i::after { content: ""; position: absolute; inset: 0; width: 45%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .35), transparent); animation: meter-shine .9s ease-in-out 1.25s both; }
 @media (prefers-reduced-motion: reduce) { .fill-anim .meter i, .fill-anim .steps-bar i, .fill-anim .meter i::after, .fill-anim .steps-bar i::after { animation: none !important; } }
@@ -1498,8 +1515,11 @@ button.kpi-label:hover { color: var(--ink); text-decoration-color: currentColor;
 .evo-in .evo-table tbody tr:nth-child(12) { animation-delay: 420ms; }
 .evo-in .evo-table tfoot tr { animation-delay: .45s; }
 @media (prefers-reduced-motion: reduce) { .evo-in, .evo-in * { animation: none !important; } }
-.fill-anim .fc-line { stroke-dasharray: 1; animation: line-draw 1.3s cubic-bezier(.4, 0, .2, 1) .3s both; }
-.fill-anim .insights .ins { animation: rise .5s cubic-bezier(.2, .75, .25, 1) both; }
+.fill-anim .fc-line, .rv-go .fc-line { stroke-dasharray: 1; animation: line-draw 1.3s cubic-bezier(.4, 0, .2, 1) .3s both; }
+.fill-anim .insights .ins, .rv-go .insights .ins { animation: rise .5s cubic-bezier(.2, .75, .25, 1) both; }
+.rv-go .insights .ins:nth-child(1) { animation-delay: .35s; } .rv-go .insights .ins:nth-child(2) { animation-delay: .43s; } .rv-go .insights .ins:nth-child(3) { animation-delay: .51s; }
+.rv-go .insights .ins:nth-child(4) { animation-delay: .59s; } .rv-go .insights .ins:nth-child(n+5) { animation-delay: .67s; }
+@media (prefers-reduced-motion: reduce) { .rv-go *, .rv-wait * { animation: none !important; } }
 .fill-anim .insights .ins:nth-child(1) { animation-delay: .35s; } .fill-anim .insights .ins:nth-child(2) { animation-delay: .43s; }
 .fill-anim .insights .ins:nth-child(3) { animation-delay: .51s; } .fill-anim .insights .ins:nth-child(4) { animation-delay: .59s; }
 .fill-anim .insights .ins:nth-child(5) { animation-delay: .67s; } .fill-anim .insights .ins:nth-child(n+6) { animation-delay: .75s; }
@@ -2819,8 +2839,9 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     clearTimeout(fillAnim.t); fillAnim.t = setTimeout(() => root.classList.remove('fill-anim'), 2200);
   }
   // valor do meio do gráfico conta de 0 até o total enquanto as fatias são desenhadas
-  function countUpDonuts() {
-    document.querySelectorAll('.donut-wrap.draw [data-total]').forEach(el => {
+  function countUpDonuts(root = document) {
+    root.querySelectorAll('.donut-wrap.draw [data-total]').forEach(el => {
+      if (el.closest('.rv-wait')) return;   // ainda fora da tela: conta quando aparecer
       const total = +el.dataset.total, t0 = performance.now() + 200, dur = 1300;
       if (ui.hidden || !total) return;
       const step = now => {
@@ -2853,7 +2874,29 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   }
   // valores montados no HTML com data-cu="centavos" (cards da visão geral, metas)
   function countUpMarked(root = document) {
-    root.querySelectorAll('[data-cu]').forEach(el => countTo(el, +el.dataset.cu, money, 0));
+    root.querySelectorAll('[data-cu]').forEach(el => { if (!el.closest('.rv-wait')) countTo(el, +el.dataset.cu, money, 0); });
+  }
+  // Animações conforme você rola: o que está fora da tela fica parado no começo e anima quando aparece
+  // (rosca se desenha e conta, barrinhas enchem, gráficos crescem). Vale no celular e no computador.
+  const revealIO = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) reveal(e.target); }), { threshold: .18 }) : null;
+  function reveal(el) {
+    revealIO.unobserve(el); el.classList.remove('rv-wait');
+    el.classList.remove('rv-go'); void el.offsetWidth; el.classList.add('rv-go');
+    el.querySelectorAll('.donut-wrap').forEach(w => { w.classList.remove('draw', 'soft'); void w.offsetWidth; w.classList.add('draw'); });
+    countUpDonuts(el); countUpMarked(el);
+    if (el.querySelector('#evoChart svg')) growEvo(120);
+    clearTimeout(el._rvT); el._rvT = setTimeout(() => el.classList.remove('rv-go'), 2600);
+  }
+  function armReveal() {
+    if (!revealIO || reduced()) return;
+    document.querySelectorAll('.rv-wait').forEach(el => { el.classList.remove('rv-wait'); revealIO.unobserve(el); });
+    const H = innerHeight;
+    document.querySelectorAll('#overview > .ov, #evo, #mainGrid .card').forEach(el => {
+      if (!el.getClientRects().length) return;   // escondido (outra aba)
+      const r = el.getBoundingClientRect();
+      if (r.top < H - Math.min(r.height * .45, 260)) return;   // já aparece o bastante (não só o título)
+      el.classList.add('rv-wait'); revealIO.observe(el);
+    });
   }
   function moveTabInd() {
     const ind = $('#tabInd'), act = document.querySelector('#tabs button.active');
@@ -2897,7 +2940,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
           const dir = pm !== view.month ? (view.month > pm ? 1 : -1) : Math.sign(tabs.indexOf(ui.tab) - tabs.indexOf(pt));
           requestAnimationFrame(() => animateEnter(dir));
           // a rosca se desenha de novo a cada aba/mês (antes só esmaecia e parecia sem animação)
-          if (!matchMedia('(prefers-reduced-motion: reduce)').matches) { donutAnim = true; requestAnimationFrame(() => { countUpDonuts(); donutAnim = false; }); }
+          if (!matchMedia('(prefers-reduced-motion: reduce)').matches) { donutAnim = true; requestAnimationFrame(() => { armReveal(); countUpDonuts(); donutAnim = false; }); }
         }
         lastKpiMonth = view.month; lastView = v;
       } }
@@ -2910,8 +2953,9 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     // fora do mês atual: mostra "hoje" (tocar no nome do mês volta pro mês atual)
     const away = view.month !== curKey();
     $('#monthLabel').classList.toggle('away', away);
+    document.documentElement.dataset.when = view.month < curKey() ? 'past' : view.month > curKey() ? 'future' : 'now';
     { const bt = $('#backToday'); const wasHidden = bt.hidden; bt.hidden = !away;
-      if (away) { bt.innerHTML = `${ico(view.month < curKey() ? 'right' : 'left')}Voltar para ${monthName(curKey())}`; if (wasHidden) { bt.classList.remove('pop-in'); void bt.offsetWidth; bt.classList.add('pop-in'); } } }
+      if (away) { bt.innerHTML = view.month > curKey() ? `<span class="plan-tag">Planejando ${monthName(view.month)}</span>${ico('left')}Voltar para ${monthName(curKey())}` : `${ico('right')}Voltar para ${monthName(curKey())}`; if (wasHidden) { bt.classList.remove('pop-in'); void bt.offsetWidth; bt.classList.add('pop-in'); } } }
     $('#monthLabel').title = away ? 'Voltar para o mês atual' : '';
     $('#monthLabel').setAttribute('aria-label', `${$('#monthLabel').textContent}${away ? ' (tocar volta para o mês atual)' : ''}`);
 
@@ -2919,7 +2963,10 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const cnt = (el, v, fmt = money) => countTo(el, v, fmt, countZero ? 0 : el._v);
     cnt($('#kReceita'), t.receita);
     // com payLag, o card mostra o dinheiro do mês seguinte (o que paga as contas deste mês)
-    $('[data-explain="entrou"]').textContent = t.incomeKey === view.month ? 'Caiu na conta' : `${t.incomeKey <= curKey() ? 'Caiu' : 'Cai'} em ${monthName(t.incomeKey)}`;
+    // mês que ainda não chegou (planejando): tudo no futuro — "vai cair", "vai sair", "previsão"
+    const fut = view.month > curKey(), incFut = t.incomeKey > curKey();
+    $('[data-explain="entrou"]').textContent = t.incomeKey === view.month ? (fut ? 'Vai cair na conta' : 'Caiu na conta') : `${incFut ? (fut ? 'Vai cair' : 'Cai') : 'Caiu'} em ${monthName(t.incomeKey)}`;
+    $('[data-explain="saiu"]').textContent = fut ? 'Vai sair da conta' : 'Saiu da conta';
     const byWho = multi() ? members().map(m => [m, receitasOf(t.incomeKey).filter(r => !r.pending && whoOf(r) === m.id).reduce((x, r) => x + r.amount, 0)]).filter(([, v]) => v) : [];
     // Divisão do valor: uma barrinha com a proporção de cada parte e, embaixo, uma linha por parte (nome à esquerda, valor à direita)
     const splitHtml = parts => { parts = parts.filter(p => p.v > 0); if (!parts.length) return '';
@@ -2949,7 +2996,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     }
     // Balanço do mês: entrou − saiu − o que você guarda, com sinal. A barra mostra quanto do que entrou já saiu
     // (passou de 100%: o pedaço a mais fica em âmbar, atenção sem alarme)
-    $('#kSobraLabel').textContent = 'Balanço do mês';
+    $('#kSobraLabel').textContent = view.month > curKey() ? `Previsão de ${monthName(view.month)}` : 'Balanço do mês';
     $('#capiScene')?.classList.toggle('tight', t.saldo < 0);   // mês no vermelho: a Capi fica preocupadinha
     cnt($('#kSobra'), t.saldo, c => ui.hidden ? money(c) : (c < 0 ? '– ' : c > 0 ? '+ ' : '') + money(Math.abs(c)));
     countZero = false;
@@ -2958,6 +3005,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     { const used = t.despesas + t.investir, top = Math.max(t.receita, used);
       const cap = !t.receita && !used ? 'Lance o que entra e o que sai pra ver o balanço'
         : !t.receita ? (t.incomeKey !== view.month ? `Nada lançado em ${monthName(t.incomeKey)} ainda` : 'Ainda não entrou nada este mês')
+        : view.month > curKey() ? (used > t.receita ? `Vai sair ${Math.round((used / t.receita - 1) * 100)}% a mais do que vai entrar` : `${vc('Você vai usar', 'Vocês vão usar')} ${Math.round(used / t.receita * 100)}% do que vai entrar`)
         : used > t.receita ? `Saiu ${Math.round((used / t.receita - 1) * 100)}% a mais do que entrou`
         : `${vc('Você usou', 'Vocês usaram')} ${Math.round(used / t.receita * 100)}% do que entrou`;
       const seg = (v, cls) => v > 0 ? `<i class="${cls}" style="width:${(v / top * 100).toFixed(2)}%"></i>` : '';
@@ -3523,7 +3571,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     }
     const total = list.reduce((s, g) => s + g.value, 0);
     box.innerHTML = `<h3>Para onde vai o dinheiro <button class="ov-link" data-pdf>Resumo em PDF</button></h3>`
-      + (total ? donutHtml(list, total, 'Saiu da conta', true) : '<div class="ov-empty">Sem despesas neste mês ainda.</div>');
+      + (total ? donutHtml(list, total, view.month > curKey() ? 'Vai sair' : 'Saiu da conta', true) : '<div class="ov-empty">Sem despesas neste mês ainda.</div>');
   }
 
   function renderOvCards() {
@@ -3620,7 +3668,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   }
   // Barras que nascem como bolinhas no chão e crescem com o topo arredondado (como o Bem-estar digital)
   function growEvo(delay = 0) {
-    const svg = $('#evoChart svg'); if (!svg || reduced()) return;
+    const svg = $('#evoChart svg'); if (!svg || reduced() || svg.closest('.rv-wait')) return;
     const bars = [...svg.querySelectorAll('rect.eb')], base = +svg.dataset.base;
     const h0 = b => Math.min(+b.dataset.h, +b.getAttribute('rx') * 2 + 2);
     const put = (b, h) => { b.setAttribute('y', (base - h).toFixed(2)); b.setAttribute('height', (h + +b.getAttribute('rx')).toFixed(2)); };
@@ -5967,12 +6015,13 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   });
   $('#backToday').addEventListener('click', () => { view.month = curKey(); render(); });
   $('#prevMonth').addEventListener('click', () => { view.month = addMonths(view.month, -1); render(); });
-  // Celular: arrastar o dedo para os lados troca o mês (para a esquerda = próximo, para a direita = anterior)
+  // Celular: arrastar o dedo para os lados troca de parte do app (Início → Entradas → Contas → Gastos → … → Metas).
+  // O mês fica parado: pra ver outro mês, use o seletor de mês.
   let swipe = null;
   document.addEventListener('touchstart', e => {
     swipe = null;
     if (e.touches.length !== 1 || !$('#overlay').hidden || document.documentElement.classList.contains('locked')) return;
-    if (e.target.closest('.tabs, .fc-chart, .evo-chart, input, select, textarea, .pop, .imp-list, .modal')) return;
+    if (e.target.closest('.tabs, .seg-tabs, .fc-chart, .evo-chart, input, select, textarea, .pop, .imp-list, .modal, .bnav')) return;
     const t = e.touches[0];
     swipe = { x: t.clientX, y: t.clientY, at: Date.now() };
   }, { passive: true });
@@ -5981,15 +6030,24 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const t = e.changedTouches[0], dx = t.clientX - swipe.x, dy = t.clientY - swipe.y, fast = Date.now() - swipe.at < 700;
     swipe = null;
     if (!fast || Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
-    view.month = addMonths(view.month, dx < 0 ? 1 : -1);
-    render();
-    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      const el = ui.tab === 'geral' ? $('#overview') : $('#mainGrid');
-      el.animate?.([{ transform: `translateX(${dx < 0 ? 24 : -24}px)`, opacity: .35 }, { transform: 'none', opacity: 1 }], { duration: 200, easing: 'ease-out' });
-    }
+    const order = ['geral', 'receita', ...OUT_TABS, ...MORE_TABS], i = order.indexOf(ui.tab), next = order[i + (dx < 0 ? 1 : -1)];
+    if (next) goTab(next);   // a troca já desliza pro lado certo (animateEnter)
   }, { passive: true });
   $('#nextMonth').addEventListener('click', () => { view.month = addMonths(view.month, 1); render(); });
-  $('#monthLabel').addEventListener('click', () => { view.month = monthOf(todayIso); render(); });
+  $('#monthLabel').addEventListener('click', () => { if (isPhone()) return openMonthPicker(); view.month = monthOf(todayIso); render(); });
+  // Celular: escolher o mês. O foco é o agora: meses que já passaram em cima e, separado, "Planejar" os próximos
+  function openMonthPicker() {
+    const cur = curKey(), name = k => { const t = monthName(k); return t.charAt(0).toUpperCase() + t.slice(1); };
+    const past = Array.from({ length: 12 }, (_, i) => addMonths(cur, -i));
+    const btn = (k, extra = '') => `<button type="button" data-mk="${k}" class="${k === view.month ? 'on' : ''}">${name(k)}${k.slice(0, 4) !== cur.slice(0, 4) ? ` <small>${k.slice(0, 4)}</small>` : ''}${extra}</button>`;
+    openModal(`${modalHead('Escolher mês', '')}
+      <div class="mk-grid">${past.map(k => btn(k, k === cur ? '<em>agora</em>' : '')).join('')}</div>
+      <p class="fl" style="margin-top:14px">Planejar</p>
+      <p class="help" style="margin-top:-2px">Veja o que já está previsto pra entrar e sair nos próximos meses.</p>
+      <div class="mk-grid plan">${[1, 2, 3].map(i => btn(addMonths(cur, i))).join('')}</div>`, m => {
+      m.querySelectorAll('[data-mk]').forEach(b => b.addEventListener('click', () => { view.month = b.dataset.mk; closeModal(); render(); }));
+    });
+  }
   $('#monthLabel').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); view.month = monthOf(todayIso); render(); } });
   $('#eyeBtn').addEventListener('click', () => { ui.hidden = !ui.hidden; saveUi(); render(); });
   $('#investBtn').addEventListener('click', openInvest);
@@ -7329,6 +7387,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     wordsIn($('#headline'), lastHeadline || $('#headline').textContent, 140);
     [top, kpis].forEach(el => { el.classList.remove('intro'); void el.offsetWidth; el.classList.add('intro'); });
     ['#kSaldo', '#kReceita', '#kDespesas', '#kSobra'].forEach((id, i) => { const el = $(id); if (el._v != null) countTo(el, el._v, el._fmt, 0, 380 + i * 60); });
+    armReveal();   // o que está mais pra baixo anima só quando você rolar até lá
     countUpMarked($('#overview')); animateEnter(0, true);
     // a rosca já tinha se desenhado escondida atrás da abertura: desenha de novo agora que aparece
     document.querySelectorAll('.donut-wrap').forEach(w => { w.classList.remove('draw', 'soft'); void w.offsetWidth; w.classList.add('draw'); });
