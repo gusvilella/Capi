@@ -1948,6 +1948,28 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   .capi-scene { width: 130px; right: -10px; top: -4px; }
 }
 @media (prefers-reduced-motion: reduce) { .capi-scene, .capi-scene * { animation: none !important; } }
+
+/* ===== Celular · Início: topo numa linha (saudação + Capi pequena), balanço em destaque, resto compacto ===== */
+@media (max-width: 640px) {
+  html[data-tab="geral"] .top { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "hi scene" "bar bar"; align-items: center; gap: 10px 8px; margin-bottom: 14px; }
+  html[data-tab="geral"] .top > div:first-child { grid-area: hi; min-width: 0; padding-right: 0 !important; }
+  html[data-tab="geral"] .top #headline, html[data-tab="geral"] .top .hero-sub { display: none; }
+  html[data-tab="geral"] .top .hello { width: 100%; font-size: 1.22rem; font-weight: 600; color: var(--ink); letter-spacing: -.02em; line-height: 1.2; text-wrap: wrap; }
+  html[data-tab="geral"] .capi-scene { grid-area: scene; position: relative; right: auto; top: auto; bottom: auto; width: 112px; height: 50px; align-self: center; margin: 0 6px 0 0; }
+  html[data-tab="geral"] .top-right { grid-area: bar; margin-top: 4px; }
+  .kpis { grid-template-columns: 1fr 1fr !important; gap: 10px !important; margin-bottom: 18px; }
+  .kpi.sobra { order: -1; grid-column: 1 / -1; padding: 16px 18px; }
+  .kpi.sobra .kpi-value { font-size: 1.9rem; margin-top: 6px; }
+  .kpi.receita, .kpi.despesas { padding: 13px 14px; position: relative; cursor: pointer; }
+  .kpi.receita .kpi-value, .kpi.despesas .kpi-value { font-size: 1.15rem; margin-top: 6px; }
+  .kpi.receita .kleg, .kpi.despesas .kleg, .kpi.receita .knote { display: none; }
+  .kpi.receita .kbar, .kpi.despesas .kbar { margin: 10px 0 0; height: 5px; }
+  .kpi.receita::after, .kpi.despesas::after { content: "›"; position: absolute; right: 12px; top: 10px; font-size: 1.1rem; color: var(--muted); }
+  .kpi.contas { grid-column: 1 / -1; order: 5; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 12px; padding: 14px 16px; }
+  .kpi.contas .kpi-head { grid-column: 1 / -1; min-height: 0; }
+  .kpi.contas .kpi-value { font-size: 1.4rem !important; margin-top: 4px; }
+  .kpi.contas .kpi-sub { margin: 0; justify-self: end; }
+}
   </style>
 </head>
 <body>
@@ -5885,6 +5907,9 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     sub.hidden = !list;
     if (list) sub.innerHTML = `<div class="seg-tabs" role="tablist">${list.map(k => `<button type="button" role="tab" data-sub="${k}" class="${k === t ? 'on' : ''}" aria-selected="${k === t}">${SUB_LABELS[k]}</button>`).join('')}</div>`;
   }
+  // Início no celular: tocar no card de entradas/saídas abre a parte correspondente
+  document.querySelector('.kpi.receita').addEventListener('click', e => { if (isPhone() && !e.target.closest('button')) goTab('receita'); });
+  document.querySelector('.kpi.despesas').addEventListener('click', e => { if (isPhone() && !e.target.closest('button')) goTab(ui.lastOut || 'variavel'); });
   $('#subnav').addEventListener('click', e => { const b = e.target.closest('[data-sub]'); if (b && b.dataset.sub !== ui.tab) goTab(b.dataset.sub); });
   $('#bnavPlus').addEventListener('click', () => openQuick());
   $('#bnav').addEventListener('click', e => {
