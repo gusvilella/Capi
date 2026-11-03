@@ -2700,9 +2700,11 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   const curKey = () => monthOf(todayIso);
   // Qual fatura mostrar no mês visto. No mês atual, mostra a fatura "da vez": a deste mês se ainda não venceu
   // ou está vencida sem pagar; se já foi paga (ou nem foi lançada e já venceu), a próxima.
+  // Já paga (mesmo antes de vencer): passa pra próxima, a que está aberta recebendo compras.
   function focusKey(card, key) {
     if (key !== curKey()) return key;
     const f = (state.faturas[card.id] || {})[key];
+    if (f && f.paid) return addMonths(key, 1);
     if (todayIso <= faturaDates(card, key).due) return key;
     if (f && !f.paid) return key;
     return addMonths(key, 1);
@@ -4366,7 +4368,9 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const body = rows.map(c => {
       const f = c.fatura;
       const st = FSTATE[faturaState(c, c.fk, f)];
-      const status = !f ? `<button class="tag status none" data-fatura="${c.id}" data-key="${c.fk}">Lançar fatura</button>`
+      const prevV = !f ? faturaPreview(c.id, c.fk) : 0;
+      const status = !f ? (prevV ? `<button class="tag status open" data-fatura="${c.id}" data-key="${c.fk}" title="Prévia pelas compras e parcelas já lançadas. Toque para lançar o valor da fatura">Aberta</button>`
+          : `<button class="tag status none" data-fatura="${c.id}" data-key="${c.fk}">Lançar fatura</button>`)
         : `<button class="tag status ${st[0]}" data-fpay="${c.id}" data-key="${c.fk}" title="${f.paid ? 'Marcar como não paga' : 'Marcar como paga'}">${st[1]}</button>`;
       // Linha limpa: nome, datas da fatura e uma barrinha do limite. Bandeira e final do cartão ficam no "title"
       // (o final aparece se dois cartões tiverem o mesmo nome); o que já está dentro da fatura aparece ao abrir a fatura.
@@ -4386,20 +4390,22 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         <button class="edit" data-edit="${c.id}" data-key="${c.fk}" aria-label="Fatura">${ico('pencil', 'width:14px;height:14px')}</button>
       </div>`;
     }).join('');
-    const total = rows.reduce((s, c) => s + (c.fatura ? c.fatura.amount : 0), 0);
-    const open = rows.reduce((s, c) => s + (c.fatura && !c.fatura.paid ? c.fatura.amount : 0), 0);
+    // faturas ainda não lançadas entram pela prévia (compras e parcelas que já caem nelas)
+    const prevOf = c => c.fatura ? 0 : faturaPreview(c.id, c.fk), anyPrev = rows.some(c => prevOf(c));
+    const total = rows.reduce((s, c) => s + (c.fatura ? c.fatura.amount : prevOf(c)), 0);
+    const open = rows.reduce((s, c) => s + (c.fatura ? (c.fatura.paid ? 0 : c.fatura.amount) : prevOf(c)), 0);
     const outN = rows.filter(c => c.count === false).length;
     $('#table').innerHTML = head + body + `
-      <div class="total"><span>${view.month === curKey() ? 'Total das faturas atuais' : `Total das faturas que vencem em ${monthName(view.month)}`}</span><strong class="num negc">${money(total)}</strong></div>
+      <div class="total"><span>${view.month === curKey() ? 'Total das faturas atuais' : `Total das faturas que vencem em ${monthName(view.month)}`}${anyPrev ? ' <small style="color:var(--muted)">(com prévias)</small>' : ''}</span><strong class="num negc">${anyPrev ? '≈ ' : ''}${money(total)}</strong></div>
       <div class="yield"><span>${open ? 'Em aberto' : total ? 'Tudo pago' : ''}</span><span>${open ? `<strong class="num" style="color:var(--amber)">${money(open)}</strong>` : ''}</span></div>
       ${outN ? `<p class="cards-note">${outN === rows.length ? (outN > 1 ? 'Estas faturas ficam' : 'Esta fatura fica') : `${outN} ${outN > 1 ? 'faturas ficam' : 'fatura fica'}`} fora do "Saiu da conta": as compras já estão lançadas em Gastos.</p>` : ''}`;
   }
 
   function renderCardsChart() {
-    const rows = cardsOf(view.month).map(c => ({ ...c, fatura: (state.faturas[c.id] || {})[focusKey(c, view.month)] }))
-      .filter(c => c.fatura && c.fatura.amount > 0).map(c => {
+    const rows = cardsOf(view.month).map(c => { const k = focusKey(c, view.month), f = (state.faturas[c.id] || {})[k]; return { ...c, amt: f ? f.amount : faturaPreview(c.id, k) }; })
+      .filter(c => c.amt > 0).map(c => {
       const b = BRANDS[c.bank];
-      return { name: c.name, color: b ? b.color : (c.color || '#64748b'), value: c.fatura.amount, mono: c.bank ? monoMark(c.bank, c.name) : '', icon: c.bank ? '' : 'credit-card' };
+      return { name: c.name, color: b ? b.color : (c.color || '#64748b'), value: c.amt, mono: c.bank ? monoMark(c.bank, c.name) : '', icon: c.bank ? '' : 'credit-card' };
     }).sort((a, b) => b.value - a.value);
     const total = rows.reduce((s, g) => s + g.value, 0);
     $('#chart').innerHTML = total ? donutHtml(rows, total, 'Faturas')
