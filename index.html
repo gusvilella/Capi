@@ -796,17 +796,32 @@ div.empty::before, .ov-forecast > .ov-empty::before, .ov-where > .ov-empty::befo
 .top.no-head #headline, .top.no-head .hero-sub { display: none; }
 /* Visão geral (computador): primeiro rosca, cartões e calendário; previsão e metas/patrimônio embaixo, como detalhe */
 @media (min-width: 981px) { .ov-where { order: 1; } .ov-cards { order: 2; } .ov-cal { order: 3; } .ov-forecast { order: 4; } .ov-goals { order: 5; } .ov-steps { order: 0; } }
-/* card do mês: caiu − saiu = sobra numa linha */
-.kpi.mes .mes-row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); align-items: start; gap: 6px 10px; margin-top: 8px; }
-.mes-op { align-self: center; margin-top: 18px; font-size: 1.3rem; font-weight: 300; color: var(--muted); }
-.mes-it { min-width: 0; border-radius: 12px; padding: 6px 8px; margin: -6px -8px; }
-.mes-it[role="link"] { cursor: pointer; transition: background .15s; } .mes-it[role="link"]:hover { background: var(--field); }
-.mes-it .kpi-value { margin-top: 4px; font-size: 1.4rem; }
-.mes-it .kleg, .mes-it .knote { display: none; }
-.mes-it .kbar { margin: 8px 0 0; height: 4px; }
-.mes-it.receita .kpi-value { color: var(--green); }
-.mes-it.sobra .kpi-value.pos { color: var(--green); } .mes-it.sobra .kpi-value.short { color: var(--amber); }
+/* card do mês: três blocos (caiu · saiu · sobra), cada um com ícone; a sobra em destaque com o anel de quanto já saiu */
 .kpi.mes .mes-t { font-weight: 600; color: var(--ink-2); }
+.kpi.mes .mes-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.15fr); gap: 12px; margin-top: 12px; }
+.mes-it { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 12px 14px; border-radius: 16px; background: var(--field); }
+.mes-it[role="link"] { cursor: pointer; transition: transform .15s, box-shadow .15s; }
+.mes-it[role="link"]:hover { transform: translateY(-1px); box-shadow: 0 6px 16px -10px rgba(20, 30, 40, .3); }
+.mes-ic { flex: none; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; }
+.mes-ic svg.i { width: 18px; height: 18px; stroke-width: 2.2; }
+.mes-ic.in { background: color-mix(in srgb, var(--green) 16%, var(--card)); color: var(--green); }
+.mes-ic.out { background: color-mix(in srgb, #ff8a5c 20%, var(--card)); color: #d4683e; }
+.mes-tx { min-width: 0; }
+.mes-it .kpi-label { font-size: .76rem; }
+.mes-it .kpi-value { margin-top: 2px; font-size: 1.32rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mes-it .kpi-sub { display: none; }
+.mes-it.receita .kpi-value { color: var(--green); }
+.mes-it.sobra { --sc: var(--green); background: color-mix(in srgb, var(--sc) 10%, var(--card)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sc) 22%, transparent); }
+.mes-it.sobra.neg { --sc: var(--amber); }
+.mes-it.sobra .kpi-value { color: var(--sc); font-weight: 600; }
+.mes-cap { margin-top: 2px; font-size: .72rem; color: var(--muted); line-height: 1.3; }
+.mes-ring { flex: none; width: 44px; height: 44px; margin-left: auto; transform: rotate(-90deg); }
+.mes-ring .tr { stroke: color-mix(in srgb, var(--sc) 18%, transparent); }
+.mes-ring .fg { stroke: var(--sc); stroke-linecap: round; transition: stroke-dasharray .9s cubic-bezier(.22, .8, .25, 1); }
+.mes-foot:empty { display: none; }
+.mes-foot { margin-top: 12px; }
+.mes-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 99px; background: var(--field); font-size: .76rem; color: var(--ink-2); }
+.mes-chip b { font-weight: 600; } .mes-chip svg.i { color: var(--muted); }
 .kpi.contas .kpi-ico { background: var(--accent-soft); color: var(--accent-ink); }
 .kpi.contas .kpi-value { font-size: 1.85rem; }
 .kpi.sobra .kpi-ico { background: var(--field); color: var(--ink-2); }
@@ -2006,16 +2021,13 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   html[data-tab="geral"] .kpi.mes { order: 4; }
   html[data-tab="geral"] .ov-cal { order: 6; } html[data-tab="geral"] .ov-cards { order: 7; } html[data-tab="geral"] .ov-goals { order: 8; } html[data-tab="geral"] .ov-forecast { order: 9; }
   html[data-tab="geral"] #evo { order: 10; }
-  .kpi.mes { padding: 16px 18px; }
-  .kpi.mes .mes-row { grid-template-columns: 1fr; gap: 2px; margin-top: 10px; }
-  .mes-op { display: none; }
-  .mes-it { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 0 -8px; }
-  .mes-it .kpi-value { margin: 0 0 0 auto; font-size: 1.12rem; }
-  .mes-it .kpi-sub { display: none; }
-  .mes-it.despesas .kpi-value::before { content: "− "; color: var(--muted); font-weight: 400; }
-  .mes-it.sobra { border-top: 1px solid var(--line); border-radius: 0; margin-top: 4px; padding-top: 10px; }
-  .mes-it.sobra .kpi-value { font-size: 1.35rem; }
-  .mes-it[role="link"]::after { content: "›"; margin-left: 2px; color: var(--muted); order: 3; }
+  .kpi.mes { padding: 16px; }
+  .kpi.mes .mes-row { grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
+  .mes-it { padding: 10px 12px; gap: 10px; }
+  .mes-ic { width: 34px; height: 34px; }
+  .mes-it .kpi-value { font-size: 1.15rem; }
+  .mes-it.sobra .kpi-value { font-size: 1.3rem; }
+  .mes-it[role="link"]::after { content: "›"; margin-left: auto; font-size: 1.1rem; color: var(--muted); }
 }
   </style>
 </head>
@@ -2148,13 +2160,15 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
           <button class="adjust" id="investBtn" title="Quanto você pretende guardar este mês"><span class="t">Guardar</span><svg class="i"><use href="#i-pencil"/></svg></button>
         </div>
         <div class="mes-row">
-          <div class="mes-it receita" role="link" tabindex="0" aria-label="Ver entradas"><button type="button" class="kpi-label" data-explain="entrou">Caiu na conta</button><div class="kpi-value num" id="kReceita"></div><div class="kpi-sub" id="kReceitaSub"></div></div>
-          <span class="mes-op" aria-hidden="true">−</span>
-          <div class="mes-it despesas" role="link" tabindex="0" aria-label="Ver saídas"><button type="button" class="kpi-label" data-explain="saiu">Saiu da conta</button><div class="kpi-value num" id="kDespesas"></div><div class="kpi-sub" id="kDespesasSub"></div></div>
-          <span class="mes-op" aria-hidden="true">=</span>
-          <div class="mes-it sobra"><button type="button" class="kpi-label" id="kSobraLabel" data-explain="sobra">Sobra</button><div class="kpi-value num" id="kSobra"></div></div>
+          <div class="mes-it receita" role="link" tabindex="0" aria-label="Ver entradas"><span class="mes-ic in" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span>
+            <div class="mes-tx"><button type="button" class="kpi-label" data-explain="entrou">Caiu na conta</button><div class="kpi-value num" id="kReceita"></div><div class="kpi-sub" id="kReceitaSub"></div></div></div>
+          <div class="mes-it despesas" role="link" tabindex="0" aria-label="Ver saídas"><span class="mes-ic out" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></span>
+            <div class="mes-tx"><button type="button" class="kpi-label" data-explain="saiu">Saiu da conta</button><div class="kpi-value num" id="kDespesas"></div><div class="kpi-sub" id="kDespesasSub"></div></div></div>
+          <div class="mes-it sobra" id="kSobraBox">
+            <div class="mes-tx"><button type="button" class="kpi-label" id="kSobraLabel" data-explain="sobra">Sobra</button><div class="kpi-value num" id="kSobra"></div><div class="mes-cap" id="kSobraCap"></div></div>
+            <svg class="mes-ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="tr" cx="18" cy="18" r="15.9155" fill="none" stroke-width="3.4"/><circle class="fg" id="kRing" cx="18" cy="18" r="15.9155" fill="none" stroke-width="3.4" stroke-dasharray="0 100"/></svg></div>
         </div>
-        <div class="kpi-sub" id="kSobraSub"></div>
+        <div class="mes-foot" id="kSobraSub"></div>
       </div>
     </section>
 
@@ -3052,13 +3066,14 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         : view.month > curKey() ? (used > t.receita ? `Vai sair ${Math.round((used / t.receita - 1) * 100)}% a mais do que vai entrar` : `${vc('Você vai usar', 'Vocês vão usar')} ${Math.round(used / t.receita * 100)}% do que vai entrar`)
         : used > t.receita ? `Saiu ${Math.round((used / t.receita - 1) * 100)}% a mais do que entrou`
         : `${vc('Você usou', 'Vocês usaram')} ${Math.round(used / t.receita * 100)}% do que entrou`;
-      const seg = (v, cls) => v > 0 ? `<i class="${cls}" style="width:${(v / top * 100).toFixed(2)}%"></i>` : '';
-      $('#kSobraSub').innerHTML = (top ? `<div class="kmeter" aria-hidden="true">${seg(Math.min(t.despesas, t.receita), 'out')}${seg(Math.min(t.investir, Math.max(t.receita - t.despesas, 0)), 'save')}${seg(used - Math.min(used, t.receita), 'over')}</div>` : '')
-        + `<div class="knote">${esc(cap)}${t.pct ? ` · guardando ${esc(money(t.investir))}` : ''}</div>`
-        + (() => { if (view.month !== curKey()) return '';
+      // anel da sobra: quanto do que caiu já saiu (passou de 100%: anel cheio em âmbar)
+      $('#kSobraCap').textContent = cap + (t.pct ? ` · guardando ${money(t.investir)}` : '');
+      $('#kSobraBox').classList.toggle('neg', t.saldo < 0);
+      $('#kRing').setAttribute('stroke-dasharray', `${(top ? Math.min(used / Math.max(t.receita, 1), 1) * 100 : 0).toFixed(1)} 100`);
+      $('#kSobraSub').innerHTML = (() => { if (view.month !== curKey()) return '';
           // o que o próximo mês já tem previsto (contas fixas, assinaturas, parcelas e faturas que vencem nele)
           const nk = addMonths(view.month, 1), nx = totals(nk).despesas;
-          return nx ? `<div class="knote">${monthName(nk).charAt(0).toUpperCase() + monthName(nk).slice(1)} já tem <b class="num">${esc(money(nx))}</b> previstos</div>` : ''; })(); }
+          return nx ? `<span class="mes-chip">${ico('cal', 'width:13px;height:13px')}${monthName(nk).charAt(0).toUpperCase() + monthName(nk).slice(1)} já tem <b class="num">${esc(money(nx))}</b> previstos</span>` : ''; })(); }
     renderHeadline(t);
 
     $('#eyeBtn').innerHTML = ico(ui.hidden ? 'eye-off' : 'eye');
