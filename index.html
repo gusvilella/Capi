@@ -2759,7 +2759,10 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const pct = investPct(key);
     const investir = Math.round(receita * pct / 100);
     const despesas = fixas + variaveis + assinaturas + faturas;
-    return { receita, aReceber, fixas, variaveis, assinaturas, faturas, despesas, pct, investir, saldo: receita - investir - despesas, incomeKey: incomeKey(key) };
+    // o que caiu (ou vai cair) no próprio mês — é o que o card mostra; com payLag o balanço usa o do mês seguinte
+    const recMes = incomeKey(key) === key ? rec : receitasOf(key);
+    const receitaMes = recMes.filter(r => !r.pending).reduce((s, r) => s + r.amount, 0), aReceberMes = recMes.filter(r => r.pending).reduce((s, r) => s + r.amount, 0);
+    return { receita, aReceber, receitaMes, aReceberMes, fixas, variaveis, assinaturas, faturas, despesas, pct, investir, saldo: receita - investir - despesas, incomeKey: incomeKey(key) };
   }
 
 
@@ -2972,18 +2975,18 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
 
     const t = totals(view.month);
     const cnt = (el, v, fmt = money) => countTo(el, v, fmt, countZero ? 0 : el._v);
-    cnt($('#kReceita'), t.receita);
-    // com payLag, o card mostra o dinheiro do mês seguinte (o que paga as contas deste mês)
+    cnt($('#kReceita'), t.receitaMes);
+    // o card mostra sempre o que caiu neste mês; com payLag, só o balanço usa o dinheiro do mês seguinte
     // mês que ainda não chegou (planejando): tudo no futuro — "vai cair", "vai sair", "previsão"
     const fut = view.month > curKey(), incFut = t.incomeKey > curKey();
-    $('[data-explain="entrou"]').textContent = t.incomeKey === view.month ? (fut ? 'Vai cair na conta' : 'Caiu na conta') : `${incFut ? (fut ? 'Vai cair' : 'Cai') : 'Caiu'} em ${monthName(t.incomeKey)}`;
+    $('[data-explain="entrou"]').textContent = fut ? 'Vai cair na conta' : 'Caiu na conta';
     $('[data-explain="saiu"]').textContent = fut ? 'Vai sair da conta' : 'Saiu da conta';
-    const byWho = multi() ? members().map(m => [m, receitasOf(t.incomeKey).filter(r => !r.pending && whoOf(r) === m.id).reduce((x, r) => x + r.amount, 0)]).filter(([, v]) => v) : [];
+    const byWho = multi() ? members().map(m => [m, receitasOf(view.month).filter(r => !r.pending && whoOf(r) === m.id).reduce((x, r) => x + r.amount, 0)]).filter(([, v]) => v) : [];
     // Divisão do valor: uma barrinha com a proporção de cada parte e, embaixo, uma linha por parte (nome à esquerda, valor à direita)
     const splitHtml = parts => { parts = parts.filter(p => p.v > 0); if (!parts.length) return '';
       return `<div class="kbar" aria-hidden="true">${parts.map(p => `<i style="flex:${p.v};background:${p.c}"></i>`).join('')}</div>
         <div class="kleg">${parts.map(p => `<span class="kl"><span class="kn">${p.mark || `<b style="background:${p.c}"></b>`}${esc(p.n)}</span><span class="kv num">${esc(money(p.v))}</span></span>`).join('')}</div>`; };
-    const recNote = [t.aReceber ? `+ ${esc(money(t.aReceber))} a receber` : '', !t.receita && !t.aReceber ? 'Nada lançado ainda' : ''].filter(Boolean).join(' · ');
+    const recNote = [t.aReceberMes ? `+ ${esc(money(t.aReceberMes))} a receber` : '', !t.receitaMes && !t.aReceberMes ? 'Nada lançado ainda' : ''].filter(Boolean).join(' · ');
     $('#kReceitaSub').innerHTML = (byWho.length > 1 ? splitHtml(byWho.map(([m, v]) => ({ n: m.name, v, c: memberColor(m.id), mark: avatar(m.id, true) }))) : '')
       + (recNote ? `<div class="knote">${recNote}</div>` : '');
     cnt($('#kDespesas'), t.despesas);
@@ -3016,13 +3019,14 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     { const used = t.despesas + t.investir, top = Math.max(t.receita, used);
       const cap = !t.receita && !used ? 'Lance o que entra e o que sai pra ver o balanço'
         : !t.receita ? (t.incomeKey !== view.month ? `Nada lançado em ${monthName(t.incomeKey)} ainda` : 'Ainda não entrou nada este mês')
+        : t.incomeKey !== view.month && view.month <= curKey() ? (used > t.receita ? `Sai ${Math.round((used / t.receita - 1) * 100)}% a mais do que ${incFut ? 'cai' : 'caiu'} em ${monthName(t.incomeKey)}` : `${vc(incFut ? 'Você vai usar' : 'Você usou', incFut ? 'Vocês vão usar' : 'Vocês usaram')} ${Math.round(used / t.receita * 100)}% do que ${incFut ? 'cai' : 'caiu'} em ${monthName(t.incomeKey)}`)
         : view.month > curKey() ? (used > t.receita ? `Vai sair ${Math.round((used / t.receita - 1) * 100)}% a mais do que vai entrar` : `${vc('Você vai usar', 'Vocês vão usar')} ${Math.round(used / t.receita * 100)}% do que vai entrar`)
         : used > t.receita ? `Saiu ${Math.round((used / t.receita - 1) * 100)}% a mais do que entrou`
         : `${vc('Você usou', 'Vocês usaram')} ${Math.round(used / t.receita * 100)}% do que entrou`;
       const seg = (v, cls) => v > 0 ? `<i class="${cls}" style="width:${(v / top * 100).toFixed(2)}%"></i>` : '';
       $('#kSobraSub').innerHTML = (top ? `<div class="kmeter" aria-hidden="true">${seg(Math.min(t.despesas, t.receita), 'out')}${seg(Math.min(t.investir, Math.max(t.receita - t.despesas, 0)), 'save')}${seg(used - Math.min(used, t.receita), 'over')}</div>` : '')
         + `<div class="knote">${esc(cap)}${t.pct ? ` · guardando ${esc(money(t.investir))}` : ''}</div>`
-        + (t.incomeKey !== view.month ? `<div class="knote">Contas de ${monthName(view.month)} com o dinheiro de ${monthName(t.incomeKey)}</div>` : ''); }
+        + (t.incomeKey !== view.month ? `<div class="knote">Dinheiro de ${monthName(t.incomeKey)}: <b class="num">${esc(money(t.receita))}</b></div>` : ''); }
     renderHeadline(t);
 
     $('#eyeBtn').innerHTML = ico(ui.hidden ? 'eye-off' : 'eye');
@@ -3660,7 +3664,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const n = ui.evoRange || 6, off = view.evoOff || 0;
     const end = addMonths(view.month > curKey() ? view.month : curKey(), -off * n);   // páginas pra trás: ‹ › ou arrastando o gráfico
     const months = Array.from({ length: n }, (_, i) => addMonths(end, i - n + 1));
-    const data = months.map(k => { const t = totals(k); return { k, receita: t.receita, despesas: t.despesas, saldo: t.receita - t.despesas }; });
+    const data = months.map(k => { const t = totals(k); return { k, receita: t.receitaMes, despesas: t.despesas, saldo: t.receita - t.despesas }; });   // barra: o que caiu no mês; sobra: como no balanço
     const box = $('#evo');
     if (!off && !data.some(d => d.receita || d.despesas)) { box.hidden = true; return; }
     box.hidden = false;
