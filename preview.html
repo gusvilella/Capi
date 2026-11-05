@@ -2737,12 +2737,15 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     return addMonths(key, 1);
   }
 
-  // REGRA ÚNICA DE MÊS: cada coisa conta no mês em que o dinheiro sai da conta.
-  // Sem cartão: no mês da data. No cartão: no mês em que a fatura dele vence (a compra de 23/10 numa fatura que vence
-  // 10/11 conta em novembro). Compras lançadas uma a uma contam pela categoria delas; a fatura só soma o que faltou lançar.
+  // Item pago com cartão (assinatura, despesa fixa ou variável): entra na fatura em que a data cai. Se essa fatura
+  // já foi lançada (e o cartão conta nas despesas), o valor já está dentro dela e não soma de novo.
   const payCardOf = item => item.payCard ? state.cards.find(c => c.id === item.payCard) : null;
-  // item pago no cartão: não conta no mês da compra (entra pela fatura, no mês do vencimento)
-  function inFatura(item) { return !!payCardOf(item); }
+  function inFatura(item, key) {
+    const c = payCardOf(item);
+    if (!c || !activeIn(c, key) || c.count === false) return false;
+    const f = (state.faturas[c.id] || {})[faturaKeyFor(c, item.shownDate)];
+    return !!(f && f.amount > 0);
+  }
   // Itens pagos no cartão que caem na fatura que vence em "key": cobrados neste mês, no anterior ou até dois meses antes
   // (cartão que fecha depois do dia do vencimento, ex.: fecha 26 e vence 5: compra de 28/12 vai para a fatura de fevereiro)
   function itemsOnCard(cardId, key) { return cached('ic' + cardId + key, () => itemsOnCardRaw(cardId, key)); }
@@ -2766,39 +2769,23 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     }
     return used;
   }
-  const countable = () => i => !inFatura(i);
-  // Tudo que sai da conta no mês "key": o que não é de cartão (pela data) + o que está nas faturas que vencem em "key".
-  // rest = o que a fatura lançada tem a mais do que as compras lançadas nela (entra como "Cartões").
-  function monthSpend(key) {
-    return cached('ms' + key, () => {
-      const items = [];
-      fixasOf(key).filter(countable()).forEach(i => items.push({ kind: 'fixa', i }));
-      assinaturasOf(key).filter(countable()).forEach(i => items.push({ kind: 'assin', i }));
-      variaveisOf(key).filter(countable()).forEach(i => items.push({ kind: 'var', i }));
-      let rest = 0, cards = 0;
-      for (const c of cardsOf(key)) {
-        const its = itemsOnCard(c.id, key), sum = its.reduce((s, i) => s + i.amount, 0), f = c.fatura;
-        its.forEach(i => items.push({ kind: i.kind === 'Conta fixa' ? 'fixa' : i.kind === 'Assinatura' ? 'assin' : 'var', i, card: c }));
-        const out = f ? f.amount : sum; cards += out; rest += out - sum;
-      }
-      return { items, rest, cards };
-    });
-  }
+  const countable = key => i => !inFatura(i, key);
 
   function totals(key) { return cached('t' + key, () => totalsRaw(key)); }
-  // (antes havia a opção "payLag": salário do mês seguinte pagando as contas deste; saiu pela regra única de mês)
+  // payLag: "com o salário de um mês eu pago as contas do mês anterior". Aí as contas de outubro são comparadas com o que
   // cai em novembro (o balanço do mês junta cada conta com o dinheiro que vai pagá-la). A aba Entradas continua mostrando o que caiu em cada mês.
-  const incomeKey = key => key;   // regra única de mês: o salário conta no mês em que caiu (a opção antiga "payLag" não vale mais)
+  const incomeKey = key => state.payLag ? addMonths(key, 1) : key;
   function totalsRaw(key) {
     const rec = receitasOf(incomeKey(key));
     const receita = rec.filter(r => !r.pending).reduce((s, r) => s + r.amount, 0);
     const aReceber = rec.filter(r => r.pending).reduce((s, r) => s + r.amount, 0);
-    const ms = monthSpend(key), sumK = k => ms.items.filter(x => x.kind === k).reduce((s, x) => s + x.i.amount, 0);
-    const fixas = sumK('fixa'), variaveis = sumK('var'), assinaturas = sumK('assin');
-    const faturas = Math.max(0, ms.rest);   // parte das faturas sem compra lançada (aparece como "Cartões")
+    const fixas = fixasOf(key).filter(countable(key)).reduce((s, f) => s + f.amount, 0);
+    const variaveis = variaveisOf(key).filter(countable(key)).reduce((s, v) => s + v.amount, 0);
+    const assinaturas = assinaturasOf(key).filter(countable(key)).reduce((s, a) => s + a.amount, 0);
+    const faturas = cardsOf(key).filter(c => c.count !== false).reduce((s, c) => s + (c.fatura ? c.fatura.amount : 0), 0);
     const pct = investPct(key);
     const investir = Math.round(receita * pct / 100);
-    const despesas = fixas + variaveis + assinaturas + ms.rest;   // rest pode ser negativo (fatura menor que as compras lançadas): vale a fatura
+    const despesas = fixas + variaveis + assinaturas + faturas;
     // o que caiu (ou vai cair) no próprio mês — é o que o card mostra; com payLag o balanço usa o do mês seguinte
     const recMes = incomeKey(key) === key ? rec : receitasOf(key);
     const receitaMes = recMes.filter(r => !r.pending).reduce((s, r) => s + r.amount, 0), aReceberMes = recMes.filter(r => r.pending).reduce((s, r) => s + r.amount, 0);
@@ -3070,7 +3057,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       $('#kSobraCap').textContent = cap + (t.pct ? ` · guardando ${money(t.investir)}` : '');
       $('#kSobraBox').classList.toggle('neg', t.saldo < 0);
       $('#kRing').setAttribute('stroke-dasharray', `${(top ? Math.min(used / Math.max(t.receita, 1), 1) * 100 : 0).toFixed(1)} 100`);
-      $('#kSobraSub').innerHTML = (() => { if (view.month !== curKey()) return '';
+      $('#kSobraSub').innerHTML = (t.incomeKey !== view.month ? `<span class="mes-chip">${ico('dollar', 'width:13px;height:13px')}Dinheiro de ${monthName(t.incomeKey)}: <b class="num">${esc(money(t.receita))}</b></span> ` : '') + (() => { if (view.month !== curKey()) return '';
           // o que o próximo mês já tem previsto (contas fixas, assinaturas, parcelas e faturas que vencem nele)
           const nk = addMonths(view.month, 1), nx = totals(nk).despesas;
           return nx ? `<span class="mes-chip">${ico('cal', 'width:13px;height:13px')}${monthName(nk).charAt(0).toUpperCase() + monthName(nk).slice(1)} já tem <b class="num">${esc(money(nx))}</b> previstos</span>` : ''; })(); }
@@ -3205,11 +3192,11 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     }).join('');
 
     const sum = found.filter(r => !r.pending).reduce((s, r) => s + r.amount, 0);
-    const inside = ui.tab === 'receita' || all ? 0 : rows.filter(r => inFatura(r)).reduce((s, r) => s + r.amount, 0);
+    const inside = ui.tab === 'receita' || all ? 0 : rows.filter(r => inFatura(r, view.month)).reduce((s, r) => s + r.amount, 0);
     const foot = (all && found.length > rows.length ? `<div class="yield"><span>Mostrando os ${rows.length} mais recentes de ${found.length} encontrados</span></div>` : '')
       + `<div class="total"><span>Total${filtered ? ' filtrado' : ''}${all ? ` (${found.length} em todos os meses)` : ''}</span>
       <strong class="num ${ui.tab === 'receita' ? 'pos' : 'negc'}">${ui.hidden ? '' : (ui.tab === 'receita') !== (sum < 0) ? '+ ' : '- '}${money(Math.abs(sum))}</strong></div>`
-      + (inside ? `<div class="yield"><span>No cartão: conta no mês em que a fatura vence</span><span class="num">${money(inside)}</span></div>` : '')
+      + (inside ? `<div class="yield"><span>Já dentro das faturas dos cartões (não soma de novo)</span><span class="num">${money(inside)}</span></div>` : '')
       + (isFixa && !filtered ? (() => {
         // quanto das contas fixas do mês já foi pago (ou está no cartão) e quanto falta
         const left = rows.filter(r => ['due', 'late'].includes(fixaState(r))).reduce((s, r) => s + r.amount, 0);
@@ -3514,7 +3501,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       .filter(e => e.dir === 'out' && e.ref && /^[fa]:/.test(e.ref)).sort((a, b) => b.amount - a.amount).slice(0, 3);
     const t = totals(curKey());
     const byCat = new Map();
-    monthSpend(curKey()).items.filter(x => x.kind === 'var').forEach(({ i: v }) => byCat.set(v.category, (byCat.get(v.category) || 0) + v.amount));
+    variaveisOf(curKey()).filter(countable(curKey())).forEach(v => byCat.set(v.category, (byCat.get(v.category) || 0) + v.amount));
     const cats = [...byCat.entries()].map(([id, v]) => ({ c: cat(id), v })).filter(x => x.c).sort((a, b) => b.v - a.v).slice(0, 3);
     const item = (ic, title, sub) => `<div class="idea"><div><b>${title}</b><small>${sub}</small></div></div>`;
     const list = [
@@ -3625,12 +3612,10 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const groups = new Map();
     // extra: id da categoria (tocar filtra a aba Despesa variável) ou aba para onde ir
     const add = (name, color, v, extra = {}) => { if (!v) return; const g = groups.get(name) || { name, color, value: 0, ...extra }; g.value += v; groups.set(name, g); };
-    // mesma regra do "Saiu da conta": o que sai neste mês (compras no cartão entram no mês do vencimento da fatura)
-    const ms = monthSpend(key), sumK = k => ms.items.filter(x => x.kind === k).reduce((s, x) => s + x.i.amount, 0);
-    ms.items.filter(x => x.kind === 'var').forEach(({ i: v }) => { const c = cat(v.category); add(c?.name || 'Sem categoria', c?.color || '#94a3b8', v.amount, c ? { id: c.id, icon: catIcon(c), cc: catColor(c) } : { icon: 'tag', cc: catColor(null, 'despesa') }); });
-    add('Contas fixas', '#475569', sumK('fixa'), { go: 'fixa', icon: 'receipt' });
-    add('Assinaturas', '#d97706', sumK('assin'), { go: 'assin', icon: 'tv' });
-    add('Cartões', '#1d4ed8', Math.max(0, ms.rest), { go: 'cartoes', icon: 'credit-card' });
+    variaveisOf(key).filter(countable(key)).forEach(v => { const c = cat(v.category); add(c?.name || 'Sem categoria', c?.color || '#94a3b8', v.amount, c ? { id: c.id, icon: catIcon(c), cc: catColor(c) } : { icon: 'tag', cc: catColor(null, 'despesa') }); });
+    add('Contas fixas', '#475569', fixasOf(key).filter(countable(key)).reduce((s, f) => s + f.amount, 0), { go: 'fixa', icon: 'receipt' });
+    add('Assinaturas', '#d97706', assinaturasOf(key).filter(countable(key)).reduce((s, a) => s + a.amount, 0), { go: 'assin', icon: 'tv' });
+    add('Cartões', '#1d4ed8', totals(key).faturas, { go: 'cartoes', icon: 'credit-card' });
     let list = [...groups.values()].sort((a, b) => b.value - a.value);
     if (list.length > 6) {
       // junta o resto em "Outros" (somando na categoria Outros, se ela já estiver entre as 5 maiores, pra não aparecer duas vezes)
@@ -4123,18 +4108,18 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         ${(() => { const ex = [!charged.has(a.id) ? `<small>${(a.skip || []).includes(view.month) ? 'pulada este mês' : 'não cobra este mês'}</small>` : '', viaHtml(a)].filter(Boolean).join(' ');
           return `<div class="name"><span>${esc(a.name)}${ex ? ` <span class="ex">${ex}</span>` : ''}</span><div class="tag-m">${tag}${ex ? `<span class="ex-m">${ex}</span>` : ''}</div></div>`; })()}
         <span class="cat">${tag}</span>
-        ${charged.has(a.id) && inFatura(a)
-          ? `<span class="val num absorbed" title="No cartão ${esc(payCardOf(a).name)}: conta no mês em que a fatura vence">${money(a.amount)}${suffix}<small>no cartão</small></span>`
+        ${charged.has(a.id) && inFatura({ ...a, shownDate: dateIn(view.month, a.day) }, view.month)
+          ? `<span class="val num absorbed" title="Já está dentro da fatura do ${esc(payCardOf(a).name)}">${money(a.amount)}${suffix}<small>na fatura</small></span>`
           : `<span class="val num">${money(a.amount)}<small style="color:var(--muted);font-weight:500">${suffix}</small></span>`}
         <button class="edit" data-edit="${a.id}" aria-label="Editar">${ico('pencil', 'width:14px;height:14px')}</button>
       </div>`;
     }).join('');
     const month = rows.reduce((s, a) => s + perMonth(a), 0);
     const now = assinaturasOf(view.month).reduce((s, a) => s + a.amount, 0);
-    const inside = assinaturasOf(view.month).filter(a => inFatura(a)).reduce((s, a) => s + a.amount, 0);
+    const inside = assinaturasOf(view.month).filter(a => inFatura(a, view.month)).reduce((s, a) => s + a.amount, 0);
     $('#table').innerHTML = detectBanner() + head + body + `
       <div class="total"><span>Custo por mês</span><strong class="num negc">${money(month)}</strong></div>
-      <div class="yield"><span>Cobrado neste mês ${money(now)}${inside ? ` · ${money(inside)} no cartão` : ''}</span><span>Por ano <strong class="num" style="color:var(--ink)">${money(month * 12)}</strong></span></div>`;
+      <div class="yield"><span>Cobrado neste mês ${money(now)}${inside ? ` · ${money(inside)} já nas faturas` : ''}</span><span>Por ano <strong class="num" style="color:var(--ink)">${money(month * 12)}</strong></span></div>`;
   }
 
   function renderAssinChart() {
@@ -4431,7 +4416,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       const limit = c.limit ? `<div class="cl-meter${avail < c.limit * 0.1 ? ' low' : ''}"><span class="cl-bar"><i style="width:${Math.min(100, (1 - avail / c.limit) * 100).toFixed(1)}%"></i></span><span><b class="num">${money(avail)}</b> livres<span class="cl-of"> de ${money(c.limit)}</span></span></div>` : '';
       const prev = !f ? faturaPreview(c.id, c.fk) : 0;
       const twin = c.last4 && rows.some(o => o.id !== c.id && norm(o.name) === norm(c.name) && whoOf(o) === whoOf(c));
-      const tip = [FLAGS[c.flag]?.name, c.last4 ? '•••• ' + c.last4 : '', ''].filter(Boolean).join(' · ');
+      const tip = [FLAGS[c.flag]?.name, c.last4 ? '•••• ' + c.last4 : '', c.count === false ? 'fora das despesas' : ''].filter(Boolean).join(' · ');
       return `<div class="row atop">
         <span class="date">${logoHtml({ brand: c.bank, name: c.name, color: c.color })}</span>
         <div class="name"><span title="${esc(tip)}">${whoBadge(c)}${esc(c.name)}${twin ? ` <small>•${esc(c.last4)}</small>` : ''}</span>
@@ -4445,12 +4430,13 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     }).join('');
     // faturas ainda não lançadas entram pela prévia (compras e parcelas que já caem nelas)
     const prevOf = c => c.fatura ? 0 : faturaPreview(c.id, c.fk), anyPrev = rows.some(c => prevOf(c));
+    const outN = rows.filter(c => c.count === false).length;
     const total = rows.reduce((s, c) => s + (c.fatura ? c.fatura.amount : prevOf(c)), 0);
     const open = rows.reduce((s, c) => s + (c.fatura ? (c.fatura.paid ? 0 : c.fatura.amount) : prevOf(c)), 0);
     $('#table').innerHTML = head + body + `
       <div class="total"><span>${view.month === curKey() ? 'Total das faturas atuais' : `Total das faturas que vencem em ${monthName(view.month)}`}${anyPrev ? ' <small style="color:var(--muted)">(com prévias)</small>' : ''}</span><strong class="num negc">${anyPrev ? '≈ ' : ''}${money(total)}</strong></div>
       <div class="yield"><span>${open ? 'Em aberto' : total ? 'Tudo pago' : ''}</span><span>${open ? `<strong class="num" style="color:var(--amber)">${money(open)}</strong>` : ''}</span></div>
-      <p class="cards-note">Cada fatura conta no mês em que vence. Compras lançadas uma a uma já entram pela categoria delas; a fatura só soma o que faltou lançar.</p>`;
+      ${outN ? `<p class="cards-note">${outN === rows.length ? (outN > 1 ? 'Estas faturas ficam' : 'Esta fatura fica') : `${outN} ${outN > 1 ? 'faturas ficam' : 'fatura fica'}`} fora do "Saiu da conta": as compras já estão lançadas em Gastos.</p>` : ''}`;
   }
 
   function renderCardsChart() {
@@ -4499,6 +4485,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       <select class="select" id="fPayAcc"><option value="">Prefiro não dizer</option>${state.accounts.map(a => `<option value="${a.id}" ${a.id === c.payAccount ? 'selected' : ''}>${esc(a.name)}</option>`).join('')}</select>
       <p class="help">Marcar a fatura como paga não mexe no saldo. Com uma conta escolhida aqui, o aviso de "paga" oferece tirar o valor dela com um toque.</p>` : ''}
       ${whoField(item, meId(), 'De quem é o cartão?')}
+      ${checkField('fCount', 'Contar a fatura no que saiu', 'Desmarque se você já lança cada compra deste cartão em Gastos, pra não contar duas vezes.', c.count !== false)}
       ${footer(editing)}</form>`, m => {
       bindWho(m);
       const prev = () => { m.querySelector('#ccPrev').innerHTML = ccPreview(c); };
@@ -4533,7 +4520,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         if (!c.flag) return showErr('Escolha a bandeira do cartão.');
         const data = { bank: c.bank || '', name, flag: c.flag, last4: c.last4 || '', color: c.color || '',
           limit: cents(m.querySelector('#fLimit')), closeDay: +m.querySelector('#fClose').value, dueDay: +m.querySelector('#fDue').value,
-          payAccount: m.querySelector('#fPayAcc')?.value || '', ...readWho(m) };
+          count: m.querySelector('#fCount').checked, payAccount: m.querySelector('#fPayAcc')?.value || '', ...readWho(m) };
         if (editing) Object.assign(state.cards.find(x => x.id === item.id), data);
         else {
           const id = uid();
@@ -5462,9 +5449,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     return a ? `<span class="via" title="Conta ${esc(a.name)}">${logoHtml(a)}<span class="vt">${esc(a.name)}</span></span>` : '';
   }
   function valHtml(item, key, text) {
-    if (!inFatura(item)) return item.est ? `<span class="val num est" title="Média dos últimos meses. Confirme quando a conta chegar.">${text}<small>estimado</small></span>` : `<span class="val num">${text}</span>`;
-    const c = payCardOf(item), fk = faturaKeyFor(c, item.shownDate || dateIn(key, item.day || 1));
-    return `<span class="val num absorbed" title="No cartão ${esc(c.name)}: conta em ${monthName(fk)}, quando a fatura vence">${text}<small>fatura de ${shortMonth(fk)}</small></span>`;
+    if (!inFatura(item, key)) return item.est ? `<span class="val num est" title="Média dos últimos meses. Confirme quando a conta chegar.">${text}<small>estimado</small></span>` : `<span class="val num">${text}</span>`;
+    return `<span class="val num absorbed" title="Já está dentro da fatura do ${esc(payCardOf(item).name)}">${text}<small>na fatura</small></span>`;
   }
 
   function showErr(msg) { $('#fErr').textContent = msg; }
@@ -5639,6 +5625,9 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       <div class="pal-pick" id="mPal">${Object.entries(PALETTES).map(([k, v]) => `<button type="button" data-pal="${k}" class="${k === ui.palette ? 'on' : ''}"><span class="sw">${(v.cols || PALETTE).slice(0, 5).map(c => `<i style="background:${c}"></i>`).join('')}</span>${v.name}</button>`).join('')}</div>
       <p class="fl">Fonte</p>
       <div class="font-pick" id="mFonts">${FONTS.map(f => `<button type="button" data-font="${f}" style="font-family:'${f}'" class="${f === ui.font ? 'on' : ''}"><span>Aa</span>${f}</button>`).join('')}</div>
+      <p class="fl">Com o salário de um mês, ${vc('você paga', 'vocês pagam')}…</p>
+      <div class="seg2" id="mLag"><button type="button" data-lag="0" class="${state.payLag ? '' : 'on'}">as contas do mesmo mês</button><button type="button" data-lag="1" class="${state.payLag ? 'on' : ''}">as contas do mês anterior</button></div>
+      <p class="help" style="margin-top:-2px">No "mês anterior", o balanço de cada mês usa o dinheiro que cai no mês seguinte (ex.: contas de outubro com o salário de novembro).</p>
       <button class="menu-item" id="mFamily">Uso do app <span style="margin-left:auto;font-weight:500;font-size:.78rem;color:var(--muted)">${familyOn() ? (multi() ? esc(familyNames()) : 'em família') : 'só eu'}</span></button>
       <p class="fl">App</p>
       <button class="menu-item" id="mInstall">Instalar como app</button>
@@ -5661,6 +5650,11 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       };
       m.querySelector('#mAccount').onclick = () => openAccountSettings();
       m.querySelector('#mFamily').onclick = () => openFamily();
+      m.querySelector('#mLag').onclick = e => {
+        const b = e.target.closest('[data-lag]'); if (!b) return;
+        state.payLag = b.dataset.lag === '1'; save(); render();
+        m.querySelectorAll('#mLag button').forEach(x => x.classList.toggle('on', x === b));
+      };
       m.querySelector('#mPal').onclick = e => {
         const b = e.target.closest('[data-pal]'); if (!b) return;
         ui.palette = b.dataset.pal; saveUi(); render();
@@ -5876,7 +5870,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     // Para onde foi o dinheiro
     const groups = new Map();
     const add = (name, color, v) => { if (!v) return; const g = groups.get(name) || { name, color, value: 0 }; g.value += v; groups.set(name, g); };
-    monthSpend(key).items.filter(x => x.kind === 'var').forEach(({ i: v }) => { const c = cat(v.category); add(c?.name || 'Sem categoria', c?.color || '#94a3b8', v.amount); });
+    variaveisOf(key).filter(countable(key)).forEach(v => { const c = cat(v.category); add(c?.name || 'Sem categoria', c?.color || '#94a3b8', v.amount); });
     add('Contas fixas', '#475569', t.fixas);
     add('Assinaturas', '#d97706', t.assinaturas);
     add('Cartões', '#1d4ed8', t.faturas);
@@ -7471,7 +7465,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   const EXPLAIN = {
     contas: ['Seu dinheiro hoje', 'É o dinheiro que você tem agora, somando os bancos que cadastrou em <b>Bancos</b>.', 'Ele muda sozinho quando você lança uma entrada ou um gasto pago com aquela conta. Se ficar diferente do app do banco, é só tocar em Bancos e corrigir o valor.'],
     entrou: ['Caiu na conta', 'Tudo que caiu na conta no mês: salário, pix, vendas, rendimentos.', 'O que você ainda vai receber aparece embaixo, como "a receber", e só entra na conta quando você marcar como recebido.'],
-    saiu: ['Saiu da conta', 'Tudo que sai da conta no mês: contas fixas, gastos, assinaturas e cartões.', 'Cada coisa conta no mês em que o dinheiro sai da conta. Compra no cartão conta no mês em que a fatura vence (comprou dia 23/10, fatura vence 10/11: conta em novembro). Compras lançadas uma a uma entram pela categoria delas; a fatura só soma o que faltou lançar, então nada conta duas vezes.'],
+    saiu: ['Saiu da conta', 'Tudo que saiu da conta no mês: contas fixas, gastos do dia a dia, assinaturas e faturas de cartão.', 'O que você pagou no cartão entra pela fatura, pra não contar duas vezes.'],
     sobra: ['Sobra do mês', 'É o que caiu na conta, menos o que saiu, menos o que você quer guardar (em Guardar). Com "+" sobrou; com "–" faltou.', 'A barrinha mostra quanto do que entrou já saiu. Se passar do que entrou, o pedaço a mais fica em amarelo: é quanto falta pra fechar o mês sem se apertar. Na Visão geral tem ideias pra resolver.'],
   };
   document.addEventListener('click', e => {
