@@ -793,7 +793,6 @@ div.empty::before, .ov-forecast > .ov-empty::before, .ov-where > .ov-empty::befo
 .hero-sub { text-wrap: pretty; }
 .hero-sub { margin: 8px 0 0; color: var(--muted); font-size: .92rem; }
 .kpis { grid-template-columns: minmax(0, 1fr) minmax(0, 2.15fr); }
-.top.no-head #headline, .top.no-head .hero-sub { display: none; }
 /* Visão geral (computador): primeiro rosca, cartões e calendário; previsão e metas/patrimônio embaixo, como detalhe */
 @media (min-width: 981px) { .ov-where { order: 1; } .ov-cards { order: 2; } .ov-cal { order: 3; } .ov-forecast { order: 4; } .ov-goals { order: 5; } .ov-steps { order: 0; } }
 /* card do mês: três blocos (caiu · saiu · sobra), cada um com ícone; a sobra em destaque com o anel de quanto já saiu */
@@ -1990,18 +1989,17 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
 }
 @media (min-width: 780px) and (max-width: 1100px) { .capi-scene { width: 148px; bottom: -24px; } }   /* aqui o título é de uma linha só: menor, a laranja não encosta no mês */
 @media (max-width: 640px) {
-  .top { position: relative; } .top > div:first-child { padding-right: 122px; }
+  .top { position: relative; }
   .capi-scene { position: absolute; right: -8px; top: -6px; width: 152px; margin: 0; }
 }
 @media (max-width: 380px) {
-  .top > div:first-child { padding-right: 114px; }
   .capi-scene { width: 130px; right: -10px; top: -4px; }
 }
 @media (prefers-reduced-motion: reduce) { .capi-scene, .capi-scene * { animation: none !important; } }
 
 /* ===== Celular · Início: topo numa linha (saudação + Capi pequena), balanço em destaque, resto compacto ===== */
 @media (max-width: 640px) {
-  html[data-tab="geral"] .top { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "hi scene" "bar bar"; align-items: center; gap: 10px 8px; margin-bottom: 14px; }
+  html[data-tab="geral"] .top { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "hi" "bar"; align-items: center; gap: 10px 8px; margin-bottom: 14px; }
   html[data-tab="geral"] .top > div:first-child { grid-area: hi; min-width: 0; padding-right: 0 !important; }
   html[data-tab="geral"] .top #headline, html[data-tab="geral"] .top .hero-sub { display: none; }
   html[data-tab="geral"] .top .hello { width: 100%; font-size: 1.22rem; font-weight: 600; color: var(--ink); letter-spacing: -.02em; line-height: 1.2; text-wrap: wrap; }
@@ -2029,7 +2027,25 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   .mes-it.sobra .kpi-value { font-size: 1.3rem; }
   .mes-it[role="link"]::after { content: "›"; margin-left: auto; font-size: 1.1rem; color: var(--muted); }
 }
-  </style>
+  /* ===== Card "Dinheiro de vocês": tudo no centro, logos dos bancos grandes ===== */
+.kpi.contas { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 22px 20px; }
+.kpi.contas .kpi-head { justify-content: center; width: 100%; min-height: 0; }
+.kpi.contas #accountsBtn { position: absolute; top: 14px; right: 14px; padding: 5px 11px; border-radius: 999px; background: rgba(255, 255, 255, .16); text-decoration: none; font-size: .76rem; backdrop-filter: blur(6px); transition: background .2s; }
+.kpi.contas #accountsBtn:hover { background: rgba(255, 255, 255, .26); }
+.kpi.contas #accountsBtn svg.i { display: none; }
+.kpi.contas .kpi-value { margin-top: 8px; font-size: 2.35rem; max-width: 100%; }
+.kpi.contas #kSaldoSub { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 14px; font-size: .84rem; flex-wrap: wrap; }
+.kpi.contas .logo-stack { margin: 0; }
+.kpi.contas .logo-stack .logo { width: 34px; height: 34px; border-radius: 10px; margin-left: 7px; border: 0; box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .55), 0 6px 14px -6px rgba(0, 0, 0, .35) !important; }
+.kpi.contas .logo-stack .logo:first-child { margin-left: 0; }
+.kpi.contas .bank-n { padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, .14); color: #fff; font-weight: 500; }
+@media (max-width: 640px) {
+  html[data-tab="geral"] .kpi.contas { padding: 20px 18px 18px; }
+  html[data-tab="geral"] .kpi.contas .kpi-value { font-size: 2.3rem !important; margin-top: 6px; }
+  .kpi.contas .logo-stack .logo { width: 30px; height: 30px; border-radius: 9px; margin-left: 6px; }
+  .kpi.contas #kSaldoSub { margin-top: 12px; }
+}
+</style>
 </head>
 <body>
   <!-- Ícones -->
@@ -2121,7 +2137,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         <p class="hello" id="hello">&nbsp;</p>
         <h1 class="title" id="headline">&nbsp;</h1>
       </div>
-      <button type="button" class="capi-scene" id="capiScene" aria-label="Capi guardando dinheiro no cofrinho" title="Guardar mais uma moedinha"></button>
+      <!-- cena da Capi com o cofrinho: fora do Início por enquanto (o código continua aí; é só voltar o botão #capiScene) -->
       <div class="top-right">
         <div style="display:flex;gap:4px">
           <button class="ghost-ico" id="installBtn" title="Instalar o app no aparelho" aria-label="Instalar o app no aparelho" hidden><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M12 3v11M7.5 9.5 12 14l4.5-4.5M5 20h14"/></svg></button>
@@ -2845,8 +2861,6 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     if (!el) { el = document.createElement('p'); el.id = 'heroSub'; el.className = 'hero-sub'; $('#headline').after(el); }
     el.textContent = sub;
     el.hidden = !sub;
-    // "Sobram/Faltam R$ X" repete o card do mês logo abaixo: nesses casos a frase some e fica só a saudação
-    $('.top').classList.toggle('no-head', /^(Sobram|Faltam) /.test(h));
   }
 
   // ================= Render =================
@@ -3039,7 +3053,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       cnt($('#kSaldo'), total, signed);
       $('#kSaldo').classList.toggle('neg', total < 0);
       $('#kSaldo').title = ui.hidden ? '' : state.accounts.map(a => `${a.name}: ${brl.format(accBalance(a) / 100)}`).join('\n');
-      $('#kSaldoSub').innerHTML = `<span class="logo-stack">${state.accounts.slice(0, 5).map(a => logoHtml(a, 'sm')).join('')}</span>${state.accounts.length === 1 ? esc(state.accounts[0].name) : `${state.accounts.length} contas`}`;
+      $('#kSaldoSub').innerHTML = `<span class="logo-stack">${state.accounts.slice(0, 5).map(a => logoHtml(a)).join('')}</span><span class="bank-n">${state.accounts.length === 1 ? esc(state.accounts[0].name) : `${state.accounts.length} contas`}</span>`;
     } else {
       $('#kSaldo').textContent = '—'; $('#kSaldo')._v = null;
       $('#kSaldo').classList.remove('neg');
