@@ -1547,6 +1547,15 @@ button.kpi-label:hover { color: var(--ink); text-decoration-color: currentColor;
 /* Barras de progresso: enchem e recebem um brilho */
 @keyframes meter-fill { from { transform: scaleX(0); } }
 @keyframes meter-shine { from { transform: translateX(-120%); } to { transform: translateX(220%); } }
+/* barrinhas dos cartões: enchem ao trocar de aba/mês e, paradas, um brilho suave passa de vez em quando */
+@keyframes bar-gleam { 0%, 72% { transform: translateX(-120%); } 100% { transform: translateX(260%); } }
+.bar-mv i { position: relative; overflow: hidden; transform-origin: left center; }
+.bars-go .bar-mv i { animation: meter-fill 1s cubic-bezier(.22, .8, .25, 1) calc(.12s + var(--i, 0) * .09s) both; }
+.bar-mv i::after { content: ""; position: absolute; inset: 0; width: 55%; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .5), transparent);
+  animation: bar-gleam 5.5s ease-in-out calc(1.4s + var(--i, 0) * .35s) infinite both; }
+html:root[data-theme="dark"] .bar-mv i::after { background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .28), transparent); }
+@media (prefers-reduced-motion: reduce) { .bars-go .bar-mv i, .bar-mv i::after { animation: none !important; } .bar-mv i::after { display: none; } }
 .meter i, .steps-bar i { position: relative; overflow: hidden; transform-origin: left center; }
 /* animações que esperam o quadro aparecer na tela (rolando): ficam paradas no começo (rv-wait) e rodam ao aparecer (rv-go) */
 .rv-wait, .rv-wait * { animation-play-state: paused !important; }
@@ -3035,6 +3044,13 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
   let lastView = '';
   let donutAnim = true, sameView = false, inBySwap = false;
   // Barras de progresso enchem da esquerda pra direita (e um brilho passa no fim) ao abrir e ao trocar de aba/mês
+  // barrinhas de limite dos cartões: enchem de novo (uma depois da outra) a cada troca de aba ou de mês
+  function barsGo() {
+    if (reduced()) return;
+    const root = document.documentElement;
+    root.classList.remove('bars-go'); void root.offsetWidth; root.classList.add('bars-go');
+    clearTimeout(barsGo.t); barsGo.t = setTimeout(() => root.classList.remove('bars-go'), 2600);
+  }
   function fillAnim() {
     const root = document.documentElement;
     root.classList.remove('fill-anim'); void root.offsetWidth; root.classList.add('fill-anim');
@@ -3153,6 +3169,7 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
           if (!matchMedia('(prefers-reduced-motion: reduce)').matches) { donutAnim = true; requestAnimationFrame(() => { armReveal(); countUpDonuts(); donutAnim = false; }); }
         }
         lastKpiMonth = view.month; lastView = v;
+        barsGo();
       } }
     // saudação pela hora do dia
     $('#hello').innerHTML = (multi() ? famAvatars(true) : account ? avBadge(avFor(account.av, userName()), 'sm') : '') + esc(greet() + (multi() ? ', ' + familyNames() : account ? ', ' + userName() : ''));
@@ -3861,22 +3878,24 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
     });
   }
 
+  const shownKey = (c, k) => { const f = (state.faturas[c.id] || {})[k]; return k === curKey() && f && f.paid ? addMonths(k, 1) : k; };
+  // linha "Anterior": a fatura que você acabou de pagar, com o valor dela
+  const prevLine = (c, k) => { const f = (state.faturas[c.id] || {})[k]; return k === curKey() && f && f.paid ? f.amount : null; };
   function renderOvCards() {
     const box = $('#ovCards');
     const cards = cardsOf(view.month);
     box.innerHTML = `<h3>Cartões <button class="ov-link" data-go="cartoes">Ver todos</button></h3>`
-      + (cards.length ? cards.map(c => {
-        const k = view.month, f = c.fatura, prev = f ? 0 : faturaPreview(c.id, k), amt = f ? f.amount : prev;
+      + (cards.length ? cards.map((c, ci) => {
+        const k = shownKey(c, view.month), f = (state.faturas[c.id] || {})[k] || null, prev = f ? 0 : faturaPreview(c.id, k), amt = f ? f.amount : prev;
         const used = c.limit ? cardUsed(c) : 0, pct = c.limit ? used / c.limit : 0;
         const fs = faturaState(c, k, f), st = f || prev ? FSTATE[fs][1] : 'Sem fatura';
-        // já paga no mês atual: mostra também a próxima, que é a que está juntando compras agora
-        const nk = addMonths(k, 1), nf = (state.faturas[c.id] || {})[nk], nAmt = nf ? nf.amount : faturaPreview(c.id, nk);
-        const next = f && f.paid && k === curKey() && nAmt ? `<small class="ov-next">Próxima: ${money(nAmt)} em ${dm(faturaDates(c, nk).due)}</small>` : '';
+        const pv = prevLine(c, view.month);
+        const next = pv !== null ? `<small class="ov-next">Anterior: ${money(pv)} · paga</small>` : '';
         return `<div class="ov-row">${logoHtml({ brand: c.bank, name: c.name, color: c.color })}
           <div class="grow"><b>${esc(c.name)}${c.last4 ? ` •${esc(c.last4)}` : ''}</b><small>${st} · vence ${dm(faturaDates(c, k).due)}</small>
-            ${next}${c.limit ? `<div class="meter ${pct > 0.9 ? 'over' : pct > 0.7 ? 'warn' : 'info'}"><i style="width:${Math.min(pct, 1) * 100}%"></i></div>` : ''}</div>
+            ${next}${c.limit ? `<div class="meter bar-mv ${pct > 0.9 ? 'over' : pct > 0.7 ? 'warn' : 'info'}" style="--i:${ci}"><i style="width:${Math.min(pct, 1) * 100}%"></i></div>` : ''}</div>
           <span class="amt">${amt ? money(amt) : '—'}${!f && amt && fs === 'open' ? '<small class="ov-sofar">até agora</small>' : ''}</span></div>`;
-      }).join('') + (cards.length > 1 ? `<div class="ov-row ov-tot"><div class="grow"><small>Faturas que vencem em ${monthName(view.month)}</small></div><span class="amt">${money(cards.reduce((s, c) => s + cardOut(c, view.month), 0))}</span></div>` : '')
+      }).join('') + (cards.length > 1 ? `<div class="ov-row ov-tot"><div class="grow"><small>${cards.some(c => shownKey(c, view.month) !== view.month) ? 'Faturas atuais' : `Faturas que vencem em ${monthName(view.month)}`}</small></div><span class="amt">${money(cards.reduce((s, c) => s + cardOut(c, shownKey(c, view.month)), 0))}</span></div>` : '')
       : '<div class="ov-empty">Nenhum cartão cadastrado.</div>');
   }
 
@@ -4632,7 +4651,7 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
     $('#tableTitle').textContent = 'Cartões de crédito';
     const q = norm(view.query);
     const rows = cardsOf(view.month).filter(c => !q || norm(c.name).includes(q)).map(c => {
-      const k = view.month;   // a aba mostra as faturas que vencem no mês da tela (a soma bate com o "Saiu da conta")
+      const k = shownKey(c, view.month);   // a fatura que vence no mês da tela; no mês atual, depois de paga, a atual
       return { ...c, fk: k, fatura: (state.faturas[c.id] || {})[k] || null, dates: faturaDates(c, k) };
     });
     if (!rows.length) {
@@ -4640,7 +4659,7 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
       return;
     }
     const head = `<div class="row head"><span></span><span>Cartão</span><span class="cat">Fatura</span><span class="val">Valor</span><span></span></div>`;
-    const body = rows.map(c => {
+    const body = rows.map((c, ci) => {
       const f = c.fatura;
       const st = FSTATE[faturaState(c, c.fk, f)];
       const prevV = !f ? faturaPreview(c.id, c.fk) : 0;
@@ -4650,7 +4669,7 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
       // Linha limpa: nome, datas da fatura e uma barrinha do limite. Bandeira e final do cartão ficam no "title"
       // (o final aparece se dois cartões tiverem o mesmo nome); o que já está dentro da fatura aparece ao abrir a fatura.
       const avail = c.limit ? Math.max(c.limit - cardUsed(c), 0) : 0;
-      const limit = c.limit ? `<div class="cl-meter${avail < c.limit * 0.1 ? ' low' : ''}"><span class="cl-bar"><i style="width:${Math.min(100, (1 - avail / c.limit) * 100).toFixed(1)}%"></i></span><span><b class="num">${money(avail)}</b> livres<span class="cl-of"> de ${money(c.limit)}</span></span></div>` : '';
+      const limit = c.limit ? `<div class="cl-meter${avail < c.limit * 0.1 ? ' low' : ''}"><span class="cl-bar bar-mv" style="--i:${ci}"><i style="width:${Math.min(100, (1 - avail / c.limit) * 100).toFixed(1)}%"></i></span><span><b class="num">${money(avail)}</b> livres<span class="cl-of"> de ${money(c.limit)}</span></span></div>` : '';
       const prev = !f ? faturaPreview(c.id, c.fk) : 0;
       const twin = c.last4 && rows.some(o => o.id !== c.id && norm(o.name) === norm(c.name) && whoOf(o) === whoOf(c));
       const tip = [FLAGS[c.flag]?.name, c.last4 ? '•••• ' + c.last4 : ''].filter(Boolean).join(' · ');
@@ -4658,10 +4677,8 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
         <span class="date">${logoHtml({ brand: c.bank, name: c.name, color: c.color })}</span>
         <div class="name"><span title="${esc(tip)}">${whoBadge(c)}${esc(c.name)}${c.last4 ? ` <small>•${esc(c.last4)}</small>` : ''}</span>
           <div class="card-sub">Vence ${dm(c.dates.due)} · fecha ${dm(c.dates.close)}</div>${(() => {
-            // já paga no mês atual: a próxima (a que está juntando compras agora) fica a um toque
-            if (!(f && f.paid && c.fk === curKey())) return '';
-            const nk = addMonths(c.fk, 1), nf = (state.faturas[c.id] || {})[nk], nAmt = nf ? nf.amount : faturaPreview(c.id, nk);
-            return `<button type="button" class="card-next" data-fatura="${c.id}" data-key="${nk}">Próxima: <b class="num">${money(nAmt)}</b> ${ico('right', 'width:12px;height:12px')}</button>`; })()}
+            const pv = prevLine(c, view.month); if (pv === null) return '';
+            return `<button type="button" class="card-next" data-fatura="${c.id}" data-key="${view.month}">Anterior: <b class="num">${money(pv)}</b> ${ico('right', 'width:12px;height:12px')}</button>`; })()}
           ${limit}
           <div class="tag-m">${status}</div></div>
         <span class="cat">${status}</span>
@@ -4674,13 +4691,13 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
     const total = rows.reduce((s, c) => s + (c.fatura ? c.fatura.amount : prevOf(c)), 0);
     const open = rows.reduce((s, c) => s + (c.fatura ? (c.fatura.paid ? 0 : c.fatura.amount) : prevOf(c)), 0);
     $('#table').innerHTML = head + body + `
-      <div class="total"><span>Faturas que vencem em ${monthName(view.month)}</span><strong class="num negc">${money(total)}</strong></div>
+      <div class="total"><span>${rows.some(c => c.fk !== view.month) ? 'Faturas atuais' : `Faturas que vencem em ${monthName(view.month)}`}</span><strong class="num negc">${money(total)}</strong></div>
       <div class="yield"><span>${open ? 'Falta pagar' : total ? 'Tudo pago' : ''}</span><span>${open ? `<strong class="num" style="color:var(--amber)">${money(open)}</strong>` : ''}</span></div>
 `;
   }
 
   function renderCardsChart() {
-    const rows = cardsOf(view.month).map(c => { const k = view.month, f = (state.faturas[c.id] || {})[k]; return { ...c, amt: f ? f.amount : faturaPreview(c.id, k) }; })
+    const rows = cardsOf(view.month).map(c => { const k = shownKey(c, view.month), f = (state.faturas[c.id] || {})[k]; return { ...c, amt: f ? f.amount : faturaPreview(c.id, k) }; })
       .filter(c => c.amt > 0).map(c => {
       const b = BRANDS[c.bank];
       return { name: cardLabel(c), color: b ? b.color : (c.color || '#64748b'), value: c.amt, mono: c.bank ? monoMark(c.bank, c.name) : '', icon: c.bank ? '' : 'credit-card' };
