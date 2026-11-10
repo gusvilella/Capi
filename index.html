@@ -372,7 +372,7 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .mk-grid.plan button.on { background: var(--accent); box-shadow: none; }
 @media (max-width: 640px) {
   /* no mês atual não tem seta pro futuro: pra planejar, toque no nome do mês */
-  html[data-when="now"] #nextMonth, html[data-when="future"] #nextMonth { visibility: hidden; }
+  /* (a seta de próximo mês agora aparece sempre: antes sumia no mês atual e só dava pra avançar tocando no nome do mês) */
   .month .label { cursor: pointer; }
   .month .label::after { content: " ▾"; font-size: .7em; color: var(--muted); }
 }
@@ -543,7 +543,14 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .ov-row .grow small { color: var(--muted); font-size: .72rem; }
 .ov-row .meter { margin-top: 5px; height: 6px; }
 .ov-row .amt { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ov-more { display: none; grid-column: 1 / -1; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; padding: 12px 16px; border: 1px dashed var(--field-line); border-radius: var(--r); background: transparent; color: var(--ink-2); font: inherit; font-size: .86rem; font-weight: 600; cursor: pointer; }
+.ov-more svg.i { width: 15px; height: 15px; transition: transform .2s; } .home-more .ov-more svg.i { transform: rotate(90deg); }
+.ov-more small { font-weight: 500; color: var(--muted); font-size: .76rem; }
+@media (prefers-reduced-motion: reduce) { .ov-more svg.i { transition: none; } }
 .ov-row .ov-next { display: block; margin-top: 1px; }
+.ov-row .amt { text-align: right; } .ov-row .ov-sofar { display: block; font-size: .68rem; font-weight: 500; color: var(--muted); }
+.card-next { white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 5px 10px; border: 0; border-radius: 999px; background: var(--field); color: var(--ink-2); font: inherit; font-size: .74rem; font-weight: 500; cursor: pointer; min-height: 30px; }
+.card-next b { color: var(--ink); font-weight: 650; } .card-next:hover { background: var(--field-line); }
 .ov-row.ov-tot { padding-top: 10px; }
 .where-list { margin-top: 6px; max-height: min(56vh, 460px); overflow-y: auto; padding-right: 2px; }
 .where-list .ov-row .grow small { display: block; white-space: normal; line-height: 1.35; }
@@ -645,6 +652,14 @@ html.locked .lock { place-items: normal; overflow-y: auto; }
 .acc-total strong { font-size: 1.3rem; font-weight: 800; }
 .acc-note { grid-column: 1 / -1; margin: 2px 0 4px 42px; font-size: .72rem; color: var(--muted); }
 .acc-note summary { cursor: pointer; list-style: none; }
+.more-opt { margin-top: 14px; border-top: 1px solid var(--line); }
+.more-opt summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; min-height: 48px; font-weight: 600; font-size: .88rem; color: var(--ink-2); }
+.more-opt summary::-webkit-details-marker { display: none; }
+.more-opt summary::after { content: "›"; margin-left: auto; font-size: 1.2rem; color: var(--muted); transition: transform .2s; }
+.more-opt[open] summary::after { transform: rotate(90deg); }
+.more-opt summary span { font-weight: 500; font-size: .76rem; color: var(--muted); }
+.more-opt summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+@media (prefers-reduced-motion: reduce) { .more-opt summary::after { transition: none; } }
 .acc-note summary::-webkit-details-marker { display: none; }
 .acc-note .acc-more { color: var(--accent-ink); font-weight: 700; margin-left: 4px; }
 .acc-note[open] .acc-more { display: none; }
@@ -2036,10 +2051,14 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   html[data-tab="geral"] .ov-steps { order: 1; }
   html[data-tab="geral"] .kpi.contas { order: 2; padding: 18px 18px 16px; }
   html[data-tab="geral"] .kpi.contas .kpi-value { font-size: 2.1rem !important; margin-top: 8px; }
-  html[data-tab="geral"] .ov-where { order: 3; }
-  html[data-tab="geral"] .kpi.mes { order: 4; }
-  html[data-tab="geral"] .ov-cal { order: 6; } html[data-tab="geral"] .ov-cards { order: 7; } html[data-tab="geral"] .ov-goals { order: 8; } html[data-tab="geral"] .ov-forecast { order: 9; }
+  html[data-tab="geral"] .kpi.mes { order: 3; }
+  html[data-tab="geral"] .ov-where { order: 4; }
+  html[data-tab="geral"] .ov-cards { order: 5; }
+  html[data-tab="geral"] .ov-more { order: 6; display: flex; }
+  html[data-tab="geral"] .ov-cal { order: 7; } html[data-tab="geral"] .ov-forecast { order: 8; } html[data-tab="geral"] .ov-goals { order: 9; }
   html[data-tab="geral"] #evo { order: 10; }
+  /* o que não é do dia a dia fica recolhido até tocar em "Ver mais" */
+  html[data-tab="geral"]:not(.home-more) .ov-cal, html[data-tab="geral"]:not(.home-more) .ov-forecast, html[data-tab="geral"]:not(.home-more) .ov-goals, html[data-tab="geral"]:not(.home-more) #evo { display: none; }
   .kpi.mes { padding: 16px; }
   .kpi.mes .mes-row { grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
   .mes-it { padding: 10px 12px; gap: 10px; }
@@ -3064,6 +3083,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const away = view.month !== curKey();
     $('#monthLabel').classList.toggle('away', away);
     document.documentElement.dataset.when = view.month < curKey() ? 'past' : view.month > curKey() ? 'future' : 'now';
+    document.documentElement.classList.toggle('home-more', !!ui.homeMore);
     { const bt = $('#backToday'); const wasHidden = bt.hidden; bt.hidden = !away;
       if (away) { bt.innerHTML = view.month > curKey() ? `<span class="plan-tag">Planejando ${monthName(view.month)}</span>${ico('left')}Voltar para ${monthName(curKey())}` : `${ico('right')}Voltar para ${monthName(curKey())}`; if (wasHidden) { bt.classList.remove('pop-in'); void bt.offsetWidth; bt.classList.add('pop-in'); } } }
     $('#monthLabel').title = away ? 'Voltar para o mês atual' : '';
@@ -3129,7 +3149,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       $('#kSobraSub').innerHTML = (t.incomeKey !== view.month ? `<span class="mes-chip">${ico('dollar', 'width:13px;height:13px')}Dinheiro de ${monthName(t.incomeKey)}: <b class="num">${esc(money(t.receita))}</b></span> ` : '') + (() => { if (view.month !== curKey()) return '';
           // o que o próximo mês já tem previsto (contas fixas, assinaturas, parcelas e faturas que vencem nele)
           const nk = addMonths(view.month, 1), nx = totals(nk).despesas;
-          return nx ? `<span class="mes-chip">${ico('cal', 'width:13px;height:13px')}${monthName(nk).charAt(0).toUpperCase() + monthName(nk).slice(1)} já tem <b class="num">${esc(money(nx))}</b> previstos</span>` : ''; })(); }
+          return nx ? `<span class="mes-chip">${ico('cal', 'width:13px;height:13px')}${monthName(nk).charAt(0).toUpperCase() + monthName(nk).slice(1)} já tem <b class="num">${esc(money(nx))}</b> pra pagar</span>` : ''; })(); }
     renderHeadline(t);
 
     $('#eyeBtn').innerHTML = ico(ui.hidden ? 'eye-off' : 'eye');
@@ -3265,7 +3285,6 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const foot = (all && found.length > rows.length ? `<div class="yield"><span>Mostrando os ${rows.length} mais recentes de ${found.length} encontrados</span></div>` : '')
       + `<div class="total"><span>Total${filtered ? ' filtrado' : ''}${all ? ` (${found.length} em todos os meses)` : ''}</span>
       <strong class="num ${ui.tab === 'receita' ? 'pos' : 'negc'}">${ui.hidden ? '' : (ui.tab === 'receita') !== (sum < 0) ? '+ ' : '- '}${money(Math.abs(sum))}</strong></div>`
-      + (inside ? `<div class="yield"><span>No cartão</span><span class="num">${money(inside)}</span></div>` : '')
       + (isFixa && !filtered ? (() => {
         // quanto das contas fixas do mês já foi pago (ou está no cartão) e quanto falta
         const left = rows.filter(r => ['due', 'late'].includes(fixaState(r))).reduce((s, r) => s + r.amount, 0);
@@ -3527,8 +3546,10 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       <div class="ov ov-cal" id="ovCal"></div>
       <div class="ov ov-where" id="ovWhere"></div>
       <div class="ov ov-cards" id="ovCards"></div>
+      <button type="button" class="ov-more" id="ovMore" aria-expanded="${!!ui.homeMore}">${ui.homeMore ? 'Ver menos' : 'Ver mais'}${ui.homeMore ? '' : ' <small>calendário, previsão, metas, evolução</small>'} ${ico('right')}</button>
       <div class="ov ov-goals" id="ovGoals"></div>`;
     renderForecast(); renderCalendar(); renderWhere(); renderOvCards(); renderOvGoals();
+    el.querySelector('#ovMore').addEventListener('click', () => { ui.homeMore = !ui.homeMore; saveUi(); const y = scrollY; render(); scrollTo(0, y); });
     el.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { ui.tab = b.dataset.go; view.cat = ''; saveUi(); fillFilter(); render(); }));
     // (antigo) categoria no gráfico do Início: abre Despesa variável filtrada por ela
     el.querySelectorAll('#ovWhere [data-catpick]:not([data-go])').forEach(li => li.addEventListener('click', () => {
@@ -3749,14 +3770,14 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       + (cards.length ? cards.map(c => {
         const k = view.month, f = c.fatura, prev = f ? 0 : faturaPreview(c.id, k), amt = f ? f.amount : prev;
         const used = c.limit ? cardUsed(c) : 0, pct = c.limit ? used / c.limit : 0;
-        const st = f ? FSTATE[faturaState(c, k, f)][1] : prev ? 'Prévia' : 'Sem fatura';
+        const fs = faturaState(c, k, f), st = f || prev ? FSTATE[fs][1] : 'Sem fatura';
         // já paga no mês atual: mostra também a próxima, que é a que está juntando compras agora
         const nk = addMonths(k, 1), nf = (state.faturas[c.id] || {})[nk], nAmt = nf ? nf.amount : faturaPreview(c.id, nk);
-        const next = f && f.paid && k === curKey() && nAmt ? `<small class="ov-next">Próxima: ${nf ? '' : '≈ '}${money(nAmt)} em ${dm(faturaDates(c, nk).due)}</small>` : '';
+        const next = f && f.paid && k === curKey() && nAmt ? `<small class="ov-next">Próxima: ${money(nAmt)} em ${dm(faturaDates(c, nk).due)}</small>` : '';
         return `<div class="ov-row">${logoHtml({ brand: c.bank, name: c.name, color: c.color })}
           <div class="grow"><b>${esc(c.name)}${c.last4 ? ` •${esc(c.last4)}` : ''}</b><small>${st} · vence ${dm(faturaDates(c, k).due)}</small>
             ${next}${c.limit ? `<div class="meter ${pct > 0.9 ? 'over' : pct > 0.7 ? 'warn' : 'info'}"><i style="width:${Math.min(pct, 1) * 100}%"></i></div>` : ''}</div>
-          <span class="amt">${amt ? (f ? '' : '≈ ') + money(amt) : '—'}</span></div>`;
+          <span class="amt">${amt ? money(amt) : '—'}${!f && amt && fs === 'open' ? '<small class="ov-sofar">até agora</small>' : ''}</span></div>`;
       }).join('') + (cards.length > 1 ? `<div class="ov-row ov-tot"><div class="grow"><small>Faturas que vencem em ${monthName(view.month)}</small></div><span class="amt">${money(cards.reduce((s, c) => s + cardOut(c, view.month), 0))}</span></div>` : '')
       : '<div class="ov-empty">Nenhum cartão cadastrado.</div>');
   }
@@ -3884,7 +3905,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   }
 
   function evoTable(data) {
-    return `<table class="evo-table"><thead><tr><th>Mês</th><th>Receita</th><th>Despesas</th><th>Sobra</th></tr></thead><tbody>${data.map(d =>
+    return `<table class="evo-table"><thead><tr><th>Mês</th><th>Caiu</th><th>Saiu</th><th>Sobra</th></tr></thead><tbody>${data.map(d =>
       `<tr><td>${monthLabel(d.k)}</td><td>${money(d.receita)}</td><td>${money(d.despesas)}</td><td style="color:${d.saldo < 0 ? 'var(--amber)' : 'inherit'}">${d.saldo < 0 && !ui.hidden ? '–' : ''}${money(Math.abs(d.saldo))}</td></tr>`).join('')}</tbody>
       ${(() => {
         // total do período e média dos meses com movimento
@@ -4235,17 +4256,18 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const now = assinaturasOf(view.month).reduce((s, a) => s + a.amount, 0);
     const inside = assinaturasOf(view.month).filter(a => inFatura(a)).reduce((s, a) => s + a.amount, 0);
     $('#table').innerHTML = detectBanner() + head + body + `
-      <div class="total"><span>Custo por mês</span><strong class="num negc">${money(month)}</strong></div>
-      <div class="yield"><span>Cobrado neste mês ${money(now)}${inside ? ` · ${money(inside)} no cartão` : ''}</span><span>Por ano <strong class="num" style="color:var(--ink)">${money(month * 12)}</strong></span></div>`;
+      <div class="total"><span>Cobrado em ${monthName(view.month)}</span><strong class="num negc">${money(now)}</strong></div>
+      <div class="yield"><span>Por ano</span><strong class="num" style="color:var(--ink)">${money(month * 12)}</strong></div>`;
   }
 
   function renderAssinChart() {
-    const rows = state.assinaturas.filter(a => activeIn(a, view.month)).map(a => {
+    // a rosca mostra o que é cobrado no mês da tela (o mesmo valor da fatia "Assinaturas" no Início); a anual entra no mês dela
+    const rows = assinaturasOf(view.month).map(a => {
       const b = BRANDS[a.brand];
-      return { name: a.name, color: b ? b.color : (a.color || '#64748b'), value: perMonth(a), mono: a.brand ? monoMark(a.brand, a.name) : '', icon: a.brand ? '' : 'tv' };
+      return { name: a.name, color: b ? b.color : (a.color || '#64748b'), value: a.amount, mono: a.brand ? monoMark(a.brand, a.name) : '', icon: a.brand ? '' : 'tv' };
     }).filter(g => g.value > 0).sort((a, b) => b.value - a.value);
     const total = rows.reduce((s, g) => s + g.value, 0);
-    $('#chart').innerHTML = total ? donutHtml(rows, total, 'Por mês')
+    $('#chart').innerHTML = total ? donutHtml(rows, total, `Em ${monthName(view.month)}`)
       : `<div class="chart-empty">${ico('pie')}<span>Suas assinaturas aparecem aqui</span></div>`;
   }
 
@@ -4266,7 +4288,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
           <select class="select" id="fMonth">${MESES.map((mm, i) => `<option value="${i + 1}" ${i + 1 === a.month ? 'selected' : ''}>${mm}</option>`).join('')}</select></div>
       </div>
       <p class="help" id="cyHelp"></p>
-      ${payField(item ? a : null)}
+      ${payField(item ? a : null).replace('Como você pagou?', 'Como você paga?')}
       ${footer(editing)}</form>`, m => {
       const amount = m.querySelector('#fAmount');
       let chosen = !!(a.brand || a.name);
@@ -4512,7 +4534,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     $('#tableTitle').textContent = 'Cartões de crédito';
     const q = norm(view.query);
     const rows = cardsOf(view.month).filter(c => !q || norm(c.name).includes(q)).map(c => {
-      const k = focusKey(c, view.month);
+      const k = view.month;   // a aba mostra as faturas que vencem no mês da tela (a soma bate com o "Saiu da conta")
       return { ...c, fk: k, fatura: (state.faturas[c.id] || {})[k] || null, dates: faturaDates(c, k) };
     });
     if (!rows.length) {
@@ -4524,7 +4546,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       const f = c.fatura;
       const st = FSTATE[faturaState(c, c.fk, f)];
       const prevV = !f ? faturaPreview(c.id, c.fk) : 0;
-      const status = !f ? (prevV ? `<button class="tag status open" data-fatura="${c.id}" data-key="${c.fk}" title="Prévia pelas compras e parcelas já lançadas. Toque para lançar o valor da fatura">Aberta</button>`
+      const status = !f ? (prevV ? `<button class="tag status ${st[0]}" data-fatura="${c.id}" data-key="${c.fk}" title="Soma das compras e parcelas lançadas. Toque para digitar o valor da fatura">${st[1]}</button>`
           : `<button class="tag status none" data-fatura="${c.id}" data-key="${c.fk}">Lançar fatura</button>`)
         : `<button class="tag status ${st[0]}" data-fpay="${c.id}" data-key="${c.fk}" title="${f.paid ? 'Marcar como não paga' : 'Marcar como paga'}">${st[1]}</button>`;
       // Linha limpa: nome, datas da fatura e uma barrinha do limite. Bandeira e final do cartão ficam no "title"
@@ -4537,11 +4559,15 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       return `<div class="row atop">
         <span class="date">${logoHtml({ brand: c.bank, name: c.name, color: c.color })}</span>
         <div class="name"><span title="${esc(tip)}">${whoBadge(c)}${esc(c.name)}${c.last4 ? ` <small>•${esc(c.last4)}</small>` : ''}</span>
-          <div class="card-sub">${c.fk !== view.month ? `Fatura de ${monthName(c.fk)} · vence ${dm(c.dates.due)}` : `Vence ${dm(c.dates.due)} · fecha ${dm(c.dates.close)}`}</div>
+          <div class="card-sub">Vence ${dm(c.dates.due)} · fecha ${dm(c.dates.close)}</div>${(() => {
+            // já paga no mês atual: a próxima (a que está juntando compras agora) fica a um toque
+            if (!(f && f.paid && c.fk === curKey())) return '';
+            const nk = addMonths(c.fk, 1), nf = (state.faturas[c.id] || {})[nk], nAmt = nf ? nf.amount : faturaPreview(c.id, nk);
+            return `<button type="button" class="card-next" data-fatura="${c.id}" data-key="${nk}">Próxima: <b class="num">${money(nAmt)}</b> ${ico('right', 'width:12px;height:12px')}</button>`; })()}
           ${limit}
           <div class="tag-m">${status}</div></div>
         <span class="cat">${status}</span>
-        <span class="val num">${f ? money(f.amount) : prev ? `<span style="color:var(--muted)">≈ ${money(prev)}<small style="display:block;font-size:.68rem">prévia</small></span>` : '<span style="color:var(--muted)">—</span>'}</span>
+        <span class="val num">${f ? money(f.amount) : prev ? `${money(prev)}${st[0] === 'open' ? '<small style="display:block;font-size:.68rem;color:var(--muted);font-weight:500">até agora</small>' : ''}` : '<span style="color:var(--muted)">—</span>'}</span>
         <button class="edit" data-edit="${c.id}" data-key="${c.fk}" aria-label="Fatura">${ico('pencil', 'width:14px;height:14px')}</button>
       </div>`;
     }).join('');
@@ -4550,13 +4576,13 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const total = rows.reduce((s, c) => s + (c.fatura ? c.fatura.amount : prevOf(c)), 0);
     const open = rows.reduce((s, c) => s + (c.fatura ? (c.fatura.paid ? 0 : c.fatura.amount) : prevOf(c)), 0);
     $('#table').innerHTML = head + body + `
-      <div class="total"><span>${view.month === curKey() ? 'Total das faturas atuais' : `Total das faturas que vencem em ${monthName(view.month)}`}</span><strong class="num negc">${anyPrev ? '≈ ' : ''}${money(total)}</strong></div>
-      <div class="yield"><span>${open ? 'Em aberto' : total ? 'Tudo pago' : ''}</span><span>${open ? `<strong class="num" style="color:var(--amber)">${money(open)}</strong>` : ''}</span></div>
+      <div class="total"><span>Faturas que vencem em ${monthName(view.month)}</span><strong class="num negc">${money(total)}</strong></div>
+      <div class="yield"><span>${open ? 'Falta pagar' : total ? 'Tudo pago' : ''}</span><span>${open ? `<strong class="num" style="color:var(--amber)">${money(open)}</strong>` : ''}</span></div>
 `;
   }
 
   function renderCardsChart() {
-    const rows = cardsOf(view.month).map(c => { const k = focusKey(c, view.month), f = (state.faturas[c.id] || {})[k]; return { ...c, amt: f ? f.amount : faturaPreview(c.id, k) }; })
+    const rows = cardsOf(view.month).map(c => { const k = view.month, f = (state.faturas[c.id] || {})[k]; return { ...c, amt: f ? f.amount : faturaPreview(c.id, k) }; })
       .filter(c => c.amt > 0).map(c => {
       const b = BRANDS[c.bank];
       return { name: cardLabel(c), color: b ? b.color : (c.color || '#64748b'), value: c.amt, mono: c.bank ? monoMark(c.bank, c.name) : '', icon: c.bank ? '' : 'credit-card' };
@@ -4584,22 +4610,24 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       <label class="fl">De qual banco?</label>
       <div class="bank-chips" id="ccBanks">${banks.map(k => `<button type="button" data-bank="${k}" class="${k === c.bank ? 'on' : ''}">${logoHtml({ brand: k }, 'sm')}${esc(BRANDS[k].name)}</button>`).join('')}
         <button type="button" data-bank="" class="${editing && !c.bank ? 'on' : ''}">${ico('plus', 'width:12px;height:12px')}Outro</button></div>
-      <label class="fl">Bandeira <span style="color:var(--muted);font-weight:500">(vem escrita no cartão)</span></label>
-      <div class="flag-pick" id="ccFlags">${Object.keys(FLAGS).map(k => `<button type="button" data-flag="${k}" class="${k === c.flag ? 'on' : ''}">${flagHtml(k)}${FLAGS[k].name}</button>`).join('')}</div>
+      <div class="two">
+        <div><label class="fl" for="fBest">Melhor dia de compra</label><select class="select" id="fBest">${Array.from({ length: 31 }, (_, i) => `<option value="${i + 1}" ${i + 1 === c.closeDay % 31 + 1 ? 'selected' : ''}>Dia ${pad(i + 1)}</option>`).join('')}</select></div>
+        <div><label class="fl" for="fDue">A fatura vence</label><select class="select" id="fDue">${Array.from({ length: 31 }, (_, i) => `<option value="${i + 1}" ${i + 1 === c.dueDay ? 'selected' : ''}>Dia ${pad(i + 1)}</option>`).join('')}</select></div>
+      </div>
+      <p class="help">Os dois aparecem no app do banco, na tela do cartão.</p>
+      <details class="more-opt" id="ccMore"${editing ? ' open' : ''}><summary>Mais opções <span>nome, final, limite${state.accounts.length ? ', conta' : ''}</span></summary>
       <div class="two">
         <div><label class="fl" for="fName">Como quer chamar?</label><input class="input" id="fName" maxlength="30" placeholder="Ex.: Nubank, Itaú Click" value="${esc(c.name)}" /></div>
-        <div><label class="fl" for="fLast4">Últimos 4 números <span style="color:var(--muted);font-weight:500">(opcional)</span></label><input class="input num" id="fLast4" inputmode="numeric" placeholder="1234" value="${esc(c.last4)}" /></div>
+        <div><label class="fl" for="fLast4">Últimos 4 números</label><input class="input num" id="fLast4" inputmode="numeric" placeholder="1234" value="${esc(c.last4)}" /></div>
       </div>
-      <div class="three">
-        <div>${moneyField('fLimit', c.limit, 'Limite total (opcional)')}</div>
-        <div><label class="fl" for="fClose">Fatura fecha dia</label><select class="select" id="fClose">${Array.from({ length: 31 }, (_, i) => `<option value="${i + 1}" ${i + 1 === c.closeDay ? 'selected' : ''}>${pad(i + 1)}</option>`).join('')}</select></div>
-        <div><label class="fl" for="fDue">Você paga dia</label><select class="select" id="fDue">${Array.from({ length: 31 }, (_, i) => `<option value="${i + 1}" ${i + 1 === c.dueDay ? 'selected' : ''}>${pad(i + 1)}</option>`).join('')}</select></div>
-      </div>
-      <p class="help">As duas datas aparecem no app do banco, na tela da fatura.</p>
-      ${editing ? '' : moneyField('fAmount', 0, 'Quanto está a fatura agora? (opcional)')}
+      <label class="fl">Bandeira</label>
+      <div class="flag-pick" id="ccFlags">${Object.keys(FLAGS).map(k => `<button type="button" data-flag="${k}" class="${k === c.flag ? 'on' : ''}">${flagHtml(k)}${FLAGS[k].name}</button>`).join('')}</div>
+      ${moneyField('fLimit', c.limit, 'Limite total')}
+      ${editing ? '' : moneyField('fAmount', 0, 'Quanto está a fatura agora?')}
       ${state.accounts.length ? `<label class="fl" for="fPayAcc">De qual conta você costuma pagar?</label>
       <select class="select" id="fPayAcc"><option value="">Prefiro não dizer</option>${state.accounts.map(a => `<option value="${a.id}" ${a.id === c.payAccount ? 'selected' : ''}>${esc(a.name)}</option>`).join('')}</select>` : ''}
       ${whoField(item, meId(), 'De quem é o cartão?')}
+      </details>
       ${footer(editing)}</form>`, m => {
       bindWho(m);
       const prev = () => { m.querySelector('#ccPrev').innerHTML = ccPreview(c); };
@@ -4613,7 +4641,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         if (!c.flag && FLAG_HINT[c.bank]) { c.flag = FLAG_HINT[c.bank]; m.querySelectorAll('#ccFlags button').forEach(x => x.classList.toggle('on', x.dataset.flag === c.flag)); }
         m.querySelectorAll('#ccBanks button').forEach(x => x.classList.toggle('on', x === b));
         prev();
-        if (!c.bank) nameInput.focus();
+        if (!c.bank) { m.querySelector('#ccMore').open = true; nameInput.focus(); }
       });
       m.querySelector('#ccFlags').addEventListener('click', e => {
         const b = e.target.closest('[data-flag]'); if (!b) return;
@@ -4630,10 +4658,10 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         e.preventDefault();
         const undoSnap = JSON.stringify(state);
         const name = nameInput.value.trim();
-        if (!name) return showErr('Escolha o banco ou dê um nome ao cartão.');
-        if (!c.flag) return showErr('Escolha a bandeira do cartão.');
+        if (!name) { m.querySelector('#ccMore').open = true; return showErr('Escolha o banco ou dê um nome ao cartão.'); }
+        const best = +m.querySelector('#fBest').value;   // melhor dia de compra = o dia seguinte ao fechamento
         const data = { bank: c.bank || '', name, flag: c.flag, last4: c.last4 || '', color: c.color || '',
-          limit: cents(m.querySelector('#fLimit')), closeDay: +m.querySelector('#fClose').value, dueDay: +m.querySelector('#fDue').value,
+          limit: cents(m.querySelector('#fLimit')), closeDay: best === 1 ? 31 : best - 1, dueDay: +m.querySelector('#fDue').value,
           payAccount: m.querySelector('#fPayAcc')?.value || '', ...readWho(m) };
         if (editing) Object.assign(state.cards.find(x => x.id === item.id), data);
         else {
@@ -5438,7 +5466,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       <input type="checkbox" id="fDueNext" hidden ${f.dueNext ? 'checked' : ''} />
       ${f.dueNext ? '<p class="help" id="fWhenHelp"></p>' : ''}
       ${editing ? '' : `<div id="paidNowBox" hidden>${checkField('fPaidNow', 'Já paguei a deste mês', '', true)}</div>`}
-      ${payField(item ? f : null).replace('id="fPay"', 'id="fPay" data-fixa="1"')}
+      ${payField(item ? f : null).replace('id="fPay"', 'id="fPay" data-fixa="1"').replace('Como você pagou?', 'Como você paga?')}
       ${footer(editing)}</form>`, m => {
       bindMoney(m.querySelector('#fAmount'));
       bindPay(m);
@@ -5754,10 +5782,12 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   function openMenu() {
     openModal(`${modalHead('Configurações', 'Seus dados ficam salvos só neste navegador.')}
       <button class="menu-item" id="mAccount" style="border-top:0">Seu nome <span style="margin-left:auto;font-weight:500;font-size:.78rem;color:var(--muted)">${esc(userName())}</span></button>
+      <details class="more-opt" id="mLook" style="margin-top:6px"><summary>Aparência <span>cores e fonte</span></summary>
       <p class="fl">Cores dos gráficos</p>
       <div class="pal-pick" id="mPal">${Object.entries(PALETTES).map(([k, v]) => `<button type="button" data-pal="${k}" class="${k === ui.palette ? 'on' : ''}"><span class="sw">${(v.cols || PALETTE).slice(0, 5).map(c => `<i style="background:${c}"></i>`).join('')}</span>${v.name}</button>`).join('')}</div>
       <p class="fl">Fonte</p>
       <div class="font-pick" id="mFonts">${FONTS.map(f => `<button type="button" data-font="${f}" style="font-family:'${f}'" class="${f === ui.font ? 'on' : ''}"><span>Aa</span>${f}</button>`).join('')}</div>
+      </details>
       <button class="menu-item" id="mFamily">Uso do app <span style="margin-left:auto;font-weight:500;font-size:.78rem;color:var(--muted)">${familyOn() ? (multi() ? esc(familyNames()) : 'em família') : 'só eu'}</span></button>
       <p class="fl">App</p>
       <button class="menu-item" id="mInstall">Instalar como app</button>
