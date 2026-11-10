@@ -565,6 +565,16 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .qa-preview .l span:first-child { color: var(--muted); }
 .qa-preview .l b { font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
 .qa-preview .big { font-size: 1.3rem; font-weight: 800; }
+.qa-pick-h { margin-top: 2px; color: var(--ink-2); font-weight: 600; }
+.qa-pick { display: flex; flex-wrap: wrap; gap: 6px; }
+.qa-pick button { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 7px; border-radius: 12px; border: 1px solid var(--field-line); background: var(--card); color: var(--ink); font: inherit; text-align: left; cursor: pointer; min-height: 44px; transition: border-color .15s, background .15s, box-shadow .15s; }
+.qa-pick button .logo { width: 26px; height: 26px; border-radius: 8px; flex: none; }
+.qa-pick button span { display: grid; line-height: 1.2; }
+.qa-pick button b { font-weight: 600; font-size: .82rem; white-space: nowrap; }
+.qa-pick button small { font-size: .7rem; color: var(--muted); }
+.qa-pick button.on { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent) inset; }
+.qa-pick button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .qa-pick button { transition: none; } }
 .qa-hint { font-size: .74rem; color: var(--muted); margin-top: 6px; line-height: 1.45; }
 .qa-hint code { white-space: nowrap; display: inline-block; margin: 1px 0; background: var(--field); padding: 1px 5px; border-radius: 5px; font-family: inherit; font-weight: 600; color: var(--ink-2); }
 .favs { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -4490,7 +4500,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       const tip = [FLAGS[c.flag]?.name, c.last4 ? '•••• ' + c.last4 : ''].filter(Boolean).join(' · ');
       return `<div class="row atop">
         <span class="date">${logoHtml({ brand: c.bank, name: c.name, color: c.color })}</span>
-        <div class="name"><span title="${esc(tip)}">${whoBadge(c)}${esc(c.name)}${twin ? ` <small>•${esc(c.last4)}</small>` : ''}</span>
+        <div class="name"><span title="${esc(tip)}">${whoBadge(c)}${esc(c.name)}${c.last4 ? ` <small>•${esc(c.last4)}</small>` : ''}</span>
           <div class="card-sub">${c.fk !== view.month ? `Fatura de ${monthName(c.fk)} · vence ${dm(c.dates.due)}` : `Vence ${dm(c.dates.due)} · fecha ${dm(c.dates.close)}`}</div>
           ${limit}
           <div class="tag-m">${status}</div></div>
@@ -4513,7 +4523,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const rows = cardsOf(view.month).map(c => { const k = focusKey(c, view.month), f = (state.faturas[c.id] || {})[k]; return { ...c, amt: f ? f.amount : faturaPreview(c.id, k) }; })
       .filter(c => c.amt > 0).map(c => {
       const b = BRANDS[c.bank];
-      return { name: c.name, color: b ? b.color : (c.color || '#64748b'), value: c.amt, mono: c.bank ? monoMark(c.bank, c.name) : '', icon: c.bank ? '' : 'credit-card' };
+      return { name: cardLabel(c), color: b ? b.color : (c.color || '#64748b'), value: c.amt, mono: c.bank ? monoMark(c.bank, c.name) : '', icon: c.bank ? '' : 'credit-card' };
     }).sort((a, b) => b.value - a.value);
     const total = rows.reduce((s, g) => s + g.value, 0);
     $('#chart').innerHTML = total ? donutHtml(rows, total, 'Faturas')
@@ -5509,11 +5519,12 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     return { payCard: v.startsWith('card:') ? v.slice(5) : '', payAccount: v.startsWith('acc:') ? v.slice(4) : '' };
   }
   // Selo "no cartão" ao lado do nome
+  // Nome do cartão como aparece nas listas: "Nubank •1234"; sem os 4 números, "Nubank · cartão" se existir uma conta com o mesmo nome
+  const cardLabel = c => c.name + (c.last4 ? ' •' + c.last4 : state.accounts.some(a => norm(a.name) === norm(c.name)) ? ' · cartão' : '');
   function viaHtml(item) {
     const c = payCardOf(item);
-    // só o logo do banco e o nome do cartão (bandeira e final ficam no "title"); o final só aparece se dois cartões tiverem o mesmo nome
-    if (c) { const twin = c.last4 && state.cards.some(o => o.id !== c.id && norm(o.name) === norm(c.name));
-      return `<span class="via" title="Cartão ${esc(c.name)} ${FLAGS[c.flag]?.name || ''}${c.last4 ? ' •' + esc(c.last4) : ''}">${logoHtml({ brand: c.bank, name: c.name, color: c.color })}<span class="vt">${esc(c.name)}${twin ? ' •' + esc(c.last4) : ''}</span></span>`; }
+    // logo do banco e nome do cartão, sempre com o final (•1234): assim não se confunde com a conta do mesmo banco nem com outro cartão dele
+    if (c) return `<span class="via" title="Cartão ${esc(c.name)} ${FLAGS[c.flag]?.name || ''}${c.last4 ? ' •' + esc(c.last4) : ''}">${logoHtml({ brand: c.bank, name: c.name, color: c.color })}<span class="vt">${esc(cardLabel(c))}</span></span>`;
     const a = item.payAccount && state.accounts.find(x => x.id === item.payAccount);
     return a ? `<span class="via" title="Conta ${esc(a.name)}">${logoHtml(a)}<span class="vt">${esc(a.name)}</span></span>` : '';
   }
@@ -7074,15 +7085,22 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     // entrada?
     if (/\b(recebi|receb\w*|entrada|ganhei|salario|pagamento recebido)\b/.test(t) || /^\s*\+/.test(text)) { out.kind = 'receita'; t = t.replace(/\b(recebi|entrada|ganhei)\b/, ' '); }
     // forma de pagamento: cartão se falar crédito/cartão; senão conta pelo nome do banco
-    const credit = /\b(credito|cartao|card|cc)\b/.test(t);
+    const credit = /\b(credito|cartao|card|cc)\b/.test(t), debit = !credit && /\b(debito|pix|boleto|conta)\b/.test(t);
     t = t.replace(/\b(no|na|do|da|de|em|pelo|pela|com|via|credito|cartao|debito|pix|boleto|conta)\b/g, ' ');
     const has = name => { const n = norm(name); return n && (t.includes(' ' + n + ' ') || (n.split(' ')[0].length > 2 && t.includes(' ' + n.split(' ')[0] + ' '))); };
     const takeOut = name => { const n = norm(name); t = t.replace(' ' + n + ' ', ' ').replace(' ' + n.split(' ')[0] + ' ', ' '); };
     const bankWord = c => [c.name, BRANDS[c.bank]?.name, c.last4].filter(Boolean);
     const cards = state.cards.filter(c => activeIn(c, monthOf(out.date)));
-    const card = out.kind !== 'receita' && (cards.find(c => c.last4 && t.includes(' ' + c.last4 + ' ')) || (credit || !state.accounts.length ? cards.find(c => bankWord(c).some(has)) : null) || (credit && cards.length === 1 ? cards[0] : null));
+    // tudo que o nome do banco pode querer dizer ("nubank" = a conta ou um dos cartões): a janela mostra as opções pra escolher com um toque
+    const byLast4 = out.kind !== 'receita' && cards.find(c => c.last4 && t.includes(' ' + c.last4 + ' '));
+    const candCards = out.kind === 'receita' || debit ? [] : cards.filter(c => bankWord(c).some(has));
+    const candAccs = credit ? [] : state.accounts.filter(a => has(a.name) || has(BRANDS[a.brand]?.name || ''));
+    if (!byLast4 && candCards.length + candAccs.length > 1) out.payOpts = [...candAccs.map(a => 'acc:' + a.id), ...candCards.map(c => 'card:' + c.id)];
+    // parcelado quase sempre é no crédito: sem dizer "débito/pix", o cartão é a sugestão
+    const card = out.kind !== 'receita' && (byLast4 || (credit || !state.accounts.length || (out.parcelas && !debit) ? candCards[0] : null) || (credit && cards.length === 1 ? cards[0] : null));
     if (card) { out.payCard = card.id; bankWord(card).forEach(takeOut); }
-    else { const acc = state.accounts.find(a => has(a.name) || has(BRANDS[a.brand]?.name || '')); if (acc) { out.payAccount = acc.id; takeOut(acc.name); takeOut(BRANDS[acc.brand]?.name || ''); } }
+    else { const acc = candAccs[0] || (debit ? state.accounts.find(a => has(a.name) || has(BRANDS[a.brand]?.name || '')) : null); if (acc) { out.payAccount = acc.id; takeOut(acc.name); takeOut(BRANDS[acc.brand]?.name || ''); } }
+    if (out.payOpts) [...candAccs.flatMap(a => [a.name, BRANDS[a.brand]?.name || '']), ...candCards.flatMap(bankWord)].forEach(takeOut);
     const words = t.replace(/\s+/g, ' ').trim();
     const orig = String(text).trim().split(/\s+/).filter(w => words.split(' ').includes(norm(w)));
     out.desc = (orig.join(' ') || words).replace(/^./, c => c.toUpperCase());
@@ -7135,13 +7153,17 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         <button type="button" class="btn cancel" id="qaStar" title="Salvar como favorito">Favorito</button>
         <button type="button" class="btn save" id="qaSave" disabled>Lançar</button></div>`, m => {
       const input = m.querySelector('#qaText');
-      let q = null;
+      let q = null, pick = '';   // pick: a opção que a pessoa tocou quando o banco servia pra mais de uma coisa
+      const optHtml = v => { const id = v.slice(v.indexOf(':') + 1), c = v.startsWith('card:') && state.cards.find(x => x.id === id), a = !c && state.accounts.find(x => x.id === id);
+        const on = v === (q.payCard ? 'card:' + q.payCard : 'acc:' + q.payAccount);
+        return `<button type="button" data-pick="${v}" class="${on ? 'on' : ''}" aria-pressed="${on}">${c ? logoHtml({ brand: c.bank, name: c.name, color: c.color }, 'sm') : logoHtml(a, 'sm')}<span><b>${esc(c ? c.name + (c.last4 ? ' •' + c.last4 : '') : a.name)}</b><small>${c ? 'cartão de crédito' : 'conta'}</small></span></button>`; };
       const drawFavs = () => {
         m.querySelector('#qaFavs').innerHTML = state.favorites.length ? state.favorites.map((f, i) => `<span class="fav" data-i="${i}" role="button" tabindex="0">${esc(f.label)} <b class="num">${brl.format(f.amount / 100)}</b><button type="button" class="x" data-rmfav="${i}" aria-label="Remover favorito">${ico('x')}</button></span>`).join('')
           : '<span class="qa-hint" style="margin:0">Escreva um gasto comum (ex.: café 6,50) e toque em Favorito pra guardar aqui.</span>';
       };
       const preview = () => {
         q = input.value.trim() ? parseQuick(input.value) : null;
+        if (q && q.payOpts && q.payOpts.includes(pick)) { q.payCard = pick.startsWith('card:') ? pick.slice(5) : ''; q.payAccount = pick.startsWith('acc:') ? pick.slice(4) : ''; } else if (!q || !q.payOpts) pick = '';
         const ok = q && q.amount > 0;
         m.querySelector('#qaSave').disabled = !ok; m.querySelector('#qaStar').disabled = !ok;
         const accN = id => esc(state.accounts.find(a => a.id === id)?.name || '');
@@ -7154,10 +7176,12 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
           <div class="l"><span>Descrição</span><b>${esc(q.desc || '—')}</b></div>
           <div class="l"><span>Categoria</span><b>${esc(cat(q.category)?.name || 'Sem categoria')}</b></div>
           ${multi() ? (w => `<div class="l"><span>De quem</span><b style="display:inline-flex;align-items:center;gap:6px">${w ? avatar(w, true) + esc(memberName(w)) : famAvatars(true) + 'Da família'}</b></div>`)(q.who !== undefined ? q.who : q.kind === 'receita' ? meId() : member(ui.lastWho) ? ui.lastWho : '') : ''}
-          <div class="l"><span>${q.kind === 'receita' ? 'Recebido em' : 'Pago com'}</span><b>${payLabel(q)}</b></div>
+          ${q.payOpts ? `<div class="qa-pick-h">${q.kind === 'receita' ? 'Caiu em qual?' : 'Pagou com qual?'}</div><div class="qa-pick" role="group" aria-label="Forma de pagamento">${q.payOpts.map(optHtml).join('')}</div>`
+            : `<div class="l"><span>${q.kind === 'receita' ? 'Recebido em' : 'Pago com'}</span><b>${payLabel(q)}</b></div>`}
           <div class="l"><span>Data</span><b>${q.date === todayIso ? 'Hoje' : new Date(q.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', ...(q.date.slice(0, 4) !== todayIso.slice(0, 4) ? { year: 'numeric' } : {}) })}</b></div>`;
       };
       input.addEventListener('input', preview);
+      m.querySelector('#qaPrev').addEventListener('click', e => { const b = e.target.closest('[data-pick]'); if (!b) return; pick = b.dataset.pick; preview(); });
       input.addEventListener('keydown', e => { if (e.key === 'Enter' && q && q.amount > 0) { e.preventDefault(); saveQuick(q); } });
       m.querySelector('#qaSave').onclick = () => q && q.amount > 0 && saveQuick(q);
       m.querySelector('#qaStar').onclick = () => {
