@@ -3655,6 +3655,25 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     box.querySelector('.cal-list').addEventListener('keydown', e => { const el = e.target.closest('[data-open]'); if (el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openRef(el); } });
   }
 
+  // O que cada fatura do mês tem dentro, pra rosca mostrar "mercado, casa, gasolina" em vez de uma fatia "Cartões".
+  // A soma das partes é sempre o valor da fatura que conta no mês (cardOut): se o valor digitado for maior que as compras
+  // lançadas, a diferença vira "Outras compras no cartão"; se for menor (estorno, desconto), as partes encolhem na mesma proporção.
+  function cardParts(key, add) {
+    for (const c of cardsOf(key)) {
+      const out = cardOut(c, key); if (out <= 0) continue;
+      const items = itemsOnCard(c.id, key).filter(i => i.amount > 0), sum = items.reduce((s, i) => s + i.amount, 0);
+      const f = sum > out ? out / sum : 1;
+      let left = out;
+      items.forEach((i, n) => {
+        const v = f === 1 ? i.amount : n === items.length - 1 ? left : Math.min(left, Math.round(i.amount * f));
+        left -= v;
+        if (i.kind === 'Conta fixa') add('Contas fixas', '#475569', v, { go: 'fixa', icon: 'receipt' });
+        else if (i.kind === 'Assinatura') add('Assinaturas', '#d97706', v, { go: 'assin', icon: 'tv' });
+        else { const ct = cat(i.category); add(ct?.name || 'Sem categoria', ct?.color || '#94a3b8', v, ct ? { id: ct.id, icon: catIcon(ct), cc: catColor(ct) } : { icon: 'tag', cc: catColor(null, 'despesa') }); }
+      });
+      if (left > 0) add('Outras compras no cartão', '#1d4ed8', left, { go: 'cartoes', icon: 'credit-card' });
+    }
+  }
   function renderWhere() {
     const key = view.month, box = $('#ovWhere');
     const groups = new Map();
@@ -3663,7 +3682,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     variaveisOf(key).filter(countable(key)).forEach(v => { const c = cat(v.category); add(c?.name || 'Sem categoria', c?.color || '#94a3b8', v.amount, c ? { id: c.id, icon: catIcon(c), cc: catColor(c) } : { icon: 'tag', cc: catColor(null, 'despesa') }); });
     add('Contas fixas', '#475569', fixasOf(key).filter(countable(key)).reduce((s, f) => s + f.amount, 0), { go: 'fixa', icon: 'receipt' });
     add('Assinaturas', '#d97706', assinaturasOf(key).filter(countable(key)).reduce((s, a) => s + a.amount, 0), { go: 'assin', icon: 'tv' });
-    add('Cartões', '#1d4ed8', totals(key).faturas, { go: 'cartoes', icon: 'credit-card' });
+    cardParts(key, add);
     let list = [...groups.values()].sort((a, b) => b.value - a.value);
     if (list.length > 6) {
       // junta o resto em "Outros" (somando na categoria Outros, se ela já estiver entre as 5 maiores, pra não aparecer duas vezes)
@@ -5916,7 +5935,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     variaveisOf(key).filter(countable(key)).forEach(v => { const c = cat(v.category); add(c?.name || 'Sem categoria', c?.color || '#94a3b8', v.amount); });
     add('Contas fixas', '#475569', t.fixas);
     add('Assinaturas', '#d97706', t.assinaturas);
-    add('Cartões', '#1d4ed8', t.faturas);
+    cardParts(key, add);
     const cats = [...groups.values()].sort((a, b) => b.value - a.value), catTotal = cats.reduce((s, g) => s + g.value, 0);
     let off = 0;
     const donut = catTotal ? `<svg viewBox="0 0 42 42" class="r-donut"><g transform="rotate(-90 21 21)">${cats.map(g => {
