@@ -828,6 +828,7 @@ div.empty::before, .ov-forecast > .ov-empty::before, .ov-where > .ov-empty::befo
 .mes-it.sobra .kpi-value { color: var(--sc); font-weight: 600; }
 .mes-cap { margin-top: 2px; font-size: .72rem; color: var(--muted); line-height: 1.3; }
 .sobra-g { display: block; color: var(--ink-2); }
+#payHelp { display: none; }   /* a explicação da forma de pagamento saiu (menos letrinhas) */
 .sobra-g b { font-weight: 650; color: var(--ink); white-space: nowrap; }
 .mes-ring { flex: none; width: 44px; height: 44px; margin-left: auto; transform: rotate(-90deg); }
 .mes-ring .tr { stroke: color-mix(in srgb, var(--sc) 18%, transparent); }
@@ -3971,7 +3972,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       const [firstK, firstV] = snaps[0], [, lastV] = snaps[snaps.length - 1], d = lastV - firstV;
       out.push(['🏦', `Patrimônio: <b>${money(lastV)}</b>`, snaps.length > 1 ? `${d >= 0 ? '+' : '–'}${money(Math.abs(d))} desde ${monthLabel(firstK)} (contas + investimentos)` : 'Contas + investimentos. A evolução aparece nos próximos meses.']);
     }
-    return out.length ? out.map(([, h, sub]) => `<div class="ins"><div>${h}<small>${sub}</small></div></div>`).join('')
+    return out.length ? out.map(([, h, sub]) => `<div class="ins"><div>${h}</div></div>`).join('')
       : `<div class="ins"><div>Lance o que entra e o que sai por alguns meses pra ver as comparações aqui.</div></div>`;
   }
   let evoResize;
@@ -4559,11 +4560,10 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         <div><label class="fl" for="fClose">Fatura fecha dia</label><select class="select" id="fClose">${Array.from({ length: 31 }, (_, i) => `<option value="${i + 1}" ${i + 1 === c.closeDay ? 'selected' : ''}>${pad(i + 1)}</option>`).join('')}</select></div>
         <div><label class="fl" for="fDue">Você paga dia</label><select class="select" id="fDue">${Array.from({ length: 31 }, (_, i) => `<option value="${i + 1}" ${i + 1 === c.dueDay ? 'selected' : ''}>${pad(i + 1)}</option>`).join('')}</select></div>
       </div>
-      <p class="help">Compras depois do fechamento vão pra fatura do mês seguinte. As duas datas aparecem no app do banco, na tela da fatura.</p>
+      <p class="help">As duas datas aparecem no app do banco, na tela da fatura.</p>
       ${editing ? '' : moneyField('fAmount', 0, 'Quanto está a fatura agora? (opcional)')}
       ${state.accounts.length ? `<label class="fl" for="fPayAcc">De qual conta você costuma pagar?</label>
-      <select class="select" id="fPayAcc"><option value="">Prefiro não dizer</option>${state.accounts.map(a => `<option value="${a.id}" ${a.id === c.payAccount ? 'selected' : ''}>${esc(a.name)}</option>`).join('')}</select>
-      <p class="help">Marcar a fatura como paga não mexe no saldo. Com uma conta escolhida aqui, o aviso de "paga" oferece tirar o valor dela com um toque.</p>` : ''}
+      <select class="select" id="fPayAcc"><option value="">Prefiro não dizer</option>${state.accounts.map(a => `<option value="${a.id}" ${a.id === c.payAccount ? 'selected' : ''}>${esc(a.name)}</option>`).join('')}</select>` : ''}
       ${whoField(item, meId(), 'De quem é o cartão?')}
       ${footer(editing)}</form>`, m => {
       bindWho(m);
@@ -4635,8 +4635,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         <br><button type="button" class="btn-soft" id="fMove">${ico('right', 'width:13px;height:13px')}Mover para a fatura de ${monthName(next)}</button></div>` : ''}
       ${checkField('fPaid', 'Fatura paga', '', f ? f.paid : false)}
       ${state.accounts.length ? `<div id="fDebitBox"${f && f.paid ? '' : ' hidden'}><label class="fl" for="fDebit">Tirar o valor do saldo de alguma conta?</label>
-      <select class="select" id="fDebit"><option value="">Não, deixar o saldo como está</option>${state.accounts.map(a => `<option value="${a.id}" ${f && f.paid && a.id === f.payAccount ? 'selected' : ''}>Sim, tirar de ${esc(a.name)}</option>`).join('')}</select>
-      <p class="help">Marcar como paga não mexe no saldo. Escolha uma conta só se quiser que o valor saia dela.</p></div>` : ''}
+      <select class="select" id="fDebit"><option value="">Não, deixar o saldo como está</option>${state.accounts.map(a => `<option value="${a.id}" ${f && f.paid && a.id === f.payAccount ? 'selected' : ''}>Sim, tirar de ${esc(a.name)}</option>`).join('')}</select></div>` : ''}
       <div class="err" id="fErr"></div>
       <div class="actions">${f ? `<button type="button" class="btn del" id="fFatClear">Apagar fatura</button>` : ''}
         <button type="button" class="link" id="fEditCard" style="margin-left:${f ? '6px' : '0'}">Editar cartão</button><span class="grow"></span>
@@ -4780,7 +4779,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       </div>
       <p class="help" id="rateHelp"></p>
       ${moneyField('fAmount', now || inv.balance, editing ? 'Saldo hoje' : 'Quanto tem guardado hoje')}
-      ${editing ? `<p class="help">Estimado pelo rendimento desde ${ddmm(inv.updatedAt)}. Se no app do banco estiver diferente, é só corrigir aqui.</p>
+      ${editing ? `
       <div class="divider"></div>
       <label class="fl">Aporte ou resgate <span style="color:var(--muted);font-weight:500">(opcional)</span></label>
       <div class="seg2" id="fMv"><button type="button" data-mv="in" class="on">+ Aportar</button><button type="button" data-mv="out">− Resgatar</button></div>
@@ -4788,7 +4787,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       <p class="help" id="mvHelp"></p>
       ${state.accounts.length ? `<label class="fl" for="fMvAcc" id="mvAccLbl">Sai da conta</label>
       <select class="select" id="fMvAcc"><option value="">Não mexer nas contas</option>${state.accounts.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('')}</select>` : ''}` : ''}
-      ${state.accounts.length ? checkField('fInAcc', 'Esse dinheiro já está no saldo de uma conta', 'Marque se o valor já faz parte do saldo que você colocou em Bancos (ex.: o banco mostra o investimento junto do saldo). Assim o patrimônio não conta duas vezes.', !!inv.inAcc) : ''}
+      ${state.accounts.length ? checkField('fInAcc', 'Esse dinheiro já está no saldo de uma conta', '', !!inv.inAcc) : ''}
       ${footer(editing)}</form>`, m => {
       const type = m.querySelector('#fType'), rate = m.querySelector('#fRate'), amount = m.querySelector('#fAmount');
       let mv = 'in';
@@ -5228,14 +5227,14 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const r = item || { date: defaultDate(), amount: 0, desc: '', category: '', recurring: false, pending: false, ...prefill };
     openModal(`<form id="f" novalidate>${modalHead(editing ? 'Editar entrada' : 'Nova entrada', r.recurring ? 'Entra todo mês.' : 'Dinheiro que entrou: salário, pix, venda…')}
       <label class="fl" for="fDate">Data</label><input type="date" class="input" id="fDate" value="${r.date}" required />
-      ${checkField('fPending', 'Ainda vou receber', 'Só conta no que entrou quando você marcar como recebido.', r.pending)}
+      ${checkField('fPending', 'Ainda vou receber', '', r.pending)}
       ${moneyField('fAmount', r.amount)}
       <label class="fl" for="fDesc">Descrição</label><input class="input" id="fDesc" maxlength="60" placeholder="Ex.: Salário, Freela…" value="${esc(r.desc)}" />
       ${catSelect('receita', r.category, 'Tipo de renda')}
       ${payField(item || prefill ? r : null, true)}
       ${whoField(item, meId(), 'De quem é essa entrada?')}
-      ${checkField('fRecurring', 'Recebo todo mês', 'Como o salário: aparece sozinho nos próximos meses.', r.recurring)}
-      <div id="variaBox" ${r.recurring ? '' : 'hidden'}>${checkField('fVaria', 'O valor muda um pouco todo mês', 'O app usa a média dos últimos meses até você dizer quanto caiu.', !!r.varia)}</div>
+      ${checkField('fRecurring', 'Recebo todo mês', '', r.recurring)}
+      <div id="variaBox" ${r.recurring ? '' : 'hidden'}>${checkField('fVaria', 'O valor muda um pouco todo mês', '', !!r.varia)}</div>
       ${footer(editing, true)}</form>`, m => {
       m.querySelector('#fDup')?.addEventListener('click', () => openReceita(null, { amount: item.amount, desc: item.desc, category: item.category, payAccount: item.payAccount || '', payCard: '' }));
       m.querySelector('#fRecurring').addEventListener('change', e => { m.querySelector('#variaBox').hidden = !e.target.checked; });
@@ -5275,11 +5274,11 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       ${catSelect('despesa', v.category, 'Categoria')}
       <label class="fl" for="fDate">Quando?</label>
       <div class="date-row">${dateChips()}<input type="date" class="input" id="fDate" value="${v.date}" required /></div>
-      ${editing ? '' : checkField('fInst', 'Parcelou?', 'Divide o valor em parcelas nos próximos meses.', false) +
+      ${editing ? '' : checkField('fInst', 'Parcelou?', '', false) +
         `<div class="inline" id="instBox" hidden><input type="number" class="input" id="fN" min="2" max="48" value="2" /><span id="instHint"></span></div>`}
       ${payField(item || prefill ? v : null)}
       ${whoField(item, ui.lastWho || '')}
-      ${editing && v.installment ? checkField('fAllParc', `Aplicar a todas as ${v.installment.n} parcelas`, 'Descrição, categoria e forma de pagamento. Data e valor mudam só nesta parcela.', true) : ''}
+      ${editing && v.installment ? checkField('fAllParc', `Aplicar a todas as ${v.installment.n} parcelas`, '', true) : ''}
       ${footer(editing, true)}</form>`, m => {
       m.querySelector('#fDup')?.addEventListener('click', () => openVariavel(null, { amount: item.amount, desc: item.desc, category: item.category, payCard: item.payCard || '', payAccount: item.payAccount || '' }));
       const amount = m.querySelector('#fAmount');
@@ -5377,7 +5376,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       <label class="fl" for="fDesc">Que conta é essa?</label><input class="input" id="fDesc" maxlength="60" placeholder="Ex.: Aluguel" value="${esc(f.desc)}" />
       ${editing ? '' : `<div class="nick-chips" id="fixSug">${['Aluguel', 'Luz', 'Água', 'Internet', 'Celular', 'Condomínio', 'Plano de saúde', 'Escola'].map(n => `<button type="button" data-sug="${n}">${n}</button>`).join('')}</div>`}
       ${moneyField('fAmount', editing && f.varia ? monthAmount(f, view.month).amount : f.amount, editing && f.varia ? `Quanto veio em ${monthName(view.month)}?` : 'Quanto costuma vir?')}
-      ${checkField('fVaria', 'O valor muda todo mês', 'Ex.: luz, água, gás. O app usa a média dos últimos meses e pergunta quanto veio quando você marcar como paga.', !!f.varia)}
+      ${checkField('fVaria', 'O valor muda todo mês', '', !!f.varia)}
       <div class="two">
         <div><label class="fl" for="fDay">Vence todo dia</label>
           <select class="select" id="fDay">${Array.from({ length: 31 }, (_, i) => `<option value="${i + 1}" ${i + 1 === f.day ? 'selected' : ''}>Dia ${pad(i + 1)}</option>`).join('')}</select></div>
@@ -5386,7 +5385,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       </div>
       <input type="checkbox" id="fDueNext" hidden ${f.dueNext ? 'checked' : ''} />
       ${f.dueNext ? '<p class="help" id="fWhenHelp"></p>' : ''}
-      ${editing ? '' : `<div id="paidNowBox" hidden>${checkField('fPaidNow', 'Já paguei a deste mês', 'O vencimento deste mês já passou. Desmarque se ainda não pagou.', true)}</div>`}
+      ${editing ? '' : `<div id="paidNowBox" hidden>${checkField('fPaidNow', 'Já paguei a deste mês', '', true)}</div>`}
       ${payField(item ? f : null).replace('id="fPay"', 'id="fPay" data-fixa="1"')}
       ${footer(editing)}</form>`, m => {
       bindMoney(m.querySelector('#fAmount'));
@@ -6176,7 +6175,6 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     openModal(`${modalHead('Escolher mês', '')}
       <div class="mk-grid">${past.map(k => btn(k, k === cur ? '<em>agora</em>' : '')).join('')}</div>
       <p class="fl" style="margin-top:14px">Planejar</p>
-      <p class="help" style="margin-top:-2px">Veja o que já está previsto pra entrar e sair nos próximos meses.</p>
       <div class="mk-grid plan">${[1, 2, 3].map(i => btn(addMonths(cur, i))).join('')}</div>`, m => {
       m.querySelectorAll('[data-mk]').forEach(b => b.addEventListener('click', () => { view.month = b.dataset.mk; closeModal(); render(); }));
     });
