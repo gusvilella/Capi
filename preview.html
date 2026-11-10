@@ -2085,6 +2085,83 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   .kpi.contas .logo-stack .logo { width: 30px; height: 30px; border-radius: 9px; margin-left: 6px; }
   .kpi.contas #kSaldoSub { margin-top: 12px; }
 }
+/* ===== Visual novo (B + C): blocos de cor com a Capi, seções sem caixa, escuro quase preto ===== */
+html:root .overview > .ov, html:root .kpi.mes, html:root #evo { background: none !important; box-shadow: none !important; border-radius: 0 !important; padding-left: 0 !important; padding-right: 0 !important; }
+html:root .overview > .ov::before, html:root .kpi.mes::before, html:root .kpi.mes::after { display: none !important; }
+html:root .ov h3, html:root .evo h3 { font-size: 1.12rem !important; letter-spacing: -.02em; }
+html:root .mes-t { font-size: 1.12rem !important; font-weight: 650 !important; color: var(--ink) !important; letter-spacing: -.02em; }
+html:root .mes-it { background: none !important; box-shadow: none !important; border-radius: 0 !important; padding: 14px 0 !important; border-bottom: 1px solid var(--line); }
+html:root .mes-it.sobra { border-bottom: 0; }
+html:root .mes-it .kpi-value { font-size: 1.35rem !important; }
+html:root .mes-it.sobra .kpi-value { font-size: 1.9rem !important; font-weight: 700 !important; }
+html:root .mes-chip { background: none !important; padding-left: 0 !important; }
+html:root .ov-more { border-style: solid; }
+html:root .mk-capi { position: absolute; pointer-events: none; }
+@media (max-width: 640px) { html:root[data-tab="geral"] .app { row-gap: 26px !important; } }
+/* computador: o bloco do dinheiro e o do mês lado a lado, sem caixa */
+@media (min-width: 981px) {
+  html:root .kpi.mes { padding-top: 6px !important; }
+  html:root .kpi.mes .mes-it { border-bottom: 0 !important; padding: 8px 0 !important; }
+    html:root .overview { gap: 34px 40px !important; }
+}
+/* ===== F · fusão B + C: blocos de cor e Capi da B, acabamento fino e modo escuro da C ===== */
+html:root:not([data-theme="dark"]) { --bg: #faf5ec; --bg-top: #faf5ec; --card: #fffdf8; --line: #ece2cf; --field: #f3ebdb; --ink: #241a11; --ink-2: #57483a; --muted: #8a7b6a; }
+html:root:not([data-theme="dark"]) body { background: radial-gradient(110% 40% at 50% -8%, #e6f3e6 0, #faf5ec 60%) fixed !important; background-color: #faf5ec !important; }
+html:root[data-theme="dark"] { --bg: #0a0e0d; --bg-top: #0a0e0d; --card: #111715; --line: #1d2623; --field: #141b19; --field-line: #25302c; --ink: #f2f4f1; --ink-2: #bcc4bf; --muted: #828d88; --accent-ink: #6fe9c6; --green: #6fe9c6; }
+html:root[data-theme="dark"] body { background: radial-gradient(120% 55% at 50% -12%, #113229 0, #0a0e0d 58%) fixed !important; background-color: #0a0e0d !important; }
+/* bloco do dinheiro com a Capi */
+html:root .kpi.contas { border-radius: 32px !important; box-shadow: none !important; align-items: flex-start !important; text-align: left !important; padding: 24px 22px 22px !important; overflow: hidden; min-height: 168px; background: radial-gradient(120% 140% at 0% 0%, #17806a 0, #0e6b57 45%, #0a4d40 100%) !important; }
+html:root[data-theme="dark"] .kpi.contas { background: radial-gradient(120% 150% at 0% 0%, #17604f 0, #0d3a30 50%, #0a211c 100%) !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.07) !important; }
+html:root .kpi.contas::before, html:root .kpi.contas::after { display: none !important; }
+html:root .kpi.contas .kpi-head { justify-content: flex-start !important; }
+html:root .kpi.contas .kpi-label { color: rgba(255,255,255,.78) !important; }
+html:root .kpi.contas .kpi-value { font-size: 2.7rem !important; font-weight: 700 !important; letter-spacing: -.035em; background: linear-gradient(180deg, #ffffff 30%, #b9f5e2); -webkit-background-clip: text; background-clip: text; color: transparent !important; }
+html:root .kpi.contas #kSaldoSub { justify-content: flex-start !important; }
+html:root .mk-capi { width: 150px; height: 150px; right: -14px; bottom: -40px; }
+html:root[data-theme="dark"] .mk-capi { filter: drop-shadow(0 0 26px rgba(111,233,198,.22)); }
+/* caiu · saiu · sobra: três blocos de cor */
+html:root .kpi.mes .mes-row { gap: 10px !important; }
+html:root .mes-it { border: 0 !important; border-radius: 24px !important; padding: 16px 18px !important; }
+html:root:not([data-theme="dark"]) .mes-it.receita { background: #d7f0e0 !important; }
+html:root:not([data-theme="dark"]) .mes-it.despesas { background: #ffe0cd !important; }
+html:root:not([data-theme="dark"]) .mes-it.sobra { background: #ffe9a8 !important; box-shadow: none !important; }
+html:root:not([data-theme="dark"]) .mes-it .kpi-label, html:root:not([data-theme="dark"]) .mes-it .mes-cap, html:root:not([data-theme="dark"]) .sobra-g { color: #4a3a2b !important; }
+html:root:not([data-theme="dark"]) .mes-it .kpi-value, html:root:not([data-theme="dark"]) .mes-it.sobra .kpi-value, html:root:not([data-theme="dark"]) .sobra-g b { color: #241a11 !important; }
+html:root:not([data-theme="dark"]) .mes-ic { background: rgba(255,255,255,.72) !important; color: #241a11 !important; }
+html:root:not([data-theme="dark"]) .mes-ring .fg { stroke: #241a11 !important; } html:root:not([data-theme="dark"]) .mes-ring .tr { stroke: rgba(36,26,17,.14) !important; }
+html:root[data-theme="dark"] .mes-it.receita { background: #10291f !important; box-shadow: inset 0 0 0 1px rgba(111,233,198,.14) !important; }
+html:root[data-theme="dark"] .mes-it.despesas { background: #2b1a13 !important; box-shadow: inset 0 0 0 1px rgba(255,157,117,.16) !important; }
+html:root[data-theme="dark"] .mes-it.sobra { background: #2a2410 !important; box-shadow: inset 0 0 0 1px rgba(255,214,102,.18) !important; }
+html:root[data-theme="dark"] .mes-it.receita .kpi-value { color: #6fe9c6 !important; }
+html:root[data-theme="dark"] .mes-it.despesas .kpi-value { color: #ffb08c !important; }
+html:root[data-theme="dark"] .mes-it.sobra .kpi-value { color: #ffd666 !important; }
+html:root[data-theme="dark"] .mes-ic.in { background: rgba(111,233,198,.14) !important; color: #6fe9c6 !important; }
+html:root[data-theme="dark"] .mes-ic.out { background: rgba(255,157,117,.14) !important; color: #ffb08c !important; }
+html:root[data-theme="dark"] .mes-ring .fg { stroke: #ffd666 !important; } html:root[data-theme="dark"] .mes-ring .tr { stroke: rgba(255,214,102,.16) !important; }
+html:root .ov h3, html:root .mes-t, html:root .evo h3 { font-size: 1.22rem !important; font-weight: 700 !important; }
+html:root:not([data-theme="dark"]) .ov-more { background: #241a11 !important; color: #faf5ec !important; border: 0 !important; border-radius: 999px !important; }
+html:root:not([data-theme="dark"]) .ov-more small { color: #d9cdb9 !important; }
+html:root[data-theme="dark"] .ov-more { border-color: var(--field-line) !important; border-radius: 999px !important; }
+@media (max-width: 640px) {
+  html:root .bnav { left: 14px !important; right: 14px !important; bottom: 12px !important; border-radius: 28px !important; border: 0 !important; }
+  html:root:not([data-theme="dark"]) .bnav { background: #241a11 !important; box-shadow: 0 14px 30px -12px rgba(36,26,17,.5) !important; }
+  html:root:not([data-theme="dark"]) .bnav button { color: #b9a995 !important; }
+  html:root:not([data-theme="dark"]) .bnav button.on, html:root:not([data-theme="dark"]) .bnav button[aria-current] { color: #fff !important; }
+  html:root[data-theme="dark"] .bnav { background: rgba(20,27,25,.86) !important; backdrop-filter: blur(16px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 16px 34px -14px rgba(0,0,0,.8) !important; }
+  html:root .bnav .bplus { background: #f28a2e !important; color: #241a11 !important; }
+  html:root:not([data-theme="dark"]) .bnav .bplus { box-shadow: 0 0 0 5px #faf5ec !important; }
+  html:root[data-theme="dark"] .bnav .bplus { box-shadow: 0 0 0 5px #0a0e0d, 0 0 26px rgba(242,138,46,.4) !important; }
+}
+html:root .fab { background: #f28a2e !important; color: #241a11 !important; }
+@media (min-width: 981px) { html:root .kpi.mes .mes-it { padding: 16px 18px !important; } }
+/* texto do bloco do dinheiro sempre por cima da Capi; ela não pega toque */
+.kpi.contas .kpi-value, .kpi.contas #kSaldoSub { position: relative; z-index: 1; }
+.kpi.contas #accountsBtn { z-index: 2; }
+html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !important; max-width: calc(100% - 64px); }
+@media (max-width: 400px) { html:root .mk-capi { width: 124px !important; height: 124px !important; right: -16px !important; bottom: -34px !important; } }
+@media (prefers-reduced-motion: no-preference) { .mk-capi { transition: transform .3s; } .kpi.contas:hover .mk-capi { transform: translateY(-3px); } }
+@media print { .mk-capi { display: none; } }
+
 </style>
 </head>
 <body>
@@ -2209,6 +2286,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         </div>
         <div class="kpi-value num" id="kSaldo"></div>
         <div class="kpi-sub" id="kSaldoSub"></div>
+        <svg class="mk-capi" id="kCapi" viewBox="0 0 64 64" aria-hidden="true"></svg>
       </div>
       <!-- resumo do mês num card só: caiu − saiu = sobra -->
       <div class="kpi mes">
@@ -2528,6 +2606,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   if (!ui.pal4) { if (ui.palette === 'aurora') ui.palette = 'nevoa'; ui.pal4 = 1; }   // Névoa voltou a ser o padrão (uma vez; depois vale a escolha da pessoa)
   // visual novo: quem estava na fonte padrão antiga passa para a nova (uma vez só)
   if (!ui.look2) { if (ui.font === 'Urbanist') ui.font = 'Instrument Sans'; ui.look2 = 1; }
+  if (!ui.look3) { if (!ui.font || ui.font === 'Instrument Sans') ui.font = 'Parkinsans'; ui.look3 = 1; }
   const saveUi = () => { try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch (_) {} };
 
   let view = { month: mkey(today.getFullYear(), today.getMonth()), query: '', cat: '', allMonths: false, min: 0, max: 0 };   // min/max em centavos (0 = sem limite)
@@ -2605,6 +2684,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   const capiFull = () => `${CAPI.shadow}<g class="cb">${CAPI.body}<g class="mcoin">${capiCoin()}</g><g class="paws">${CAPI.pl}${CAPI.pr}</g>${CAPI.blush}${CAPI.eyes}</g>${CAPI.fruit}`;
   // busto (cabeça, patinhas e moeda) encaixado no quadrado 64x64 dos avatares
   const CAPI_BUST = `<g transform="matrix(.5289 0 0 .5289 -7.405 -11.636)"><g class="cb">${CAPI.body}${capiCoin()}${CAPI.pl}${CAPI.pr}${CAPI.blush}${CAPI.eyes}</g>${CAPI.fruit}</g>`;
+  { const k = document.getElementById('kCapi'); if (k) k.innerHTML = CAPI_BUST; }   // a Capi de sempre no bloco do dinheiro
   const AVATARS = {
     capivara: { name: 'Capivara', col: '#c98d62', bg: '#d6f5ec', say: 'De boa…', svg: CAPI_BUST },
     gato: { name: 'Gato', col: '#eba030', bg: '#ffe7b3', say: 'Miau!', svg: `<g class="ear"><path d="M14 26 17 10 27 19M50 26 47 10 37 19" fill="#ffb020"/><path d="M18 15 19.5 22M46 15 44.5 22" stroke="#ff8a3d" stroke-width="2.4" stroke-linecap="round"/></g><circle cx="32" cy="36" r="19" fill="#ffb020"/>${eyes(35)}${blush(41)}<path d="M30 41h4l-2 2.2z" fill="#ff6f91"/><path d="M28.5 45q3.5 2.6 7 0" fill="none" stroke="${K}" stroke-width="1.8" stroke-linecap="round"/><path d="M12 39h8M12 43l8-1M52 39h-8M52 43l-8-1" stroke="${K}" stroke-width="1.3" stroke-linecap="round" opacity=".55"/>` },
