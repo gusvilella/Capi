@@ -1550,12 +1550,14 @@ button.kpi-label:hover { color: var(--ink); text-decoration-color: currentColor;
 /* barrinhas dos cartões: enchem ao trocar de aba/mês e, paradas, um brilho suave passa de vez em quando */
 @keyframes bar-gleam { 0%, 72% { transform: translateX(-120%); } 100% { transform: translateX(260%); } }
 .bar-mv i { position: relative; overflow: hidden; transform-origin: left center; }
-.bars-go .bar-mv i { animation: meter-fill 1s cubic-bezier(.22, .8, .25, 1) calc(.12s + var(--i, 0) * .09s) both; }
+@keyframes bar-fill-a { from { transform: scaleX(0); } } @keyframes bar-fill-b { from { transform: scaleX(0); } }
+html:root.bars-go .bar-mv i { animation: bar-fill-b 1s cubic-bezier(.22, .8, .25, 1) calc(.12s + var(--i, 0) * .09s) both; }
+html:root.bars-go.bars-a .bar-mv i { animation-name: bar-fill-a; }
 .bar-mv i::after { content: ""; position: absolute; inset: 0; width: 55%; border-radius: inherit; pointer-events: none;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .5), transparent);
   animation: bar-gleam 5.5s ease-in-out calc(1.4s + var(--i, 0) * .35s) infinite both; }
 html:root[data-theme="dark"] .bar-mv i::after { background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .28), transparent); }
-@media (prefers-reduced-motion: reduce) { .bars-go .bar-mv i, .bar-mv i::after { animation: none !important; } .bar-mv i::after { display: none; } }
+@media (prefers-reduced-motion: reduce) { html:root.bars-go .bar-mv i, .bar-mv i::after { animation: none !important; } .bar-mv i::after { display: none; } }
 .meter i, .steps-bar i { position: relative; overflow: hidden; transform-origin: left center; }
 /* animações que esperam o quadro aparecer na tela (rolando): ficam paradas no começo (rv-wait) e rodam ao aparecer (rv-go) */
 .rv-wait, .rv-wait * { animation-play-state: paused !important; }
@@ -3047,8 +3049,9 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
   // barrinhas de limite dos cartões: enchem de novo (uma depois da outra) a cada troca de aba ou de mês
   function barsGo() {
     if (reduced()) return;
-    const root = document.documentElement;
-    root.classList.remove('bars-go'); void root.offsetWidth; root.classList.add('bars-go');
+    // alterna entre duas animações iguais: trocar o nome é o que garante que ela recomece (mesmo se outra estava rodando)
+    const root = document.documentElement, alt = root.classList.contains('bars-a');
+    root.classList.remove('bars-go', 'bars-a'); void root.offsetWidth; root.classList.add('bars-go'); if (!alt) root.classList.add('bars-a');
     clearTimeout(barsGo.t); barsGo.t = setTimeout(() => root.classList.remove('bars-go'), 2600);
   }
   function fillAnim() {
@@ -7723,6 +7726,7 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
     wordsIn($('#headline'), lastHeadline || $('#headline').textContent, 140);
     [top, kpis].forEach(el => { el.classList.remove('intro'); void el.offsetWidth; el.classList.add('intro'); });
     armReveal();   // o que está mais pra baixo (cards, quadros) anima só quando você rolar até lá
+    barsGo();   // as barrinhas dos cartões já tinham enchido escondidas atrás da abertura: enchem de novo agora que aparecem
     ['#kSaldo', '#kReceita', '#kDespesas', '#kSobra'].forEach((id, i) => { const el = $(id); if (el._v != null && !el.closest('.rv-wait')) countTo(el, el._v, el._fmt, 0, 380 + i * 60); });
     countUpMarked($('#overview')); animateEnter(0, true);
     // a rosca já tinha se desenhado escondida atrás da abertura: desenha de novo agora que aparece
