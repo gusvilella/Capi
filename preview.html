@@ -2975,6 +2975,9 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
   // ================= Frase do topo =================
   // Uma frase curta e animadora sobre o mês: o próximo passo, nunca um alarme.
   const reais = c => ui.hidden ? '' : 'R$ ' + Math.round(Math.abs(c) / 100).toLocaleString('pt-BR');
+  // Saiu mais do que caiu, mas os bancos cobrem: não é "estar no vermelho", é usar o que já tinha guardado
+  const bankTotal = () => state.accounts.reduce((s, a) => s + accBalance(a), 0);
+  const fromSaved = t => t.sobra < 0 && state.accounts.length > 0 && bankTotal() > 0;
   function headlineText(t) {
     const key = view.month, cur = curKey(), mes = monthName(key);
     const any = state.receitas.length || state.variaveis.length || state.fixas.length || state.accounts.length || state.cards.length;
@@ -2982,9 +2985,10 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
     if (key < cur) {
       if (!t.receita && !t.despesas) return [`Nada lançado em ${mes}.`, ''];
       return t.sobra >= 0 ? [`${vc('Você fechou', 'Vocês fecharam')} ${mes} com ${reais(t.sobra) || 'saldo'} de sobra.`, 'Guardar um pouco disso já é meio caminho.']
+        : fromSaved(t) ? [`Em ${mes}, ${vc('você usou', 'vocês usaram')} ${reais(t.sobra) || 'um pouco'} do que já ${vc('tinha', 'tinham')} guardado.`, '']
         : [`${mes.charAt(0).toUpperCase() + mes.slice(1)} ficou ${reais(t.sobra) || 'um pouco'} acima do que entrou.`, 'Todo mês é uma nova chance de virar o jogo.'];
     }
-    if (key > cur) return [`Planejando ${mes}.`, t.receita || t.despesas ? (t.sobra >= 0 ? `Por enquanto sobram ${reais(t.sobra) || 'alguns reais'}.` : `Por enquanto faltam ${reais(t.sobra) || 'alguns reais'}.`) : 'Lance o que já sabe que vai entrar e sair.'];
+    if (key > cur) return [`Planejando ${mes}.`, t.receita || t.despesas ? (t.sobra >= 0 ? `Por enquanto sobram ${reais(t.sobra) || 'alguns reais'}.` : fromSaved(t) ? `Por enquanto, ${reais(t.sobra) || 'uma parte'} sai do que já ${vc('tem', 'têm')} guardado.` : `Por enquanto faltam ${reais(t.sobra) || 'alguns reais'}.`) : 'Lance o que já sabe que vai entrar e sair.'];
     const late = dueSoon().filter(f => daysUntil(f.shownDate) < 0);
     if (late.length === 1) return [`Falta só ${late[0].desc} pra ficar em dia.`, 'Resolvendo essa, o resto está sob controle.'];
     if (late.length > 1) return [`Faltam ${late.length} contas pra ficar em dia.`, 'Uma de cada vez. Toque no sininho pra ver quais.'];
@@ -2995,6 +2999,8 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
     const today = dueSoon().filter(f => daysUntil(f.shownDate) === 0);
     if (today.length) return [`Hoje vence ${today[0].desc}.`, today.length > 1 ? `E mais ${today.length - 1}. O resto está em dia.` : 'O resto está em dia.'];
     if (t.receita && t.sobra >= 0) return [`Sobram ${reais(t.sobra) || 'alguns reais'} em ${mes}.`, !t.pct ? 'Que tal planejar guardar uma parte?' : t.saldo >= 0 ? vc('E ainda cabe o que você planejou guardar. Bom trabalho.', 'E ainda cabe o que vocês planejaram guardar. Bom trabalho.') : `Pra guardar tudo que ${vc('você planejou', 'vocês planejaram')}, faltam ${reais(t.saldo) || 'alguns reais'}.`];
+    if (t.receita && fromSaved(t)) return [`${vc('Você usou', 'Vocês usaram')} ${reais(t.sobra) || 'um pouco'} do que já ${vc('tinha', 'tinham')} guardado.`,
+      t.aReceberMes ? `E ainda vão cair ${reais(t.aReceberMes)} este mês.` : `Ainda ${vc('tem', 'têm')} ${reais(bankTotal())} nos bancos.`];
     if (t.receita && t.sobra < 0) return [`Faltam ${reais(t.sobra) || 'alguns reais'} pra fechar ${mes} no azul.`, 'Pequenos ajustes já fazem diferença.'];
     return ['Tudo em dia por aqui.', 'Lance o que entrar e sair pra acompanhar o mês.'];
   }
@@ -3228,12 +3234,13 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
     }
     // Sobra do mês: caiu − saiu, com sinal (o que você quer guardar aparece numa linha embaixo, sem mudar a sobra). A barra mostra quanto do que entrou já saiu
     // (passou de 100%: o pedaço a mais fica em âmbar, atenção sem alarme)
-    $('#kSobraLabel').textContent = view.month > curKey() ? 'Vai sobrar' : 'Sobra';
+    const saved = fromSaved(t);
+    $('#kSobraLabel').textContent = saved ? (view.month > curKey() ? 'Vai usar do guardado' : 'Usou do guardado') : view.month > curKey() ? 'Vai sobrar' : 'Sobra';
     { const n = monthName(view.month); $('#kMesT').textContent = (view.month > curKey() ? 'Previsão de ' : view.month === curKey() ? 'Seu mês · ' : '') + (view.month > curKey() ? n : n.charAt(0).toUpperCase() + n.slice(1)); }
-    $('#capiScene')?.classList.toggle('tight', t.sobra < 0);   // mês no vermelho: a Capi fica preocupadinha
-    cnt($('#kSobra'), t.sobra, c => ui.hidden ? money(c) : (c < 0 ? '– ' : c > 0 ? '+ ' : '') + money(Math.abs(c)));
+    $('#capiScene')?.classList.toggle('tight', t.sobra < 0 && !saved);   // mês no vermelho: a Capi fica preocupadinha
+    cnt($('#kSobra'), t.sobra, c => ui.hidden ? money(c) : saved ? money(Math.abs(c)) : (c < 0 ? '– ' : c > 0 ? '+ ' : '') + money(Math.abs(c)));
     countZero = false;
-    $('#kSobra').classList.toggle('short', t.sobra < 0);
+    $('#kSobra').classList.toggle('short', t.sobra < 0 && !saved);
     $('#kSobra').classList.toggle('pos', t.sobra > 0);
     { const used = t.despesas, top = Math.max(t.receita, used);
       const cap = !t.receita && !used ? 'Lance o que entra e o que sai pra ver o balanço'
@@ -3243,10 +3250,13 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
         : used > t.receita ? `Saiu ${Math.round((used / t.receita - 1) * 100)}% a mais do que entrou`
         : `${vc('Você usou', 'Vocês usaram')} ${Math.round(used / t.receita * 100)}% do que entrou`;
       // anel da sobra: quanto do que caiu já saiu (passou de 100%: anel cheio em âmbar)
-      $('#kSobraCap').innerHTML = esc(!t.receita || used > t.receita ? cap : '')   // frase só quando falta lançar ou saiu mais do que entrou; no resto, o anel já mostra
-        + (t.pct && t.receita ? `<span class="sobra-g">${t.saldo >= 0 ? `Guardando <b class="num">${esc(money(t.investir))}</b>, ficam <b class="num">${esc(money(t.saldo))}</b> livres` : `Pra guardar <b class="num">${esc(money(t.investir))}</b> faltam <b class="num">${esc(money(-t.saldo))}</b>`}</span>` : '');
-      $('#kSobraBox').classList.toggle('neg', t.sobra < 0);
-      $('#kRing').setAttribute('stroke-dasharray', `${(top ? Math.min(used / Math.max(t.receita, 1), 1) * 100 : 0).toFixed(1)} 100`);
+      const savedCap = `Ainda ${vc('tem', 'têm')} ${money(bankTotal())} nos bancos` + (t.aReceberMes && view.month >= curKey() ? ` · + ${money(t.aReceberMes)} pra cair` : '');
+      $('#kSobraCap').innerHTML = esc(saved ? (view.month < curKey() ? '' : savedCap) : !t.receita || used > t.receita ? cap : '')   // frase só quando falta lançar ou saiu mais do que entrou; no resto, o anel já mostra
+        + (t.pct && t.receita && !saved ? `<span class="sobra-g">${t.saldo >= 0 ? `Guardando <b class="num">${esc(money(t.investir))}</b>, ficam <b class="num">${esc(money(t.saldo))}</b> livres` : `Pra guardar <b class="num">${esc(money(t.investir))}</b> faltam <b class="num">${esc(money(-t.saldo))}</b>`}</span>` : '');
+      $('#kSobraBox').classList.toggle('neg', t.sobra < 0 && !saved);
+      $('#kSobraBox').classList.toggle('guard', saved);
+      $('#kRing').setAttribute('stroke-dasharray', `${(saved ? 0 : top ? Math.min(used / Math.max(t.receita, 1), 1) * 100 : 0).toFixed(1)} 100`);
+      $('#kSobraBox .mes-ring').style.visibility = saved ? 'hidden' : '';
       $('#kSobraSub').innerHTML = (t.incomeKey !== view.month ? `<span class="mes-chip">${ico('dollar', 'width:13px;height:13px')}Dinheiro de ${monthName(t.incomeKey)}: <b class="num">${esc(money(t.receita))}</b></span> ` : '') + (() => { if (view.month !== curKey()) return '';
           // o que o próximo mês já tem previsto (contas fixas, assinaturas, parcelas e faturas que vencem nele)
           const nk = addMonths(view.month, 1), nx = totals(nk).despesas;
@@ -7747,7 +7757,7 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
     contas: ['Seu dinheiro hoje', 'É o dinheiro que você tem agora, somando os bancos que cadastrou em <b>Bancos</b>.', 'Ele só muda quando você mexe: lançar um gasto, uma entrada ou marcar uma conta como paga não altera o saldo. Quando ficar diferente do app do banco, toque em Bancos e corrija o valor.'],
     entrou: ['Caiu na conta', 'Tudo que caiu na conta no mês: salário, pix, vendas, rendimentos.', 'O que você ainda vai receber aparece embaixo, como "a receber", e só entra na conta quando você marcar como recebido.'],
     saiu: ['Saiu da conta', 'Tudo que sai da conta no mês: contas fixas, gastos pagos com dinheiro da conta, assinaturas e as faturas que vencem no mês.', 'Compra no cartão entra na fatura em que cai, e a fatura conta no mês em que vence, com o valor que você lançou. Ex.: o salário de novembro paga a fatura que vence em novembro (compras de outubro). Assim nada conta duas vezes.'],
-    sobra: ['Sobra do mês', 'É o que caiu na conta menos o que saiu. Com "+" sobrou; com "–" faltou. Se você planejou guardar uma parte (em Guardar), a linha de baixo mostra quanto fica livre depois de guardar.', 'O anel mostra quanto do que entrou já saiu. Se passar do que entrou, o pedaço a mais fica em amarelo: é quanto falta pra fechar o mês sem se apertar. Na Visão geral tem ideias pra resolver.'],
+    sobra: ['Sobra do mês', 'É o que caiu na conta menos o que saiu. Quando sai mais do que caiu e os bancos cobrem, aparece "Usou do guardado": é o quanto saiu do dinheiro que você já tinha. Se você planejou guardar uma parte (em Guardar), a linha de baixo mostra quanto fica livre depois de guardar.', 'O anel mostra quanto do que entrou já saiu. Se passar do que entrou, o pedaço a mais fica em amarelo: é quanto falta pra fechar o mês sem se apertar. Na Visão geral tem ideias pra resolver.'],
   };
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-explain]'); if (!b) return;
