@@ -2683,16 +2683,29 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   }
 
   // ----- Saldo das contas -----
-  // Saldo atual = saldo informado + movimentos ligados à conta depois da data informada (até hoje):
-  // receitas recebidas nela, gastos pagos com ela (Pix/débito/boleto) e faturas pagas com ela
+  // O saldo só muda quando você mexe nele: digitando o valor em Bancos, transferindo entre contas, aportando/resgatando
+  // de um investimento ou escolhendo tirar o valor de uma fatura paga. Lançar entrada, gasto ou marcar conta como paga
+  // NÃO mexe no saldo (antes mexia; "legacy" refaz a conta antiga só pra migrar os saldos uma vez, sem nada pular na tela).
   function accountMoves(acc) { return cached('am' + acc.id + acc.updatedAt + acc.balance, () => accountMovesRaw(acc)); }
-  function accountMovesRaw(acc) {
+  // Migração (uma vez por conjunto de dados): o saldo que a pessoa via (com as mudanças automáticas antigas) vira o saldo informado
+  function bakeBalances() {
+    if (state.saldoMao) return;
+    let changed = false;
+    for (const acc of state.accounts) {
+      const old = acc.balance + accountMovesRaw(acc, true).reduce((s, m) => s + m.amount, 0);
+      if (old !== accBalance(acc)) { acc.balance = old; acc.updatedAt = todayIso; acc.balanceAt = Date.now(); changed = true; }
+    }
+    state.saldoMao = 1;
+    if (memo) memo.clear?.();
+    save(!changed);
+  }
+  function accountMovesRaw(acc, legacy = false) {
     const from = acc.updatedAt || todayIso, out = [];
     if (from > todayIso) return out;
     // Conta o que aconteceu depois do saldo informado. No mesmo dia, só o que foi lançado depois do momento em que você
     // informou o saldo (balanceAt); sem esse horário (dados antigos), o mesmo dia fica de fora, como antes.
     const inRange = (iso, ts) => iso <= todayIso && (iso > from || (iso === from && !!acc.balanceAt && !!ts && ts > acc.balanceAt));
-    for (let k = addMonths(monthOf(from), -1); k <= curKey(); k = addMonths(k, 1)) {
+    if (legacy) for (let k = addMonths(monthOf(from), -1); k <= curKey(); k = addMonths(k, 1)) {
       receitasOf(k).filter(r => r.payAccount === acc.id && !r.pending && inRange(r.shownDate, !r.imported && r.created))
         .forEach(r => out.push({ date: r.shownDate, amount: r.amount, label: r.desc || 'Entrada' }));
       [...variaveisOf(k).map(i => [i, i.desc || cat(i.category)?.name]), ...assinaturasOf(k).map(i => [i, i.name])]
@@ -2870,6 +2883,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   // depois de lançar: só a linha nova acende (o resto fica quieto); depois de editar, a linha editada pisca de leve
   const tableRows = () => new Map([...document.querySelectorAll('#table [data-edit]')].map(b => [b.dataset.edit, b.closest('.row')?.textContent || '']));
   const render = (...a) => {
+    bakeBalances();
     const before = tableRows(), hidden = render.hidden; renderMemo(...a); render.hidden = ui.hidden;
     // esconder/mostrar valores muda o texto de todas as linhas: não é lançamento nem edição
     if (!sameView || hidden !== undefined && hidden !== ui.hidden || !before.size && !document.querySelector('#table [data-edit]') || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -4823,7 +4837,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
           <div class="money"><button type="button" class="sign" data-sign tabindex="-1" title="Tocar para marcar como negativo (cheque especial)">${a.neg ? '–R$' : 'R$'}</button>
             <input inputmode="numeric" data-money value="${centsText(a.abs)}" data-cents="${a.abs}" aria-label="Saldo" /></div>
           <button type="button" class="x" data-rm aria-label="Remover conta">${ico('x')}</button></div>
-          ${a.moves && a.moves.length ? `<details class="acc-note"><summary>Atualizado sozinho: ${brl.format(a.balance / 100)} informado em ${dm(a.updatedAt)} ${a.moves.reduce((s, x) => s + x.amount, 0) < 0 ? '−' : '+'} ${brl.format(Math.abs(a.moves.reduce((s, x) => s + x.amount, 0)) / 100)} em ${a.moves.length} lançamento${a.moves.length > 1 ? 's' : ''} <span class="acc-more">ver</span></summary>
+          ${a.moves && a.moves.length ? `<details class="acc-note"><summary>${brl.format(a.balance / 100)} informado em ${dm(a.updatedAt)} ${a.moves.reduce((s, x) => s + x.amount, 0) < 0 ? '−' : '+'} ${brl.format(Math.abs(a.moves.reduce((s, x) => s + x.amount, 0)) / 100)} em ${a.moves.length} lançamento${a.moves.length > 1 ? 's' : ''} <span class="acc-more">ver</span></summary>
             <ul>${a.moves.slice(-30).reverse().map(x => `<li><span>${dm(x.date)} · ${esc(x.label)}</span><b class="${x.amount < 0 ? '' : 'in'}">${x.amount < 0 ? '−' : '+'}${brl.format(Math.abs(x.amount) / 100)}</b></li>`).join('')}</ul></details>` : ''}`).join('')
           : `<p class="acc-empty">Nenhuma conta ainda. Escolha um banco abaixo.</p>`;
         list.querySelectorAll('[data-money]').forEach(inp => {
@@ -5430,7 +5444,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const help = () => {
       const v = box.querySelector('.on')?.dataset.card || '';
       m.querySelector('#payHelp').textContent = v.startsWith('card:') ? 'Entra na fatura do cartão. Quando a fatura for lançada, passa a contar só dentro dela (não soma duas vezes).'
-        : v.startsWith('acc:') ? (box.dataset.receita ? 'Soma no saldo dessa conta na data do recebimento.' : box.dataset.fixa ? 'Sai do saldo desse banco quando você marcar a conta como paga.' : 'Sai do saldo dessa conta na data do pagamento.') : '';
+        : v.startsWith('acc:') ? 'É só pra você lembrar por onde foi. O saldo do banco não muda sozinho: ajuste em Bancos quando quiser.' : '';
     };
     box.addEventListener('click', e => {
       const b = e.target.closest('[data-card]'); if (!b) return;
@@ -7481,7 +7495,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
 
   // "Entenda": explicações curtas dos números do topo, como uma conversa
   const EXPLAIN = {
-    contas: ['Seu dinheiro hoje', 'É o dinheiro que você tem agora, somando os bancos que cadastrou em <b>Bancos</b>.', 'Ele muda sozinho quando você lança uma entrada ou um gasto pago com aquela conta. Se ficar diferente do app do banco, é só tocar em Bancos e corrigir o valor.'],
+    contas: ['Seu dinheiro hoje', 'É o dinheiro que você tem agora, somando os bancos que cadastrou em <b>Bancos</b>.', 'Ele só muda quando você mexe: lançar um gasto, uma entrada ou marcar uma conta como paga não altera o saldo. Quando ficar diferente do app do banco, toque em Bancos e corrija o valor.'],
     entrou: ['Caiu na conta', 'Tudo que caiu na conta no mês: salário, pix, vendas, rendimentos.', 'O que você ainda vai receber aparece embaixo, como "a receber", e só entra na conta quando você marcar como recebido.'],
     saiu: ['Saiu da conta', 'Tudo que sai da conta no mês: contas fixas, gastos pagos com dinheiro da conta, assinaturas e as faturas que vencem no mês.', 'Compra no cartão entra na fatura em que cai, e a fatura conta no mês em que vence, com o valor que você lançou. Ex.: o salário de novembro paga a fatura que vence em novembro (compras de outubro). Assim nada conta duas vezes.'],
     sobra: ['Sobra do mês', 'É o que caiu na conta menos o que saiu. Com "+" sobrou; com "–" faltou. Se você planejou guardar uma parte (em Guardar), a linha de baixo mostra quanto fica livre depois de guardar.', 'O anel mostra quanto do que entrou já saiu. Se passar do que entrou, o pedaço a mais fica em amarelo: é quanto falta pra fechar o mês sem se apertar. Na Visão geral tem ideias pra resolver.'],
