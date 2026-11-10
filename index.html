@@ -814,6 +814,8 @@ div.empty::before, .ov-forecast > .ov-empty::before, .ov-where > .ov-empty::befo
 .mes-it.sobra.neg { --sc: var(--amber); }
 .mes-it.sobra .kpi-value { color: var(--sc); font-weight: 600; }
 .mes-cap { margin-top: 2px; font-size: .72rem; color: var(--muted); line-height: 1.3; }
+.sobra-g { display: block; margin-top: 5px; padding-top: 5px; border-top: 1px dashed var(--line, rgba(128,128,128,.28)); color: var(--ink-2); }
+.sobra-g b { font-weight: 650; color: var(--ink); white-space: nowrap; }
 .mes-ring { flex: none; width: 44px; height: 44px; margin-left: auto; transform: rotate(-90deg); }
 .mes-ring .tr { stroke: color-mix(in srgb, var(--sc) 18%, transparent); }
 .mes-ring .fg { stroke: var(--sc); stroke-linecap: round; transition: stroke-dasharray .9s cubic-bezier(.22, .8, .25, 1); }
@@ -2814,7 +2816,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     // o que caiu (ou vai cair) no próprio mês — é o que o card mostra; com payLag o balanço usa o do mês seguinte
     const recMes = incomeKey(key) === key ? rec : receitasOf(key);
     const receitaMes = recMes.filter(r => !r.pending).reduce((s, r) => s + r.amount, 0), aReceberMes = recMes.filter(r => r.pending).reduce((s, r) => s + r.amount, 0);
-    return { receita, aReceber, receitaMes, aReceberMes, fixas, variaveis, assinaturas, faturas, despesas, pct, investir, saldo: receita - investir - despesas, incomeKey: incomeKey(key), aPagar, jaPago: despesas - aPagar };
+    return { receita, aReceber, receitaMes, aReceberMes, fixas, variaveis, assinaturas, faturas, despesas, pct, investir, sobra: receita - despesas, saldo: receita - investir - despesas, incomeKey: incomeKey(key), aPagar, jaPago: despesas - aPagar };
   }
 
 
@@ -2827,10 +2829,10 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     if (!any) return ['Vamos colocar suas contas em ordem?', 'Comece pelo botão + ou importe um extrato.'];
     if (key < cur) {
       if (!t.receita && !t.despesas) return [`Nada lançado em ${mes}.`, ''];
-      return t.saldo >= 0 ? [`${vc('Você fechou', 'Vocês fecharam')} ${mes} com ${reais(t.saldo) || 'saldo'} de sobra.`, 'Guardar um pouco disso já é meio caminho.']
-        : [`${mes.charAt(0).toUpperCase() + mes.slice(1)} ficou ${reais(t.saldo) || 'um pouco'} acima do que entrou.`, 'Todo mês é uma nova chance de virar o jogo.'];
+      return t.sobra >= 0 ? [`${vc('Você fechou', 'Vocês fecharam')} ${mes} com ${reais(t.sobra) || 'saldo'} de sobra.`, 'Guardar um pouco disso já é meio caminho.']
+        : [`${mes.charAt(0).toUpperCase() + mes.slice(1)} ficou ${reais(t.sobra) || 'um pouco'} acima do que entrou.`, 'Todo mês é uma nova chance de virar o jogo.'];
     }
-    if (key > cur) return [`Planejando ${mes}.`, t.receita || t.despesas ? (t.saldo >= 0 ? `Por enquanto sobram ${reais(t.saldo) || 'alguns reais'}.` : `Por enquanto faltam ${reais(t.saldo) || 'alguns reais'}.`) : 'Lance o que já sabe que vai entrar e sair.'];
+    if (key > cur) return [`Planejando ${mes}.`, t.receita || t.despesas ? (t.sobra >= 0 ? `Por enquanto sobram ${reais(t.sobra) || 'alguns reais'}.` : `Por enquanto faltam ${reais(t.sobra) || 'alguns reais'}.`) : 'Lance o que já sabe que vai entrar e sair.'];
     const late = dueSoon().filter(f => daysUntil(f.shownDate) < 0);
     if (late.length === 1) return [`Falta só ${late[0].desc} pra ficar em dia.`, 'Resolvendo essa, o resto está sob controle.'];
     if (late.length > 1) return [`Faltam ${late.length} contas pra ficar em dia.`, 'Uma de cada vez. Toque no sininho pra ver quais.'];
@@ -2840,8 +2842,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     }
     const today = dueSoon().filter(f => daysUntil(f.shownDate) === 0);
     if (today.length) return [`Hoje vence ${today[0].desc}.`, today.length > 1 ? `E mais ${today.length - 1}. O resto está em dia.` : 'O resto está em dia.'];
-    if (t.receita && t.saldo >= 0) return [`Sobram ${reais(t.saldo) || 'alguns reais'} em ${mes}.`, t.pct ? vc('E ainda cabe o que você planejou guardar. Bom trabalho.', 'E ainda cabe o que vocês planejaram guardar. Bom trabalho.') : 'Que tal planejar guardar uma parte?'];
-    if (t.receita && t.saldo < 0) return [`Faltam ${reais(t.saldo) || 'alguns reais'} pra fechar ${mes} no azul.`, 'Pequenos ajustes já fazem diferença.'];
+    if (t.receita && t.sobra >= 0) return [`Sobram ${reais(t.sobra) || 'alguns reais'} em ${mes}.`, !t.pct ? 'Que tal planejar guardar uma parte?' : t.saldo >= 0 ? vc('E ainda cabe o que você planejou guardar. Bom trabalho.', 'E ainda cabe o que vocês planejaram guardar. Bom trabalho.') : `Pra guardar tudo que ${vc('você planejou', 'vocês planejaram')}, faltam ${reais(t.saldo) || 'alguns reais'}.`];
+    if (t.receita && t.sobra < 0) return [`Faltam ${reais(t.sobra) || 'alguns reais'} pra fechar ${mes} no azul.`, 'Pequenos ajustes já fazem diferença.'];
     return ['Tudo em dia por aqui.', 'Lance o que entrar e sair pra acompanhar o mês.'];
   }
   let lastHeadline = '';
@@ -3061,16 +3063,16 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       $('#kSaldoSub').textContent = 'Adicione seus bancos pra ver tudo somado';
       $('#accountsBtnT').textContent = 'Adicionar';
     }
-    // Sobra do mês: entrou − saiu − o que você guarda, com sinal. A barra mostra quanto do que entrou já saiu
+    // Sobra do mês: caiu − saiu, com sinal (o que você quer guardar aparece numa linha embaixo, sem mudar a sobra). A barra mostra quanto do que entrou já saiu
     // (passou de 100%: o pedaço a mais fica em âmbar, atenção sem alarme)
     $('#kSobraLabel').textContent = view.month > curKey() ? 'Vai sobrar' : 'Sobra';
     { const n = monthName(view.month); $('#kMesT').textContent = (view.month > curKey() ? 'Previsão de ' : view.month === curKey() ? 'Seu mês · ' : '') + (view.month > curKey() ? n : n.charAt(0).toUpperCase() + n.slice(1)); }
-    $('#capiScene')?.classList.toggle('tight', t.saldo < 0);   // mês no vermelho: a Capi fica preocupadinha
-    cnt($('#kSobra'), t.saldo, c => ui.hidden ? money(c) : (c < 0 ? '– ' : c > 0 ? '+ ' : '') + money(Math.abs(c)));
+    $('#capiScene')?.classList.toggle('tight', t.sobra < 0);   // mês no vermelho: a Capi fica preocupadinha
+    cnt($('#kSobra'), t.sobra, c => ui.hidden ? money(c) : (c < 0 ? '– ' : c > 0 ? '+ ' : '') + money(Math.abs(c)));
     countZero = false;
-    $('#kSobra').classList.toggle('short', t.saldo < 0);
-    $('#kSobra').classList.toggle('pos', t.saldo > 0);
-    { const used = t.despesas + t.investir, top = Math.max(t.receita, used);
+    $('#kSobra').classList.toggle('short', t.sobra < 0);
+    $('#kSobra').classList.toggle('pos', t.sobra > 0);
+    { const used = t.despesas, top = Math.max(t.receita, used);
       const cap = !t.receita && !used ? 'Lance o que entra e o que sai pra ver o balanço'
         : !t.receita ? (t.incomeKey !== view.month ? `Nada lançado em ${monthName(t.incomeKey)} ainda` : 'Ainda não entrou nada este mês')
         : t.incomeKey !== view.month && view.month <= curKey() ? (used > t.receita ? `Sai ${Math.round((used / t.receita - 1) * 100)}% a mais do que ${incFut ? 'cai' : 'caiu'} em ${monthName(t.incomeKey)}` : `${vc(incFut ? 'Você vai usar' : 'Você usou', incFut ? 'Vocês vão usar' : 'Vocês usaram')} ${Math.round(used / t.receita * 100)}% do que ${incFut ? 'cai' : 'caiu'} em ${monthName(t.incomeKey)}`)
@@ -3078,8 +3080,9 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         : used > t.receita ? `Saiu ${Math.round((used / t.receita - 1) * 100)}% a mais do que entrou`
         : `${vc('Você usou', 'Vocês usaram')} ${Math.round(used / t.receita * 100)}% do que entrou`;
       // anel da sobra: quanto do que caiu já saiu (passou de 100%: anel cheio em âmbar)
-      $('#kSobraCap').textContent = (t.aPagar > 0 && view.month <= curKey() ? 'Depois de pagar o que falta · ' : '') + cap + (t.pct ? ` · guardando ${money(t.investir)}` : '');
-      $('#kSobraBox').classList.toggle('neg', t.saldo < 0);
+      $('#kSobraCap').innerHTML = esc((t.aPagar > 0 && view.month <= curKey() ? 'Depois de pagar o que falta · ' : '') + cap)
+        + (t.pct && t.receita ? `<span class="sobra-g">${t.saldo >= 0 ? `Guardando <b class="num">${esc(money(t.investir))}</b>, ficam <b class="num">${esc(money(t.saldo))}</b> livres` : `Pra guardar <b class="num">${esc(money(t.investir))}</b> faltam <b class="num">${esc(money(-t.saldo))}</b>`}</span>` : '');
+      $('#kSobraBox').classList.toggle('neg', t.sobra < 0);
       $('#kRing').setAttribute('stroke-dasharray', `${(top ? Math.min(used / Math.max(t.receita, 1), 1) * 100 : 0).toFixed(1)} 100`);
       $('#kSobraSub').innerHTML = (t.incomeKey !== view.month ? `<span class="mes-chip">${ico('dollar', 'width:13px;height:13px')}Dinheiro de ${monthName(t.incomeKey)}: <b class="num">${esc(money(t.receita))}</b></span> ` : '') + (() => { if (view.month !== curKey()) return '';
           // o que o próximo mês já tem previsto (contas fixas, assinaturas, parcelas e faturas que vencem nele)
@@ -5922,8 +5925,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       <div class="r-kpis">${kpi('Caiu na conta', t.receita, delta(t.receita, tp.receita, true) + (t.aReceber ? `<small>+ ${R(t.aReceber)} a receber</small>` : ''), '#15803d')}
         ${kpi('Saiu da conta', t.despesas, delta(t.despesas, tp.despesas, false), '#111827')}
         ${kpi('Pretende guardar', t.investir, t.pct ? `<small>${fmtPct(t.pct)} do que entrou</small>` : '', '#1d4ed8')}
-        ${t.saldo < 0 ? kpi('Faltou', -t.saldo, '<small>pra fechar o mês sem se apertar</small>', '#8f620a')
-          : kpi('Sobrou', t.saldo, t.receita ? `<small>${Math.round(t.saldo / t.receita * 100)}% do que entrou</small>` : '', '#111827')}</div>
+        ${t.sobra < 0 ? kpi('Faltou', -t.sobra, '<small>pra fechar o mês sem se apertar</small>', '#8f620a')
+          : kpi('Sobrou', t.sobra, t.receita ? `<small>${Math.round(t.sobra / t.receita * 100)}% do que entrou</small>` : '', '#111827')}</div>
       <div class="r-grid r-top">
         <section class="r-sec"><h2>Para onde foi o dinheiro</h2>${catTotal ? `<div class="r-where">${donut}<div class="r-cats">${catRows}</div></div>` : '<p class="r-empty">Sem despesas neste mês.</p>'}</section>
         <section class="r-sec"><h2>Últimos 6 meses</h2>${evo}<div class="r-tips">${tips}</div></section>
@@ -7481,7 +7484,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     contas: ['Seu dinheiro hoje', 'É o dinheiro que você tem agora, somando os bancos que cadastrou em <b>Bancos</b>.', 'Ele muda sozinho quando você lança uma entrada ou um gasto pago com aquela conta. Se ficar diferente do app do banco, é só tocar em Bancos e corrigir o valor.'],
     entrou: ['Caiu na conta', 'Tudo que caiu na conta no mês: salário, pix, vendas, rendimentos.', 'O que você ainda vai receber aparece embaixo, como "a receber", e só entra na conta quando você marcar como recebido.'],
     saiu: ['Saiu da conta', 'Tudo que sai da conta no mês: contas fixas, gastos pagos com dinheiro da conta, assinaturas e as faturas que vencem no mês.', 'Compra no cartão entra na fatura em que cai, e a fatura conta no mês em que vence, com o valor que você lançou. Ex.: o salário de novembro paga a fatura que vence em novembro (compras de outubro). Assim nada conta duas vezes.'],
-    sobra: ['Sobra do mês', 'É o que caiu na conta, menos o que saiu, menos o que você quer guardar (em Guardar). Com "+" sobrou; com "–" faltou.', 'A barrinha mostra quanto do que entrou já saiu. Se passar do que entrou, o pedaço a mais fica em amarelo: é quanto falta pra fechar o mês sem se apertar. Na Visão geral tem ideias pra resolver.'],
+    sobra: ['Sobra do mês', 'É o que caiu na conta menos o que saiu. Com "+" sobrou; com "–" faltou. Se você planejou guardar uma parte (em Guardar), a linha de baixo mostra quanto fica livre depois de guardar.', 'O anel mostra quanto do que entrou já saiu. Se passar do que entrou, o pedaço a mais fica em amarelo: é quanto falta pra fechar o mês sem se apertar. Na Visão geral tem ideias pra resolver.'],
   };
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-explain]'); if (!b) return;
