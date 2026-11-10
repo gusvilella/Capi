@@ -543,6 +543,9 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .ov-row .grow small { color: var(--muted); font-size: .72rem; }
 .ov-row .meter { margin-top: 5px; height: 6px; }
 .ov-row .amt { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ov-row .ov-next { display: block; margin-top: 1px; }
+.ov-row.ov-tot { padding-top: 10px; }
+.ov-row.ov-tot .grow small { font-size: .78rem; }
 .ov-empty { color: var(--muted); font-size: .82rem; padding: 18px 0; text-align: center; }
 /* card vazio ao lado de um card alto (calendário): o aviso fica no meio, sem um buraco embaixo */
 .ov-forecast:has(> .ov-empty), .ov-where:has(> .ov-empty), .ov-cards:has(> .ov-empty) { display: flex; flex-direction: column; }
@@ -562,6 +565,16 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .qa-preview .l span:first-child { color: var(--muted); }
 .qa-preview .l b { font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
 .qa-preview .big { font-size: 1.3rem; font-weight: 800; }
+.qa-pick-h { margin-top: 2px; color: var(--ink-2); font-weight: 600; }
+.qa-pick { display: flex; flex-wrap: wrap; gap: 6px; }
+.qa-pick button { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 7px; border-radius: 12px; border: 1px solid var(--field-line); background: var(--card); color: var(--ink); font: inherit; text-align: left; cursor: pointer; min-height: 44px; transition: border-color .15s, background .15s, box-shadow .15s; }
+.qa-pick button .logo { width: 26px; height: 26px; border-radius: 8px; flex: none; }
+.qa-pick button span { display: grid; line-height: 1.2; }
+.qa-pick button b { font-weight: 600; font-size: .82rem; white-space: nowrap; }
+.qa-pick button small { font-size: .7rem; color: var(--muted); }
+.qa-pick button.on { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent) inset; }
+.qa-pick button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .qa-pick button { transition: none; } }
 .qa-hint { font-size: .74rem; color: var(--muted); margin-top: 6px; line-height: 1.45; }
 .qa-hint code { white-space: nowrap; display: inline-block; margin: 1px 0; background: var(--field); padding: 1px 5px; border-radius: 5px; font-family: inherit; font-weight: 600; color: var(--ink-2); }
 .favs { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -814,6 +827,8 @@ div.empty::before, .ov-forecast > .ov-empty::before, .ov-where > .ov-empty::befo
 .mes-it.sobra.neg { --sc: var(--amber); }
 .mes-it.sobra .kpi-value { color: var(--sc); font-weight: 600; }
 .mes-cap { margin-top: 2px; font-size: .72rem; color: var(--muted); line-height: 1.3; }
+.sobra-g { display: block; margin-top: 5px; padding-top: 5px; border-top: 1px dashed var(--line, rgba(128,128,128,.28)); color: var(--ink-2); }
+.sobra-g b { font-weight: 650; color: var(--ink); white-space: nowrap; }
 .mes-ring { flex: none; width: 44px; height: 44px; margin-left: auto; transform: rotate(-90deg); }
 .mes-ring .tr { stroke: color-mix(in srgb, var(--sc) 18%, transparent); }
 .mes-ring .fg { stroke: var(--sc); stroke-linecap: round; transition: stroke-dasharray .9s cubic-bezier(.22, .8, .25, 1); }
@@ -2681,16 +2696,29 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   }
 
   // ----- Saldo das contas -----
-  // Saldo atual = saldo informado + movimentos ligados à conta depois da data informada (até hoje):
-  // receitas recebidas nela, gastos pagos com ela (Pix/débito/boleto) e faturas pagas com ela
+  // O saldo só muda quando você mexe nele: digitando o valor em Bancos, transferindo entre contas, aportando/resgatando
+  // de um investimento ou escolhendo tirar o valor de uma fatura paga. Lançar entrada, gasto ou marcar conta como paga
+  // NÃO mexe no saldo (antes mexia; "legacy" refaz a conta antiga só pra migrar os saldos uma vez, sem nada pular na tela).
   function accountMoves(acc) { return cached('am' + acc.id + acc.updatedAt + acc.balance, () => accountMovesRaw(acc)); }
-  function accountMovesRaw(acc) {
+  // Migração (uma vez por conjunto de dados): o saldo que a pessoa via (com as mudanças automáticas antigas) vira o saldo informado
+  function bakeBalances() {
+    if (state.saldoMao) return;
+    let changed = false;
+    for (const acc of state.accounts) {
+      const old = acc.balance + accountMovesRaw(acc, true).reduce((s, m) => s + m.amount, 0);
+      if (old !== accBalance(acc)) { acc.balance = old; acc.updatedAt = todayIso; acc.balanceAt = Date.now(); changed = true; }
+    }
+    state.saldoMao = 1;
+    if (memo) memo.clear?.();
+    save(!changed);
+  }
+  function accountMovesRaw(acc, legacy = false) {
     const from = acc.updatedAt || todayIso, out = [];
     if (from > todayIso) return out;
     // Conta o que aconteceu depois do saldo informado. No mesmo dia, só o que foi lançado depois do momento em que você
     // informou o saldo (balanceAt); sem esse horário (dados antigos), o mesmo dia fica de fora, como antes.
     const inRange = (iso, ts) => iso <= todayIso && (iso > from || (iso === from && !!acc.balanceAt && !!ts && ts > acc.balanceAt));
-    for (let k = addMonths(monthOf(from), -1); k <= curKey(); k = addMonths(k, 1)) {
+    if (legacy) for (let k = addMonths(monthOf(from), -1); k <= curKey(); k = addMonths(k, 1)) {
       receitasOf(k).filter(r => r.payAccount === acc.id && !r.pending && inRange(r.shownDate, !r.imported && r.created))
         .forEach(r => out.push({ date: r.shownDate, amount: r.amount, label: r.desc || 'Entrada' }));
       [...variaveisOf(k).map(i => [i, i.desc || cat(i.category)?.name]), ...assinaturasOf(k).map(i => [i, i.name])]
@@ -2779,13 +2807,17 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     return out.filter(i => i.payCard === cardId && card && faturaKeyFor(card, i.shownDate) === key);
   }
   // Prévia da fatura: soma do que já caiu nela (compras até hoje e parcelas)
-  const faturaPreview = (cardId, key) => itemsOnCard(cardId, key).filter(i => i.shownDate <= todayIso || i.installment).reduce((s, i) => s + i.amount, 0);
+  // Um número só por fatura sem valor digitado: a soma de tudo que cai nela (inclusive assinatura e conta fixa no cartão
+  // que ainda vão ser cobradas até o fechamento). É o mesmo valor que entra no total do mês.
+  const faturaPreview = (cardId, key) => itemsOnCard(cardId, key).reduce((s, i) => s + i.amount, 0);
+  // Só o que já foi cobrado (compras até hoje e parcelas): é o que ocupa o limite do cartão
+  const faturaCharged = (cardId, key) => itemsOnCard(cardId, key).filter(i => i.shownDate <= todayIso || i.installment).reduce((s, i) => s + i.amount, 0);
   // Quanto do limite está comprometido: faturas lançadas e não pagas + compras/parcelas que ainda vão entrar em faturas não lançadas
   function cardUsed(card) {
     let used = 0;
     for (let i = 0, k = focusKey(card, curKey()); i < 48; i++, k = addMonths(k, 1)) {
       const f = (state.faturas[card.id] || {})[k];
-      used += f ? (f.paid ? 0 : f.amount) : faturaPreview(card.id, k);
+      used += f ? (f.paid ? 0 : f.amount) : faturaCharged(card.id, k);
     }
     return used;
   }
@@ -2814,7 +2846,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     // o que caiu (ou vai cair) no próprio mês — é o que o card mostra; com payLag o balanço usa o do mês seguinte
     const recMes = incomeKey(key) === key ? rec : receitasOf(key);
     const receitaMes = recMes.filter(r => !r.pending).reduce((s, r) => s + r.amount, 0), aReceberMes = recMes.filter(r => r.pending).reduce((s, r) => s + r.amount, 0);
-    return { receita, aReceber, receitaMes, aReceberMes, fixas, variaveis, assinaturas, faturas, despesas, pct, investir, saldo: receita - investir - despesas, incomeKey: incomeKey(key), aPagar, jaPago: despesas - aPagar };
+    return { receita, aReceber, receitaMes, aReceberMes, fixas, variaveis, assinaturas, faturas, despesas, pct, investir, sobra: receita - despesas, saldo: receita - investir - despesas, incomeKey: incomeKey(key), aPagar, jaPago: despesas - aPagar };
   }
 
 
@@ -2827,10 +2859,10 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     if (!any) return ['Vamos colocar suas contas em ordem?', 'Comece pelo botão + ou importe um extrato.'];
     if (key < cur) {
       if (!t.receita && !t.despesas) return [`Nada lançado em ${mes}.`, ''];
-      return t.saldo >= 0 ? [`${vc('Você fechou', 'Vocês fecharam')} ${mes} com ${reais(t.saldo) || 'saldo'} de sobra.`, 'Guardar um pouco disso já é meio caminho.']
-        : [`${mes.charAt(0).toUpperCase() + mes.slice(1)} ficou ${reais(t.saldo) || 'um pouco'} acima do que entrou.`, 'Todo mês é uma nova chance de virar o jogo.'];
+      return t.sobra >= 0 ? [`${vc('Você fechou', 'Vocês fecharam')} ${mes} com ${reais(t.sobra) || 'saldo'} de sobra.`, 'Guardar um pouco disso já é meio caminho.']
+        : [`${mes.charAt(0).toUpperCase() + mes.slice(1)} ficou ${reais(t.sobra) || 'um pouco'} acima do que entrou.`, 'Todo mês é uma nova chance de virar o jogo.'];
     }
-    if (key > cur) return [`Planejando ${mes}.`, t.receita || t.despesas ? (t.saldo >= 0 ? `Por enquanto sobram ${reais(t.saldo) || 'alguns reais'}.` : `Por enquanto faltam ${reais(t.saldo) || 'alguns reais'}.`) : 'Lance o que já sabe que vai entrar e sair.'];
+    if (key > cur) return [`Planejando ${mes}.`, t.receita || t.despesas ? (t.sobra >= 0 ? `Por enquanto sobram ${reais(t.sobra) || 'alguns reais'}.` : `Por enquanto faltam ${reais(t.sobra) || 'alguns reais'}.`) : 'Lance o que já sabe que vai entrar e sair.'];
     const late = dueSoon().filter(f => daysUntil(f.shownDate) < 0);
     if (late.length === 1) return [`Falta só ${late[0].desc} pra ficar em dia.`, 'Resolvendo essa, o resto está sob controle.'];
     if (late.length > 1) return [`Faltam ${late.length} contas pra ficar em dia.`, 'Uma de cada vez. Toque no sininho pra ver quais.'];
@@ -2840,8 +2872,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     }
     const today = dueSoon().filter(f => daysUntil(f.shownDate) === 0);
     if (today.length) return [`Hoje vence ${today[0].desc}.`, today.length > 1 ? `E mais ${today.length - 1}. O resto está em dia.` : 'O resto está em dia.'];
-    if (t.receita && t.saldo >= 0) return [`Sobram ${reais(t.saldo) || 'alguns reais'} em ${mes}.`, t.pct ? vc('E ainda cabe o que você planejou guardar. Bom trabalho.', 'E ainda cabe o que vocês planejaram guardar. Bom trabalho.') : 'Que tal planejar guardar uma parte?'];
-    if (t.receita && t.saldo < 0) return [`Faltam ${reais(t.saldo) || 'alguns reais'} pra fechar ${mes} no azul.`, 'Pequenos ajustes já fazem diferença.'];
+    if (t.receita && t.sobra >= 0) return [`Sobram ${reais(t.sobra) || 'alguns reais'} em ${mes}.`, !t.pct ? 'Que tal planejar guardar uma parte?' : t.saldo >= 0 ? vc('E ainda cabe o que você planejou guardar. Bom trabalho.', 'E ainda cabe o que vocês planejaram guardar. Bom trabalho.') : `Pra guardar tudo que ${vc('você planejou', 'vocês planejaram')}, faltam ${reais(t.saldo) || 'alguns reais'}.`];
+    if (t.receita && t.sobra < 0) return [`Faltam ${reais(t.sobra) || 'alguns reais'} pra fechar ${mes} no azul.`, 'Pequenos ajustes já fazem diferença.'];
     return ['Tudo em dia por aqui.', 'Lance o que entrar e sair pra acompanhar o mês.'];
   }
   let lastHeadline = '';
@@ -2868,6 +2900,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   // depois de lançar: só a linha nova acende (o resto fica quieto); depois de editar, a linha editada pisca de leve
   const tableRows = () => new Map([...document.querySelectorAll('#table [data-edit]')].map(b => [b.dataset.edit, b.closest('.row')?.textContent || '']));
   const render = (...a) => {
+    bakeBalances();
     const before = tableRows(), hidden = render.hidden; renderMemo(...a); render.hidden = ui.hidden;
     // esconder/mostrar valores muda o texto de todas as linhas: não é lançamento nem edição
     if (!sameView || hidden !== undefined && hidden !== ui.hidden || !before.size && !document.querySelector('#table [data-edit]') || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -3061,16 +3094,16 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       $('#kSaldoSub').textContent = 'Adicione seus bancos pra ver tudo somado';
       $('#accountsBtnT').textContent = 'Adicionar';
     }
-    // Sobra do mês: entrou − saiu − o que você guarda, com sinal. A barra mostra quanto do que entrou já saiu
+    // Sobra do mês: caiu − saiu, com sinal (o que você quer guardar aparece numa linha embaixo, sem mudar a sobra). A barra mostra quanto do que entrou já saiu
     // (passou de 100%: o pedaço a mais fica em âmbar, atenção sem alarme)
     $('#kSobraLabel').textContent = view.month > curKey() ? 'Vai sobrar' : 'Sobra';
     { const n = monthName(view.month); $('#kMesT').textContent = (view.month > curKey() ? 'Previsão de ' : view.month === curKey() ? 'Seu mês · ' : '') + (view.month > curKey() ? n : n.charAt(0).toUpperCase() + n.slice(1)); }
-    $('#capiScene')?.classList.toggle('tight', t.saldo < 0);   // mês no vermelho: a Capi fica preocupadinha
-    cnt($('#kSobra'), t.saldo, c => ui.hidden ? money(c) : (c < 0 ? '– ' : c > 0 ? '+ ' : '') + money(Math.abs(c)));
+    $('#capiScene')?.classList.toggle('tight', t.sobra < 0);   // mês no vermelho: a Capi fica preocupadinha
+    cnt($('#kSobra'), t.sobra, c => ui.hidden ? money(c) : (c < 0 ? '– ' : c > 0 ? '+ ' : '') + money(Math.abs(c)));
     countZero = false;
-    $('#kSobra').classList.toggle('short', t.saldo < 0);
-    $('#kSobra').classList.toggle('pos', t.saldo > 0);
-    { const used = t.despesas + t.investir, top = Math.max(t.receita, used);
+    $('#kSobra').classList.toggle('short', t.sobra < 0);
+    $('#kSobra').classList.toggle('pos', t.sobra > 0);
+    { const used = t.despesas, top = Math.max(t.receita, used);
       const cap = !t.receita && !used ? 'Lance o que entra e o que sai pra ver o balanço'
         : !t.receita ? (t.incomeKey !== view.month ? `Nada lançado em ${monthName(t.incomeKey)} ainda` : 'Ainda não entrou nada este mês')
         : t.incomeKey !== view.month && view.month <= curKey() ? (used > t.receita ? `Sai ${Math.round((used / t.receita - 1) * 100)}% a mais do que ${incFut ? 'cai' : 'caiu'} em ${monthName(t.incomeKey)}` : `${vc(incFut ? 'Você vai usar' : 'Você usou', incFut ? 'Vocês vão usar' : 'Vocês usaram')} ${Math.round(used / t.receita * 100)}% do que ${incFut ? 'cai' : 'caiu'} em ${monthName(t.incomeKey)}`)
@@ -3078,8 +3111,9 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         : used > t.receita ? `Saiu ${Math.round((used / t.receita - 1) * 100)}% a mais do que entrou`
         : `${vc('Você usou', 'Vocês usaram')} ${Math.round(used / t.receita * 100)}% do que entrou`;
       // anel da sobra: quanto do que caiu já saiu (passou de 100%: anel cheio em âmbar)
-      $('#kSobraCap').textContent = (t.aPagar > 0 && view.month <= curKey() ? 'Depois de pagar o que falta · ' : '') + cap + (t.pct ? ` · guardando ${money(t.investir)}` : '');
-      $('#kSobraBox').classList.toggle('neg', t.saldo < 0);
+      $('#kSobraCap').innerHTML = esc((t.aPagar > 0 && view.month <= curKey() ? 'Depois de pagar o que falta · ' : '') + cap)
+        + (t.pct && t.receita ? `<span class="sobra-g">${t.saldo >= 0 ? `Guardando <b class="num">${esc(money(t.investir))}</b>, ficam <b class="num">${esc(money(t.saldo))}</b> livres` : `Pra guardar <b class="num">${esc(money(t.investir))}</b> faltam <b class="num">${esc(money(-t.saldo))}</b>`}</span>` : '');
+      $('#kSobraBox').classList.toggle('neg', t.sobra < 0);
       $('#kRing').setAttribute('stroke-dasharray', `${(top ? Math.min(used / Math.max(t.receita, 1), 1) * 100 : 0).toFixed(1)} 100`);
       $('#kSobraSub').innerHTML = (t.incomeKey !== view.month ? `<span class="mes-chip">${ico('dollar', 'width:13px;height:13px')}Dinheiro de ${monthName(t.incomeKey)}: <b class="num">${esc(money(t.receita))}</b></span> ` : '') + (() => { if (view.month !== curKey()) return '';
           // o que o próximo mês já tem previsto (contas fixas, assinaturas, parcelas e faturas que vencem nele)
@@ -3631,6 +3665,25 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     box.querySelector('.cal-list').addEventListener('keydown', e => { const el = e.target.closest('[data-open]'); if (el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openRef(el); } });
   }
 
+  // O que cada fatura do mês tem dentro, pra rosca mostrar "mercado, casa, gasolina" em vez de uma fatia "Cartões".
+  // A soma das partes é sempre o valor da fatura que conta no mês (cardOut): se o valor digitado for maior que as compras
+  // lançadas, a diferença vira "Outras compras no cartão"; se for menor (estorno, desconto), as partes encolhem na mesma proporção.
+  function cardParts(key, add) {
+    for (const c of cardsOf(key)) {
+      const out = cardOut(c, key); if (out <= 0) continue;
+      const items = itemsOnCard(c.id, key).filter(i => i.amount > 0), sum = items.reduce((s, i) => s + i.amount, 0);
+      const f = sum > out ? out / sum : 1;
+      let left = out;
+      items.forEach((i, n) => {
+        const v = f === 1 ? i.amount : n === items.length - 1 ? left : Math.min(left, Math.round(i.amount * f));
+        left -= v;
+        if (i.kind === 'Conta fixa') add('Contas fixas', '#475569', v, { go: 'fixa', icon: 'receipt' });
+        else if (i.kind === 'Assinatura') add('Assinaturas', '#d97706', v, { go: 'assin', icon: 'tv' });
+        else { const ct = cat(i.category); add(ct?.name || 'Sem categoria', ct?.color || '#94a3b8', v, ct ? { id: ct.id, icon: catIcon(ct), cc: catColor(ct) } : { icon: 'tag', cc: catColor(null, 'despesa') }); }
+      });
+      if (left > 0) add('Outras compras no cartão', '#1d4ed8', left, { go: 'cartoes', icon: 'credit-card' });
+    }
+  }
   function renderWhere() {
     const key = view.month, box = $('#ovWhere');
     const groups = new Map();
@@ -3639,7 +3692,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     variaveisOf(key).filter(countable(key)).forEach(v => { const c = cat(v.category); add(c?.name || 'Sem categoria', c?.color || '#94a3b8', v.amount, c ? { id: c.id, icon: catIcon(c), cc: catColor(c) } : { icon: 'tag', cc: catColor(null, 'despesa') }); });
     add('Contas fixas', '#475569', fixasOf(key).filter(countable(key)).reduce((s, f) => s + f.amount, 0), { go: 'fixa', icon: 'receipt' });
     add('Assinaturas', '#d97706', assinaturasOf(key).filter(countable(key)).reduce((s, a) => s + a.amount, 0), { go: 'assin', icon: 'tv' });
-    add('Cartões', '#1d4ed8', totals(key).faturas, { go: 'cartoes', icon: 'credit-card' });
+    cardParts(key, add);
     let list = [...groups.values()].sort((a, b) => b.value - a.value);
     if (list.length > 6) {
       // junta o resto em "Outros" (somando na categoria Outros, se ela já estiver entre as 5 maiores, pra não aparecer duas vezes)
@@ -3658,14 +3711,18 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const cards = cardsOf(view.month);
     box.innerHTML = `<h3>Cartões <button class="ov-link" data-go="cartoes">Ver todos</button></h3>`
       + (cards.length ? cards.map(c => {
-        const k = focusKey(c, view.month), f = (state.faturas[c.id] || {})[k], prev = f ? 0 : faturaPreview(c.id, k), amt = f ? f.amount : prev;
+        const k = view.month, f = c.fatura, prev = f ? 0 : faturaPreview(c.id, k), amt = f ? f.amount : prev;
         const used = c.limit ? cardUsed(c) : 0, pct = c.limit ? used / c.limit : 0;
         const st = f ? FSTATE[faturaState(c, k, f)][1] : prev ? 'Prévia' : 'Sem fatura';
+        // já paga no mês atual: mostra também a próxima, que é a que está juntando compras agora
+        const nk = addMonths(k, 1), nf = (state.faturas[c.id] || {})[nk], nAmt = nf ? nf.amount : faturaPreview(c.id, nk);
+        const next = f && f.paid && k === curKey() && nAmt ? `<small class="ov-next">Próxima: ${nf ? '' : '≈ '}${money(nAmt)} em ${dm(faturaDates(c, nk).due)}</small>` : '';
         return `<div class="ov-row">${logoHtml({ brand: c.bank, name: c.name, color: c.color })}
           <div class="grow"><b>${esc(c.name)}${c.last4 ? ` •${esc(c.last4)}` : ''}</b><small>${st} · vence ${dm(faturaDates(c, k).due)}${c.limit ? ` · disponível ${money(Math.max(c.limit - used, 0))}` : ''}</small>
-            ${c.limit ? `<div class="meter ${pct > 0.9 ? 'over' : pct > 0.7 ? 'warn' : 'info'}"><i style="width:${Math.min(pct, 1) * 100}%"></i></div>` : ''}</div>
+            ${next}${c.limit ? `<div class="meter ${pct > 0.9 ? 'over' : pct > 0.7 ? 'warn' : 'info'}"><i style="width:${Math.min(pct, 1) * 100}%"></i></div>` : ''}</div>
           <span class="amt">${amt ? (f ? '' : '≈ ') + money(amt) : '—'}</span></div>`;
-      }).join('') : '<div class="ov-empty">Nenhum cartão cadastrado.</div>');
+      }).join('') + (cards.length > 1 ? `<div class="ov-row ov-tot"><div class="grow"><small>Faturas que vencem em ${monthName(view.month)}</small></div><span class="amt">${money(cards.reduce((s, c) => s + cardOut(c, view.month), 0))}</span></div>` : '')
+      : '<div class="ov-empty">Nenhum cartão cadastrado.</div>');
   }
 
   // Patrimônio = contas + investimentos. Investimento marcado "já está no saldo das contas" (inAcc) não entra de novo
@@ -4443,7 +4500,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       const tip = [FLAGS[c.flag]?.name, c.last4 ? '•••• ' + c.last4 : ''].filter(Boolean).join(' · ');
       return `<div class="row atop">
         <span class="date">${logoHtml({ brand: c.bank, name: c.name, color: c.color })}</span>
-        <div class="name"><span title="${esc(tip)}">${whoBadge(c)}${esc(c.name)}${twin ? ` <small>•${esc(c.last4)}</small>` : ''}</span>
+        <div class="name"><span title="${esc(tip)}">${whoBadge(c)}${esc(c.name)}${c.last4 ? ` <small>•${esc(c.last4)}</small>` : ''}</span>
           <div class="card-sub">${c.fk !== view.month ? `Fatura de ${monthName(c.fk)} · vence ${dm(c.dates.due)}` : `Vence ${dm(c.dates.due)} · fecha ${dm(c.dates.close)}`}</div>
           ${limit}
           <div class="tag-m">${status}</div></div>
@@ -4466,7 +4523,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const rows = cardsOf(view.month).map(c => { const k = focusKey(c, view.month), f = (state.faturas[c.id] || {})[k]; return { ...c, amt: f ? f.amount : faturaPreview(c.id, k) }; })
       .filter(c => c.amt > 0).map(c => {
       const b = BRANDS[c.bank];
-      return { name: c.name, color: b ? b.color : (c.color || '#64748b'), value: c.amt, mono: c.bank ? monoMark(c.bank, c.name) : '', icon: c.bank ? '' : 'credit-card' };
+      return { name: cardLabel(c), color: b ? b.color : (c.color || '#64748b'), value: c.amt, mono: c.bank ? monoMark(c.bank, c.name) : '', icon: c.bank ? '' : 'credit-card' };
     }).sort((a, b) => b.value - a.value);
     const total = rows.reduce((s, g) => s + g.value, 0);
     $('#chart').innerHTML = total ? donutHtml(rows, total, 'Faturas')
@@ -4572,7 +4629,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       ${ccPreview(card)}
       ${moneyField('fAmount', f ? f.amount : 0, 'Valor da fatura')}
       ${last && !f ? `<div class="last-hint"><span>Mês passado: ${brl.format(last.amount / 100)}</span><button type="button" class="link" id="fLast">Usar esse valor</button></div>` : ''}
-      ${!f && faturaPreview(card.id, key) ? `<div class="last-hint"><span>Compras já lançadas neste cartão: ${brl.format(faturaPreview(card.id, key) / 100)}</span><button type="button" class="link" id="fPrevUse">Usar esse valor</button></div>` : ''}
+      ${!f && faturaPreview(card.id, key) ? `<div class="last-hint"><span>Soma do que já está nesta fatura: ${brl.format(faturaPreview(card.id, key) / 100)}</span><button type="button" class="link" id="fPrevUse">Usar esse valor</button></div>` : ''}
       <div id="insideBox"></div>
       ${st === 'late' && f && !nextF ? `<div class="movebox">Essa fatura venceu em ${dm(due)} e está sem pagar. Se esse valor é da fatura que ainda está aberta (fecha ${dm(faturaDates(card, next).close)}), mova pra de ${monthName(next)}.
         <br><button type="button" class="btn-soft" id="fMove">${ico('right', 'width:13px;height:13px')}Mover para a fatura de ${monthName(next)}</button></div>` : ''}
@@ -4820,7 +4877,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
           <div class="money"><button type="button" class="sign" data-sign tabindex="-1" title="Tocar para marcar como negativo (cheque especial)">${a.neg ? '–R$' : 'R$'}</button>
             <input inputmode="numeric" data-money value="${centsText(a.abs)}" data-cents="${a.abs}" aria-label="Saldo" /></div>
           <button type="button" class="x" data-rm aria-label="Remover conta">${ico('x')}</button></div>
-          ${a.moves && a.moves.length ? `<details class="acc-note"><summary>Atualizado sozinho: ${brl.format(a.balance / 100)} informado em ${dm(a.updatedAt)} ${a.moves.reduce((s, x) => s + x.amount, 0) < 0 ? '−' : '+'} ${brl.format(Math.abs(a.moves.reduce((s, x) => s + x.amount, 0)) / 100)} em ${a.moves.length} lançamento${a.moves.length > 1 ? 's' : ''} <span class="acc-more">ver</span></summary>
+          ${a.moves && a.moves.length ? `<details class="acc-note"><summary>${brl.format(a.balance / 100)} informado em ${dm(a.updatedAt)} ${a.moves.reduce((s, x) => s + x.amount, 0) < 0 ? '−' : '+'} ${brl.format(Math.abs(a.moves.reduce((s, x) => s + x.amount, 0)) / 100)} em ${a.moves.length} lançamento${a.moves.length > 1 ? 's' : ''} <span class="acc-more">ver</span></summary>
             <ul>${a.moves.slice(-30).reverse().map(x => `<li><span>${dm(x.date)} · ${esc(x.label)}</span><b class="${x.amount < 0 ? '' : 'in'}">${x.amount < 0 ? '−' : '+'}${brl.format(Math.abs(x.amount) / 100)}</b></li>`).join('')}</ul></details>` : ''}`).join('')
           : `<p class="acc-empty">Nenhuma conta ainda. Escolha um banco abaixo.</p>`;
         list.querySelectorAll('[data-money]').forEach(inp => {
@@ -5427,7 +5484,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const help = () => {
       const v = box.querySelector('.on')?.dataset.card || '';
       m.querySelector('#payHelp').textContent = v.startsWith('card:') ? 'Entra na fatura do cartão. Quando a fatura for lançada, passa a contar só dentro dela (não soma duas vezes).'
-        : v.startsWith('acc:') ? (box.dataset.receita ? 'Soma no saldo dessa conta na data do recebimento.' : box.dataset.fixa ? 'Sai do saldo desse banco quando você marcar a conta como paga.' : 'Sai do saldo dessa conta na data do pagamento.') : '';
+        : v.startsWith('acc:') ? 'É só pra você lembrar por onde foi. O saldo do banco não muda sozinho: ajuste em Bancos quando quiser.' : '';
     };
     box.addEventListener('click', e => {
       const b = e.target.closest('[data-card]'); if (!b) return;
@@ -5462,11 +5519,12 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     return { payCard: v.startsWith('card:') ? v.slice(5) : '', payAccount: v.startsWith('acc:') ? v.slice(4) : '' };
   }
   // Selo "no cartão" ao lado do nome
+  // Nome do cartão como aparece nas listas: "Nubank •1234"; sem os 4 números, "Nubank · cartão" se existir uma conta com o mesmo nome
+  const cardLabel = c => c.name + (c.last4 ? ' •' + c.last4 : state.accounts.some(a => norm(a.name) === norm(c.name)) ? ' · cartão' : '');
   function viaHtml(item) {
     const c = payCardOf(item);
-    // só o logo do banco e o nome do cartão (bandeira e final ficam no "title"); o final só aparece se dois cartões tiverem o mesmo nome
-    if (c) { const twin = c.last4 && state.cards.some(o => o.id !== c.id && norm(o.name) === norm(c.name));
-      return `<span class="via" title="Cartão ${esc(c.name)} ${FLAGS[c.flag]?.name || ''}${c.last4 ? ' •' + esc(c.last4) : ''}">${logoHtml({ brand: c.bank, name: c.name, color: c.color })}<span class="vt">${esc(c.name)}${twin ? ' •' + esc(c.last4) : ''}</span></span>`; }
+    // logo do banco e nome do cartão, sempre com o final (•1234): assim não se confunde com a conta do mesmo banco nem com outro cartão dele
+    if (c) return `<span class="via" title="Cartão ${esc(c.name)} ${FLAGS[c.flag]?.name || ''}${c.last4 ? ' •' + esc(c.last4) : ''}">${logoHtml({ brand: c.bank, name: c.name, color: c.color })}<span class="vt">${esc(cardLabel(c))}</span></span>`;
     const a = item.payAccount && state.accounts.find(x => x.id === item.payAccount);
     return a ? `<span class="via" title="Conta ${esc(a.name)}">${logoHtml(a)}<span class="vt">${esc(a.name)}</span></span>` : '';
   }
@@ -5888,7 +5946,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     variaveisOf(key).filter(countable(key)).forEach(v => { const c = cat(v.category); add(c?.name || 'Sem categoria', c?.color || '#94a3b8', v.amount); });
     add('Contas fixas', '#475569', t.fixas);
     add('Assinaturas', '#d97706', t.assinaturas);
-    add('Cartões', '#1d4ed8', t.faturas);
+    cardParts(key, add);
     const cats = [...groups.values()].sort((a, b) => b.value - a.value), catTotal = cats.reduce((s, g) => s + g.value, 0);
     let off = 0;
     const donut = catTotal ? `<svg viewBox="0 0 42 42" class="r-donut"><g transform="rotate(-90 21 21)">${cats.map(g => {
@@ -5922,8 +5980,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       <div class="r-kpis">${kpi('Caiu na conta', t.receita, delta(t.receita, tp.receita, true) + (t.aReceber ? `<small>+ ${R(t.aReceber)} a receber</small>` : ''), '#15803d')}
         ${kpi('Saiu da conta', t.despesas, delta(t.despesas, tp.despesas, false), '#111827')}
         ${kpi('Pretende guardar', t.investir, t.pct ? `<small>${fmtPct(t.pct)} do que entrou</small>` : '', '#1d4ed8')}
-        ${t.saldo < 0 ? kpi('Faltou', -t.saldo, '<small>pra fechar o mês sem se apertar</small>', '#8f620a')
-          : kpi('Sobrou', t.saldo, t.receita ? `<small>${Math.round(t.saldo / t.receita * 100)}% do que entrou</small>` : '', '#111827')}</div>
+        ${t.sobra < 0 ? kpi('Faltou', -t.sobra, '<small>pra fechar o mês sem se apertar</small>', '#8f620a')
+          : kpi('Sobrou', t.sobra, t.receita ? `<small>${Math.round(t.sobra / t.receita * 100)}% do que entrou</small>` : '', '#111827')}</div>
       <div class="r-grid r-top">
         <section class="r-sec"><h2>Para onde foi o dinheiro</h2>${catTotal ? `<div class="r-where">${donut}<div class="r-cats">${catRows}</div></div>` : '<p class="r-empty">Sem despesas neste mês.</p>'}</section>
         <section class="r-sec"><h2>Últimos 6 meses</h2>${evo}<div class="r-tips">${tips}</div></section>
@@ -7027,15 +7085,22 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     // entrada?
     if (/\b(recebi|receb\w*|entrada|ganhei|salario|pagamento recebido)\b/.test(t) || /^\s*\+/.test(text)) { out.kind = 'receita'; t = t.replace(/\b(recebi|entrada|ganhei)\b/, ' '); }
     // forma de pagamento: cartão se falar crédito/cartão; senão conta pelo nome do banco
-    const credit = /\b(credito|cartao|card|cc)\b/.test(t);
+    const credit = /\b(credito|cartao|card|cc)\b/.test(t), debit = !credit && /\b(debito|pix|boleto|conta)\b/.test(t);
     t = t.replace(/\b(no|na|do|da|de|em|pelo|pela|com|via|credito|cartao|debito|pix|boleto|conta)\b/g, ' ');
     const has = name => { const n = norm(name); return n && (t.includes(' ' + n + ' ') || (n.split(' ')[0].length > 2 && t.includes(' ' + n.split(' ')[0] + ' '))); };
     const takeOut = name => { const n = norm(name); t = t.replace(' ' + n + ' ', ' ').replace(' ' + n.split(' ')[0] + ' ', ' '); };
     const bankWord = c => [c.name, BRANDS[c.bank]?.name, c.last4].filter(Boolean);
     const cards = state.cards.filter(c => activeIn(c, monthOf(out.date)));
-    const card = out.kind !== 'receita' && (cards.find(c => c.last4 && t.includes(' ' + c.last4 + ' ')) || (credit || !state.accounts.length ? cards.find(c => bankWord(c).some(has)) : null) || (credit && cards.length === 1 ? cards[0] : null));
+    // tudo que o nome do banco pode querer dizer ("nubank" = a conta ou um dos cartões): a janela mostra as opções pra escolher com um toque
+    const byLast4 = out.kind !== 'receita' && cards.find(c => c.last4 && t.includes(' ' + c.last4 + ' '));
+    const candCards = out.kind === 'receita' || debit ? [] : cards.filter(c => bankWord(c).some(has));
+    const candAccs = credit ? [] : state.accounts.filter(a => has(a.name) || has(BRANDS[a.brand]?.name || ''));
+    if (!byLast4 && candCards.length + candAccs.length > 1) out.payOpts = [...candAccs.map(a => 'acc:' + a.id), ...candCards.map(c => 'card:' + c.id)];
+    // parcelado quase sempre é no crédito: sem dizer "débito/pix", o cartão é a sugestão
+    const card = out.kind !== 'receita' && (byLast4 || (credit || !state.accounts.length || (out.parcelas && !debit) ? candCards[0] : null) || (credit && cards.length === 1 ? cards[0] : null));
     if (card) { out.payCard = card.id; bankWord(card).forEach(takeOut); }
-    else { const acc = state.accounts.find(a => has(a.name) || has(BRANDS[a.brand]?.name || '')); if (acc) { out.payAccount = acc.id; takeOut(acc.name); takeOut(BRANDS[acc.brand]?.name || ''); } }
+    else { const acc = candAccs[0] || (debit ? state.accounts.find(a => has(a.name) || has(BRANDS[a.brand]?.name || '')) : null); if (acc) { out.payAccount = acc.id; takeOut(acc.name); takeOut(BRANDS[acc.brand]?.name || ''); } }
+    if (out.payOpts) [...candAccs.flatMap(a => [a.name, BRANDS[a.brand]?.name || '']), ...candCards.flatMap(bankWord)].forEach(takeOut);
     const words = t.replace(/\s+/g, ' ').trim();
     const orig = String(text).trim().split(/\s+/).filter(w => words.split(' ').includes(norm(w)));
     out.desc = (orig.join(' ') || words).replace(/^./, c => c.toUpperCase());
@@ -7088,13 +7153,17 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         <button type="button" class="btn cancel" id="qaStar" title="Salvar como favorito">Favorito</button>
         <button type="button" class="btn save" id="qaSave" disabled>Lançar</button></div>`, m => {
       const input = m.querySelector('#qaText');
-      let q = null;
+      let q = null, pick = '';   // pick: a opção que a pessoa tocou quando o banco servia pra mais de uma coisa
+      const optHtml = v => { const id = v.slice(v.indexOf(':') + 1), c = v.startsWith('card:') && state.cards.find(x => x.id === id), a = !c && state.accounts.find(x => x.id === id);
+        const on = v === (q.payCard ? 'card:' + q.payCard : 'acc:' + q.payAccount);
+        return `<button type="button" data-pick="${v}" class="${on ? 'on' : ''}" aria-pressed="${on}">${c ? logoHtml({ brand: c.bank, name: c.name, color: c.color }, 'sm') : logoHtml(a, 'sm')}<span><b>${esc(c ? c.name + (c.last4 ? ' •' + c.last4 : '') : a.name)}</b><small>${c ? 'cartão de crédito' : 'conta'}</small></span></button>`; };
       const drawFavs = () => {
         m.querySelector('#qaFavs').innerHTML = state.favorites.length ? state.favorites.map((f, i) => `<span class="fav" data-i="${i}" role="button" tabindex="0">${esc(f.label)} <b class="num">${brl.format(f.amount / 100)}</b><button type="button" class="x" data-rmfav="${i}" aria-label="Remover favorito">${ico('x')}</button></span>`).join('')
           : '<span class="qa-hint" style="margin:0">Escreva um gasto comum (ex.: café 6,50) e toque em Favorito pra guardar aqui.</span>';
       };
       const preview = () => {
         q = input.value.trim() ? parseQuick(input.value) : null;
+        if (q && q.payOpts && q.payOpts.includes(pick)) { q.payCard = pick.startsWith('card:') ? pick.slice(5) : ''; q.payAccount = pick.startsWith('acc:') ? pick.slice(4) : ''; } else if (!q || !q.payOpts) pick = '';
         const ok = q && q.amount > 0;
         m.querySelector('#qaSave').disabled = !ok; m.querySelector('#qaStar').disabled = !ok;
         const accN = id => esc(state.accounts.find(a => a.id === id)?.name || '');
@@ -7107,10 +7176,12 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
           <div class="l"><span>Descrição</span><b>${esc(q.desc || '—')}</b></div>
           <div class="l"><span>Categoria</span><b>${esc(cat(q.category)?.name || 'Sem categoria')}</b></div>
           ${multi() ? (w => `<div class="l"><span>De quem</span><b style="display:inline-flex;align-items:center;gap:6px">${w ? avatar(w, true) + esc(memberName(w)) : famAvatars(true) + 'Da família'}</b></div>`)(q.who !== undefined ? q.who : q.kind === 'receita' ? meId() : member(ui.lastWho) ? ui.lastWho : '') : ''}
-          <div class="l"><span>${q.kind === 'receita' ? 'Recebido em' : 'Pago com'}</span><b>${payLabel(q)}</b></div>
+          ${q.payOpts ? `<div class="qa-pick-h">${q.kind === 'receita' ? 'Caiu em qual?' : 'Pagou com qual?'}</div><div class="qa-pick" role="group" aria-label="Forma de pagamento">${q.payOpts.map(optHtml).join('')}</div>`
+            : `<div class="l"><span>${q.kind === 'receita' ? 'Recebido em' : 'Pago com'}</span><b>${payLabel(q)}</b></div>`}
           <div class="l"><span>Data</span><b>${q.date === todayIso ? 'Hoje' : new Date(q.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', ...(q.date.slice(0, 4) !== todayIso.slice(0, 4) ? { year: 'numeric' } : {}) })}</b></div>`;
       };
       input.addEventListener('input', preview);
+      m.querySelector('#qaPrev').addEventListener('click', e => { const b = e.target.closest('[data-pick]'); if (!b) return; pick = b.dataset.pick; preview(); });
       input.addEventListener('keydown', e => { if (e.key === 'Enter' && q && q.amount > 0) { e.preventDefault(); saveQuick(q); } });
       m.querySelector('#qaSave').onclick = () => q && q.amount > 0 && saveQuick(q);
       m.querySelector('#qaStar').onclick = () => {
@@ -7478,10 +7549,10 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
 
   // "Entenda": explicações curtas dos números do topo, como uma conversa
   const EXPLAIN = {
-    contas: ['Seu dinheiro hoje', 'É o dinheiro que você tem agora, somando os bancos que cadastrou em <b>Bancos</b>.', 'Ele muda sozinho quando você lança uma entrada ou um gasto pago com aquela conta. Se ficar diferente do app do banco, é só tocar em Bancos e corrigir o valor.'],
+    contas: ['Seu dinheiro hoje', 'É o dinheiro que você tem agora, somando os bancos que cadastrou em <b>Bancos</b>.', 'Ele só muda quando você mexe: lançar um gasto, uma entrada ou marcar uma conta como paga não altera o saldo. Quando ficar diferente do app do banco, toque em Bancos e corrija o valor.'],
     entrou: ['Caiu na conta', 'Tudo que caiu na conta no mês: salário, pix, vendas, rendimentos.', 'O que você ainda vai receber aparece embaixo, como "a receber", e só entra na conta quando você marcar como recebido.'],
     saiu: ['Saiu da conta', 'Tudo que sai da conta no mês: contas fixas, gastos pagos com dinheiro da conta, assinaturas e as faturas que vencem no mês.', 'Compra no cartão entra na fatura em que cai, e a fatura conta no mês em que vence, com o valor que você lançou. Ex.: o salário de novembro paga a fatura que vence em novembro (compras de outubro). Assim nada conta duas vezes.'],
-    sobra: ['Sobra do mês', 'É o que caiu na conta, menos o que saiu, menos o que você quer guardar (em Guardar). Com "+" sobrou; com "–" faltou.', 'A barrinha mostra quanto do que entrou já saiu. Se passar do que entrou, o pedaço a mais fica em amarelo: é quanto falta pra fechar o mês sem se apertar. Na Visão geral tem ideias pra resolver.'],
+    sobra: ['Sobra do mês', 'É o que caiu na conta menos o que saiu. Com "+" sobrou; com "–" faltou. Se você planejou guardar uma parte (em Guardar), a linha de baixo mostra quanto fica livre depois de guardar.', 'O anel mostra quanto do que entrou já saiu. Se passar do que entrou, o pedaço a mais fica em amarelo: é quanto falta pra fechar o mês sem se apertar. Na Visão geral tem ideias pra resolver.'],
   };
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-explain]'); if (!b) return;
