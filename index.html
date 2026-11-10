@@ -1759,6 +1759,9 @@ button.kpi-label:hover { color: var(--ink); text-decoration-color: currentColor;
 .suffix span { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: .8rem; pointer-events: none; }
 .seg2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--field); border-radius: 12px; padding: 4px; margin-bottom: 8px; }
 .seg2 button { border: 0; background: transparent; border-radius: 9px; padding: 8px; font-weight: 700; font-size: .82rem; color: var(--muted); }
+.seg2.seg3 { grid-template-columns: 1fr 1fr 1fr; }
+.seg2.seg3 button { text-transform: capitalize; min-height: 40px; }
+.seg2.seg3 button.on { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
 .seg2 button.on[data-mv="in"] { background: var(--green); color: #fff; }
 .seg2 button.on[data-mv="out"] { background: var(--red); color: #fff; }
 .help { font-size: .76rem; color: var(--muted); margin: 6px 0 0; line-height: 1.45; }
@@ -2387,6 +2390,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const withId = x => { if (x.id === undefined || x.id === null || x.id === '') x.id = uid(); else x.id = String(x.id); };
     [...s.receitas, ...s.variaveis].forEach(x => {
       withId(x); x.amount = num(x.amount);
+      if (x.fatShift !== undefined && x.fatShift !== 1 && x.fatShift !== -1) delete x.fatShift;
       if (x.skip !== undefined) x.skip = Array.isArray(x.skip) ? x.skip.filter(isKey) : [];
       x.date = fixIso(x.date) || (x.created && isFinite(new Date(x.created)) ? isoOf(new Date(x.created)) : todayIso);
     });
@@ -2761,6 +2765,10 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     if (+iso.slice(8) > Math.min(card.closeDay, daysIn(closeMonth))) closeMonth = addMonths(closeMonth, 1);
     return card.closeDay < card.dueDay ? closeMonth : addMonths(closeMonth, 1);
   }
+  // O banco muda um pouco o dia de fechamento de um mês pro outro (o "melhor dia de compra" anda), então uma compra feita
+  // perto do fechamento pode cair numa fatura diferente da calculada. fatShift (−1 ou +1, opcional, por compra) é a
+  // correção que a pessoa escolhe no formulário: "essa caiu na fatura anterior / na seguinte".
+  const itemFatKey = (card, i, iso) => addMonths(faturaKeyFor(card, iso || i.shownDate), i.fatShift || 0);
   // Situação pelas datas: aberta (ainda juntando compras), fechada (a pagar), vencida ou paga
   function faturaState(card, key, f) {
     if (f && f.paid) return 'paid';
@@ -2803,11 +2811,11 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   function itemsOnCardRaw(cardId, key) {
     const card = state.cards.find(c => c.id === cardId);
     const out = [];
-    for (const k of [addMonths(key, -2), addMonths(key, -1), key]) out.push(
+    for (const k of [addMonths(key, -3), addMonths(key, -2), addMonths(key, -1), key, addMonths(key, 1)]) out.push(
       ...fixasOf(k).map(i => ({ ...i, kind: 'Conta fixa', label: i.desc })),
       ...assinaturasOf(k).map(i => ({ ...i, kind: 'Assinatura', label: i.name })),
       ...variaveisOf(k).map(i => ({ ...i, kind: i.installment ? `Parcela ${i.installment.i}/${i.installment.n}` : 'Gasto', label: (i.desc || cat(i.category)?.name || 'Gasto') + (i.installment ? ` (${i.installment.i}/${i.installment.n})` : '') })));
-    return out.filter(i => i.payCard === cardId && card && faturaKeyFor(card, i.shownDate) === key);
+    return out.filter(i => i.payCard === cardId && card && itemFatKey(card, i) === key);
   }
   // Prévia da fatura: soma do que já caiu nela (compras até hoje e parcelas)
   // Um número só por fatura sem valor digitado: a soma de tudo que cai nela (inclusive assinatura e conta fixa no cartão
@@ -3678,7 +3686,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       const c = payCardOf(i), a = !c && state.accounts.find(x => x.id === i.payAccount);
       if (c) onCard += i.amount; else direct += i.amount;
       const g = groups.get(name) || { name, color, value: 0, items: [], ...extra }; g.value += i.amount;
-      g.items.push({ label, amount: i.amount, sub: [when, c ? `${cardLabel(c)} · fatura de ${shortMonth(faturaKeyFor(c, i.shownDate))}` : a ? 'pela conta ' + a.name : ''].filter(Boolean).join(' · ') });
+      g.items.push({ label, amount: i.amount, sub: [when, c ? `${cardLabel(c)} · fatura de ${shortMonth(itemFatKey(c, i))}` : a ? 'pela conta ' + a.name : ''].filter(Boolean).join(' · ') });
       groups.set(name, g); };
     variaveisOf(key).forEach(v => { const c = cat(v.category);
       add(c?.name || 'Sem categoria', c?.color || '#94a3b8', c ? { id: c.id, icon: catIcon(c), cc: catColor(c) } : { icon: 'tag', cc: catColor(null, 'despesa') }, v,
@@ -5304,6 +5312,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       ${editing ? '' : checkField('fInst', 'Parcelou?', '', false) +
         `<div class="inline" id="instBox" hidden><input type="number" class="input" id="fN" min="2" max="48" value="2" /><span id="instHint"></span></div>`}
       ${payField(item || prefill ? v : null)}
+      <div id="fFatBox" hidden><label class="fl">Cai em qual fatura?</label><div class="seg2 seg3" id="fFat" role="group" aria-label="Fatura em que a compra cai"></div></div>
       ${whoField(item, ui.lastWho || '')}
       ${editing && v.installment ? checkField('fAllParc', `Aplicar a todas as ${v.installment.n} parcelas`, '', true) : ''}
       ${footer(editing, true)}</form>`, m => {
@@ -5331,6 +5340,21 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       m.querySelector('#fDate').addEventListener('change', limitHint);
       limitHint();
       bindPay(m); bindWho(m);
+      // compra no cartão: mostra a fatura em que ela cai (pela data e pelo fechamento) e deixa trocar pra anterior ou seguinte
+      let fatShift = editing ? v.fatShift || 0 : 0;
+      const drawFat = () => {
+        const sel = m.querySelector('#fPay .on')?.dataset.card || '', card = sel.startsWith('card:') && state.cards.find(c => c.id === sel.slice(5)), date = m.querySelector('#fDate').value;
+        m.querySelector('#fFatBox').hidden = !(card && date);
+        if (!card || !date) return;
+        const base = faturaKeyFor(card, date);
+        m.querySelector('#fFat').innerHTML = [-1, 0, 1].map(d => `<button type="button" data-fat="${d}" class="${d === fatShift ? 'on' : ''}" aria-pressed="${d === fatShift}">${monthName(addMonths(base, d))}</button>`).join('');
+      };
+      m.querySelector('#fFat').addEventListener('click', e => { const b = e.target.closest('[data-fat]'); if (!b) return; fatShift = +b.dataset.fat; drawFat(); });
+      // trocou a data ou o cartão: volta pra fatura calculada
+      m.querySelector('#fPay')?.addEventListener('click', e => { if (e.target.closest('[data-card]')) { fatShift = 0; drawFat(); } });
+      m.querySelector('#fDate').addEventListener('change', () => { fatShift = 0; drawFat(); });
+      m.querySelector('.date-row')?.addEventListener('click', e => { if (e.target.closest('button')) setTimeout(() => { fatShift = 0; drawFat(); }, 0); });
+      drawFat();
       if (!editing) {
         m.querySelector('#fInst').addEventListener('change', e => {
           m.querySelector('#instBox').hidden = !e.target.checked;
@@ -5350,11 +5374,12 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         if (!data.date) return showErr('Escolha a data.');
         if (!data.amount) return showErr('Digite o valor.');
         if (data.category === '__new') data.category = '';
+        data.fatShift = data.payCard && fatShift ? fatShift : undefined;
         if (editing) {
           Object.assign(state.variaveis.find(x => x.id === item.id), data);
           if (item.installment && m.querySelector('#fAllParc')?.checked)
             state.variaveis.filter(x => x.installment?.group === item.installment.group)
-              .forEach(x => Object.assign(x, { desc: data.desc, category: data.category, payCard: data.payCard, payAccount: data.payAccount, ...('who' in data ? { who: data.who } : {}) }));
+              .forEach(x => Object.assign(x, { desc: data.desc, category: data.category, payCard: data.payCard, payAccount: data.payAccount, fatShift: data.fatShift, ...('who' in data ? { who: data.who } : {}) }));
           undoToast('Gasto atualizado', undoSnap);
         } else if (m.querySelector('#fInst').checked) {
           const n = Math.max(2, Math.min(48, +m.querySelector('#fN').value || 2));
@@ -5557,7 +5582,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   }
   function valHtml(item, key, text) {
     if (!inFatura(item)) return item.est ? `<span class="val num est" title="Média dos últimos meses. Confirme quando a conta chegar.">${text}<small>estimado</small></span>` : `<span class="val num">${text}</span>`;
-    const c = payCardOf(item), fk = faturaKeyFor(c, item.shownDate || dateIn(key, item.day || 1));
+    const c = payCardOf(item), fk = itemFatKey(c, item, item.shownDate || dateIn(key, item.day || 1));
     return `<span class="val num absorbed" title="No cartão ${esc(c.name)}: entra na fatura de ${monthName(fk)}">${text}<small>fatura de ${shortMonth(fk)}</small></span>`;
   }
 
