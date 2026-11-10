@@ -2196,7 +2196,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         <div class="mes-row">
           <div class="mes-it receita" role="link" tabindex="0" aria-label="Ver entradas"><span class="mes-ic in" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span>
             <div class="mes-tx"><button type="button" class="kpi-label" data-explain="entrou">Caiu na conta</button><div class="kpi-value num" id="kReceita"></div><div class="kpi-sub" id="kReceitaSub"></div></div></div>
-          <div class="mes-it despesas" role="link" tabindex="0" aria-label="Ver saídas"><span class="mes-ic out" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></span>
+          <div class="mes-it despesas" role="link" tabindex="0" aria-label="Ver o que saiu da conta"><span class="mes-ic out" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></span>
             <div class="mes-tx"><button type="button" class="kpi-label" data-explain="saiu">Saiu da conta</button><div class="kpi-value num" id="kDespesas"></div><div class="mes-cap" id="kSaiuCap"></div><div class="kpi-sub" id="kDespesasSub"></div></div></div>
           <div class="mes-it sobra" id="kSobraBox">
             <div class="mes-tx"><button type="button" class="kpi-label" id="kSobraLabel" data-explain="sobra">Sobra</button><div class="kpi-value num" id="kSobra"></div><div class="mes-cap" id="kSobraCap"></div></div>
@@ -3522,7 +3522,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       <div class="ov ov-goals" id="ovGoals"></div>`;
     renderForecast(); renderCalendar(); renderWhere(); renderOvCards(); renderOvGoals();
     el.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { ui.tab = b.dataset.go; view.cat = ''; saveUi(); fillFilter(); render(); }));
-    // categoria no gráfico "Para onde vai": abre Despesa variável filtrada por ela
+    // (antigo) categoria no gráfico do Início: abre Despesa variável filtrada por ela
     el.querySelectorAll('#ovWhere [data-catpick]:not([data-go])').forEach(li => li.addEventListener('click', () => {
       ui.tab = 'variavel'; saveUi(); fillFilter(); view.cat = li.dataset.catpick; $('#fCat').value = view.cat; render(); scrollTo({ top: $('#tabs').offsetTop - 10, behavior: 'smooth' });
     }));
@@ -3668,40 +3668,29 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     box.querySelector('.cal-list').addEventListener('keydown', e => { const el = e.target.closest('[data-open]'); if (el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openRef(el); } });
   }
 
-  // O que cada fatura do mês tem dentro, pra rosca mostrar "mercado, casa, gasolina" em vez de uma fatia "Cartões".
-  // A soma das partes é sempre o valor da fatura que conta no mês (cardOut): se o valor digitado for maior que as compras
-  // lançadas, a diferença vira "Outras compras no cartão"; se for menor (estorno, desconto), as partes encolhem na mesma proporção.
-  function cardParts(key, add) {
-    for (const c of cardsOf(key)) {
-      const out = cardOut(c, key); if (out <= 0) continue;
-      const items = itemsOnCard(c.id, key).filter(i => i.amount > 0), sum = items.reduce((s, i) => s + i.amount, 0);
-      const f = sum > out ? out / sum : 1;
-      let left = out;
-      const fat = `Fatura ${cardLabel(c)} · vence ${dm(faturaDates(c, key).due)}`;
-      items.forEach((i, n) => {
-        const v = f === 1 ? i.amount : n === items.length - 1 ? left : Math.min(left, Math.round(i.amount * f));
-        left -= v;
-        const it = { label: i.label, sub: fat + (i.kind === 'Conta fixa' || i.kind === 'Assinatura' ? '' : ` · compra de ${dm(i.buyDate || i.shownDate)}`), amount: i.amount, counted: v };
-        if (i.kind === 'Conta fixa') add('Contas fixas', '#475569', v, { go: 'fixa', icon: 'receipt' }, it);
-        else if (i.kind === 'Assinatura') add('Assinaturas', '#d97706', v, { go: 'assin', icon: 'tv' }, it);
-        else { const ct = cat(i.category); add(ct?.name || 'Sem categoria', ct?.color || '#94a3b8', v, ct ? { id: ct.id, icon: catIcon(ct), cc: catColor(ct) } : { icon: 'tag', cc: catColor(null, 'despesa') }, it); }
-      });
-      if (left > 0) add('Outras compras no cartão', '#1d4ed8', left, { go: 'cartoes', icon: 'credit-card' }, { label: 'Parte da fatura sem compra lançada', sub: fat, amount: left, counted: left });
-    }
+  // "Gastos de <mês>": tudo que foi comprado ou cobrado no mês, pela data (no cartão ou não), mais as contas fixas e
+  // assinaturas do mês. É outra pergunta, diferente de "Saiu da conta" (que segue o dinheiro: a fatura conta no mês em
+  // que vence, então traz compras de meses anteriores). Aqui ninguém vê compra antiga aparecendo no mês.
+  function spentGroups(key) {
+    const groups = new Map();
+    let direct = 0, onCard = 0;
+    const add = (name, color, extra, i, label, when) => { if (!i.amount) return;
+      const c = payCardOf(i), a = !c && state.accounts.find(x => x.id === i.payAccount);
+      if (c) onCard += i.amount; else direct += i.amount;
+      const g = groups.get(name) || { name, color, value: 0, items: [], ...extra }; g.value += i.amount;
+      g.items.push({ label, amount: i.amount, sub: [when, c ? `${cardLabel(c)} · fatura de ${shortMonth(faturaKeyFor(c, i.shownDate))}` : a ? 'pela conta ' + a.name : ''].filter(Boolean).join(' · ') });
+      groups.set(name, g); };
+    variaveisOf(key).forEach(v => { const c = cat(v.category);
+      add(c?.name || 'Sem categoria', c?.color || '#94a3b8', c ? { id: c.id, icon: catIcon(c), cc: catColor(c) } : { icon: 'tag', cc: catColor(null, 'despesa') }, v,
+        (v.desc || c?.name || 'Gasto') + (v.installment ? ` (${v.installment.i}/${v.installment.n})` : ''), v.buyDate ? `compra de ${dm(v.buyDate)}` : `dia ${dm(v.shownDate)}`); });
+    fixasOf(key).forEach(f => add('Contas fixas', '#475569', { go: 'fixa', icon: 'receipt' }, f, f.desc || 'Conta fixa', `vence ${dm(f.shownDate)}`));
+    assinaturasOf(key).forEach(a => add('Assinaturas', '#d97706', { go: 'assin', icon: 'tv' }, a, a.name, `dia ${dm(a.shownDate)}`));
+    const list = [...groups.values()].sort((a, b) => b.value - a.value);
+    return { list, total: direct + onCard, direct, onCard };
   }
   function renderWhere() {
-    const key = view.month, box = $('#ovWhere');
-    const groups = new Map();
-    // extra: id da categoria (tocar filtra a aba Despesa variável) ou aba para onde ir
-    // cada fatia guarda os itens que a formam: tocar nela mostra de onde veio o valor
-    const add = (name, color, v, extra = {}, it) => { if (!v) return; const g = groups.get(name) || { name, color, value: 0, items: [], ...extra }; g.value += v; if (it) g.items.push(it); groups.set(name, g); };
-    const accN = i => state.accounts.find(a => a.id === i.payAccount)?.name;
-    const own = (i, label, when) => ({ label, sub: [when, accN(i) ? 'pela conta ' + accN(i) : ''].filter(Boolean).join(' · '), amount: i.amount, counted: i.amount });
-    variaveisOf(key).filter(countable(key)).forEach(v => { const c = cat(v.category); add(c?.name || 'Sem categoria', c?.color || '#94a3b8', v.amount, c ? { id: c.id, icon: catIcon(c), cc: catColor(c) } : { icon: 'tag', cc: catColor(null, 'despesa') }, own(v, v.desc || c?.name || 'Gasto', `dia ${dm(v.shownDate)}`)); });
-    fixasOf(key).filter(countable(key)).forEach(f => add('Contas fixas', '#475569', f.amount, { go: 'fixa', icon: 'receipt' }, own(f, f.desc || 'Conta fixa', `vence ${dm(f.shownDate)}`)));
-    assinaturasOf(key).filter(countable(key)).forEach(a => add('Assinaturas', '#d97706', a.amount, { go: 'assin', icon: 'tv' }, own(a, a.name, `dia ${dm(a.shownDate)}`)));
-    cardParts(key, add);
-    let list = [...groups.values()].sort((a, b) => b.value - a.value);
+    const key = view.month, box = $('#ovWhere'), sp = spentGroups(key);
+    let list = sp.list;
     if (list.length > 6) {
       // junta o resto em "Outros" (somando na categoria Outros, se ela já estiver entre as 5 maiores, pra não aparecer duas vezes)
       const top = list.slice(0, 5).map(g => ({ ...g, items: [...g.items] })), restV = list.slice(5).reduce((s, g) => s + g.value, 0);
@@ -3711,22 +3700,34 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       if (o) { o.value += restV; o.items.push(...restI); } else top.push({ name: 'Outros', color: '#94a3b8', cc: catColor(null, 'despesa'), icon: 'shopping-bag', value: restV, items: restI });
       list = top.sort((a, b) => b.value - a.value);
     }
-    const total = list.reduce((s, g) => s + g.value, 0);
-    box.innerHTML = `<h3>Para onde vai o dinheiro <button class="ov-link" data-pdf>Resumo em PDF</button></h3>`
-      + (total ? donutHtml(list.map(({ id, go, ...g }) => g), total, view.month > curKey() ? 'Vai sair' : 'Saiu da conta', true) : '<div class="ov-empty">Sem despesas neste mês ainda.</div>');
+    const total = sp.total, fut = view.month > curKey();
+    box.innerHTML = `<h3>Gastos de ${monthName(key)} <button class="ov-link" data-pdf>Resumo em PDF</button></h3>`
+      + (total && sp.onCard ? `<p class="ov-sub">${sp.direct ? `${money(sp.direct)} direto da conta · ` : ''}${money(sp.onCard)} no cartão</p>` : '')
+      + (total ? donutHtml(list.map(({ id, go, ...g }) => g), total, fut ? 'Vai gastar' : 'Gastou', true) : '<div class="ov-empty">Sem gastos neste mês ainda.</div>');
     // tocar numa fatia (na legenda): abre a lista do que forma aquele valor
     box.querySelectorAll('.legend li').forEach((li, n) => { const g = list[n]; if (!g) return;
       li.setAttribute('role', 'button'); li.tabIndex = 0; li.title = `Ver o que forma ${g.name}`; li.style.cursor = 'pointer';
       const go = () => openWhere(g);
       li.addEventListener('click', go); li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); });
   }
+  // "Saiu da conta" aberto em poucas linhas: o que foi pago direto e cada fatura que vence no mês (com compras de antes)
+  function openOut() {
+    const key = view.month, t = totals(key), fut = key > curKey();
+    const row = (b, sm, v) => v ? `<div class="ov-row"><div class="grow"><b>${esc(b)}</b>${sm ? `<small>${esc(sm)}</small>` : ''}</div><span class="amt num">${money(v)}</span></div>` : '';
+    openModal(`${modalHead(fut ? 'Vai sair da conta' : 'Saiu da conta', `${money(t.despesas)} em ${monthName(key)}`)}
+      <div class="where-list">${row('Contas fixas', '', t.fixas)}${row('Gastos e assinaturas', 'pagos direto da conta', t.variaveis + t.assinaturas)}
+        ${cardsOf(key).map(c => row(`Fatura ${cardLabel(c)}`, `vence ${dm(faturaDates(c, key).due)} · ${c.fatura && c.fatura.paid ? 'paga' : 'a pagar'}`, cardOut(c, key))).join('')}
+        <div class="ov-row ov-tot"><div class="grow"><small>Total</small></div><span class="amt num">${money(t.despesas)}</span></div></div>
+      <div class="actions"><button type="button" class="link" id="whGo">Abrir Saídas</button><span class="grow"></span><button type="button" class="btn save" data-close>Fechar</button></div>`, m => {
+      m.querySelector('#whGo').addEventListener('click', () => { closeModal(); goTab(ui.lastOut || 'variavel'); });
+    });
+  }
   // "De onde veio esse valor": os lançamentos que formam uma fatia da rosca do mês, do maior pro menor
   function openWhere(g) {
-    const items = [...g.items].sort((a, b) => b.amount - a.amount), adj = items.reduce((s, i) => s + i.counted - i.amount, 0);
+    const items = [...g.items].sort((a, b) => b.amount - a.amount);
     const tab = g.go || (g.id ? 'variavel' : '');
     openModal(`${modalHead(esc(g.name), `${money(g.value)} em ${monthName(view.month)}`)}
       <div class="where-list">${items.map(i => `<div class="ov-row"><div class="grow"><b>${esc(i.label)}</b>${i.sub ? `<small>${esc(i.sub)}</small>` : ''}</div><span class="amt num">${money(i.amount)}</span></div>`).join('')}
-        ${adj ? `<div class="ov-row"><div class="grow"><b>Ajuste</b><small>A fatura foi digitada com valor menor que a soma das compras</small></div><span class="amt num">–${money(-adj)}</span></div>` : ''}
         <div class="ov-row ov-tot"><div class="grow"><small>Total</small></div><span class="amt num">${money(g.value)}</span></div></div>
       <div class="actions">${tab ? `<button type="button" class="link" id="whGo">Abrir ${SUB_LABELS[tab] || 'a aba'}</button>` : ''}<span class="grow"></span><button type="button" class="btn save" data-close>Fechar</button></div>`, m => {
       m.querySelector('#whGo')?.addEventListener('click', () => { closeModal(); ui.tab = tab; view.cat = ''; saveUi(); fillFilter(); render(); });
@@ -5966,13 +5967,8 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       return `<small class="${good ? 'up' : 'down'}">${p > 0 ? '▲' : '▼'} ${Math.abs(p)}% vs ${prevName}</small>`;
     };
     const kpi = (label, v, sub, color) => `<div class="r-kpi"><span>${label}</span><strong style="color:${color}">${v < 0 ? '–' : ''}${R(Math.abs(v))}</strong>${sub}</div>`;
-    // Para onde foi o dinheiro
-    const groups = new Map();
-    const add = (name, color, v) => { if (!v) return; const g = groups.get(name) || { name, color, value: 0 }; g.value += v; groups.set(name, g); };
-    variaveisOf(key).filter(countable(key)).forEach(v => { const c = cat(v.category); add(c?.name || 'Sem categoria', c?.color || '#94a3b8', v.amount); });
-    add('Contas fixas', '#475569', t.fixas);
-    add('Assinaturas', '#d97706', t.assinaturas);
-    cardParts(key, add);
+    // Gastos do mês (a mesma lista da rosca do Início)
+    const groups = new Map(spentGroups(key).list.map(g => [g.name, g]));
     const cats = [...groups.values()].sort((a, b) => b.value - a.value), catTotal = cats.reduce((s, g) => s + g.value, 0);
     let off = 0;
     const donut = catTotal ? `<svg viewBox="0 0 42 42" class="r-donut"><g transform="rotate(-90 21 21)">${cats.map(g => {
@@ -6009,7 +6005,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         ${t.sobra < 0 ? kpi('Faltou', -t.sobra, '<small>pra fechar o mês sem se apertar</small>', '#8f620a')
           : kpi('Sobrou', t.sobra, t.receita ? `<small>${Math.round(t.sobra / t.receita * 100)}% do que entrou</small>` : '', '#111827')}</div>
       <div class="r-grid r-top">
-        <section class="r-sec"><h2>Para onde foi o dinheiro</h2>${catTotal ? `<div class="r-where">${donut}<div class="r-cats">${catRows}</div></div>` : '<p class="r-empty">Sem despesas neste mês.</p>'}</section>
+        <section class="r-sec"><h2>Gastos do mês</h2>${catTotal ? `<div class="r-where">${donut}<div class="r-cats">${catRows}</div></div>` : '<p class="r-empty">Sem despesas neste mês.</p>'}</section>
         <section class="r-sec"><h2>Últimos 6 meses</h2>${evo}<div class="r-tips">${tips}</div></section>
       </div>
       ${table('Maiores gastos', topGastos, 'Nenhuma despesa variável.')}
@@ -6127,7 +6123,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
   }
   // Início no celular: tocar no card de entradas/saídas abre a parte correspondente
   { const go = (sel, fn) => { const el = document.querySelector(sel); el.addEventListener('click', e => { if (!e.target.closest('button')) fn(); }); el.addEventListener('keydown', e => { if (e.key === 'Enter') fn(); }); };
-    go('.mes-it.receita', () => goTab('receita')); go('.mes-it.despesas', () => goTab(ui.lastOut || 'variavel')); }
+    go('.mes-it.receita', () => goTab('receita')); go('.mes-it.despesas', () => totals(view.month).despesas ? openOut() : goTab(ui.lastOut || 'variavel')); }
   $('#subnav').addEventListener('click', e => { const b = e.target.closest('[data-sub]'); if (b && b.dataset.sub !== ui.tab) goTab(b.dataset.sub); });
   $('#bnavPlus').addEventListener('click', () => openQuick());
   $('#bnav').addEventListener('click', e => {
