@@ -552,6 +552,7 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .card-next { white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 5px 10px; border: 0; border-radius: 999px; background: var(--field); color: var(--ink-2); font: inherit; font-size: .74rem; font-weight: 500; cursor: pointer; min-height: 30px; }
 .card-next b { color: var(--ink); font-weight: 650; } .card-next:hover { background: var(--field-line); }
 .ov-row.ov-tot { padding-top: 10px; }
+.ov-why .ov-link { display: inline; margin-left: 4px; font-size: inherit; }
 .where-list { margin-top: 6px; max-height: min(56vh, 460px); overflow-y: auto; padding-right: 2px; }
 .where-list .ov-row .grow small { display: block; white-space: normal; line-height: 1.35; }
 .ov-row.ov-tot .grow small { font-size: .78rem; }
@@ -3363,7 +3364,7 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
     const sum = found.filter(r => !r.pending).reduce((s, r) => s + r.amount, 0);
     const inside = ui.tab === 'receita' || all ? 0 : rows.filter(r => inFatura(r)).reduce((s, r) => s + r.amount, 0);
     const foot = (all && found.length > rows.length ? `<div class="yield"><span>Mostrando os ${rows.length} mais recentes de ${found.length} encontrados</span></div>` : '')
-      + `<div class="total"><span>Total${filtered ? ' filtrado' : ''}${all ? ` (${found.length} em todos os meses)` : ''}</span>
+      + `<div class="total"><span>${ui.tab === 'variavel' && !filtered && !all ? 'Compras do dia a dia' : 'Total'}${filtered ? ' filtrado' : ''}${all ? ` (${found.length} em todos os meses)` : ''}</span>
       <strong class="num ${ui.tab === 'receita' ? 'pos' : 'negc'}">${ui.hidden ? '' : (ui.tab === 'receita') !== (sum < 0) ? '+ ' : '- '}${money(Math.abs(sum))}</strong></div>`
       + (isFixa && !filtered ? (() => {
         // quanto das contas fixas do mês já foi pago (ou está no cartão) e quanto falta
@@ -3398,7 +3399,7 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
       return;
     }
 
-    const label = { receita: 'Entradas', fixa: 'Contas fixas', variavel: 'Gastos' }[ui.tab];
+    const label = { receita: 'Entradas', fixa: 'Contas fixas', variavel: 'Dia a dia' }[ui.tab];
     // família: as entradas mostram quanto veio de cada um (ou por tipo, se preferir)
     if (ui.tab === 'receita' && multi()) {
       const byP = ui.inBy !== 'tipo';
@@ -3802,22 +3803,39 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
     let list = sp.list;
     if (list.length > 6) {
       // junta o resto em "Outros" (somando na categoria Outros, se ela já estiver entre as 5 maiores, pra não aparecer duas vezes)
-      const top = list.slice(0, 5).map(g => ({ ...g, items: [...g.items] })), restV = list.slice(5).reduce((s, g) => s + g.value, 0);
+      // contas fixas e assinaturas ficam sempre com fatia própria; das categorias, as maiores aparecem e o resto vira "Outros"
+      const fixed = list.filter(g => g.go === 'fixa' || g.go === 'assin'), cats = list.filter(g => !fixed.includes(g)), nTop = Math.max(2, 5 - fixed.length);
+      const top = [...fixed, ...cats.slice(0, nTop)].map(g => ({ ...g, items: [...g.items] })), rest = cats.slice(nTop), restV = rest.reduce((s, g) => s + g.value, 0);
       // nos itens que vieram de outras fatias, o nome da categoria vai junto, pra dar pra entender o "Outros"
-      const restI = list.slice(5).flatMap(g => g.items.map(i => ({ ...i, sub: [g.name, i.sub].filter(Boolean).join(' · ') })));
+      const restI = rest.flatMap(g => g.items.map(i => ({ ...i, sub: [g.name, i.sub].filter(Boolean).join(' · ') })));
       const o = top.find(g => g.name === 'Outros');
-      if (o) { o.value += restV; o.items.push(...restI); } else top.push({ name: 'Outros', color: '#94a3b8', cc: catColor(null, 'despesa'), icon: 'shopping-bag', value: restV, items: restI });
+      if (!restV) {} else if (o) { o.value += restV; o.items.push(...restI); } else top.push({ name: 'Outros', color: '#94a3b8', cc: catColor(null, 'despesa'), icon: 'shopping-bag', value: restV, items: restI });
       list = top.sort((a, b) => b.value - a.value);
     }
     const total = sp.total, fut = view.month > curKey();
-    box.innerHTML = `<h3>Gastos de ${monthName(key)} <button class="ov-link" data-pdf>Resumo em PDF</button></h3>`
-      + (total && sp.onCard ? `<p class="ov-sub">${sp.direct ? `${money(sp.direct)} direto da conta · ` : ''}${money(sp.onCard)} no cartão</p>` : '')
+    // a ponte entre "gastou" e "saiu da conta": gastou − o que foi no cartão + as faturas que vencem no mês = saiu da conta
+    const t = totals(key), diff = t.despesas - total, why = Math.abs(diff) >= 100;
+    box.innerHTML = `<h3>${fut ? 'Vai gastar' : 'Gastou'} em ${monthName(key)} <button class="ov-link" data-pdf title="Resumo do mês em PDF">PDF</button></h3>`
+      + (total && why ? `<p class="ov-sub ov-why">${diff > 0 ? `${fut ? 'Vai sair' : 'Saiu'} mais da conta: ${fut ? 'você vai pagar' : 'você pagou'} faturas de ${monthName(addMonths(key, -1))}.` : `${fut ? 'Vai sair' : 'Saiu'} menos da conta: parte ficou pra fatura de ${monthName(addMonths(key, 1))}.`} <button type="button" class="ov-link" id="whyBtn">Por quê?</button></p>` : '')
       + (total ? donutHtml(list.map(({ id, go, ...g }) => g), total, fut ? 'Vai gastar' : 'Gastou', true) : '<div class="ov-empty">Sem gastos neste mês ainda.</div>');
+    box.querySelector('#whyBtn')?.addEventListener('click', () => openWhy(key));
     // tocar numa fatia (na legenda): abre a lista do que forma aquele valor
     box.querySelectorAll('.legend li').forEach((li, n) => { const g = list[n]; if (!g) return;
       li.setAttribute('role', 'button'); li.tabIndex = 0; li.title = `Ver o que forma ${g.name}`; li.style.cursor = 'pointer';
       const go = () => openWhere(g);
       li.addEventListener('click', go); li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); });
+  }
+  // "Por quê?": a conta que liga o que você gastou ao que saiu da conta
+  function openWhy(key) {
+    const sp = spentGroups(key), t = totals(key), fut = key > curKey();
+    const row = (b, v, sign = '') => `<div class="ov-row"><div class="grow"><b>${b}</b></div><span class="amt num">${sign}${money(v)}</span></div>`;
+    openModal(`${modalHead(fut ? 'Gasto × saída da conta' : 'Por que saiu outro valor?', `${monthName(key).charAt(0).toUpperCase() + monthName(key).slice(1)}`)}
+      <div class="where-list">${row(fut ? 'Você vai gastar' : 'Você gastou', sp.total)}
+        ${sp.onCard ? row('Comprado no cartão', sp.onCard, '− ') : ''}
+        ${t.faturas ? row(`Faturas que vencem em ${monthName(key)}`, t.faturas, '+ ') : ''}
+        <div class="ov-row ov-tot"><div class="grow"><b>= ${fut ? 'Vai sair da conta' : 'Saiu da conta'}</b></div><span class="amt num">${money(t.despesas)}</span></div></div>
+      <p class="help">O que vai no cartão só sai da conta quando a fatura vence.</p>
+      <div class="actions"><span class="grow"></span><button type="button" class="btn save" data-close>Entendi</button></div>`);
   }
   // "Saiu da conta" aberto em poucas linhas: o que foi pago direto e cada fatura que vence no mês (com compras de antes)
   function openOut() {
