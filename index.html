@@ -543,6 +543,9 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .ov-row .grow small { color: var(--muted); font-size: .72rem; }
 .ov-row .meter { margin-top: 5px; height: 6px; }
 .ov-row .amt { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ov-row .ov-next { display: block; margin-top: 1px; }
+.ov-row.ov-tot { padding-top: 10px; }
+.ov-row.ov-tot .grow small { font-size: .78rem; }
 .ov-empty { color: var(--muted); font-size: .82rem; padding: 18px 0; text-align: center; }
 /* card vazio ao lado de um card alto (calendário): o aviso fica no meio, sem um buraco embaixo */
 .ov-forecast:has(> .ov-empty), .ov-where:has(> .ov-empty), .ov-cards:has(> .ov-empty) { display: flex; flex-direction: column; }
@@ -2794,13 +2797,17 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     return out.filter(i => i.payCard === cardId && card && faturaKeyFor(card, i.shownDate) === key);
   }
   // Prévia da fatura: soma do que já caiu nela (compras até hoje e parcelas)
-  const faturaPreview = (cardId, key) => itemsOnCard(cardId, key).filter(i => i.shownDate <= todayIso || i.installment).reduce((s, i) => s + i.amount, 0);
+  // Um número só por fatura sem valor digitado: a soma de tudo que cai nela (inclusive assinatura e conta fixa no cartão
+  // que ainda vão ser cobradas até o fechamento). É o mesmo valor que entra no total do mês.
+  const faturaPreview = (cardId, key) => itemsOnCard(cardId, key).reduce((s, i) => s + i.amount, 0);
+  // Só o que já foi cobrado (compras até hoje e parcelas): é o que ocupa o limite do cartão
+  const faturaCharged = (cardId, key) => itemsOnCard(cardId, key).filter(i => i.shownDate <= todayIso || i.installment).reduce((s, i) => s + i.amount, 0);
   // Quanto do limite está comprometido: faturas lançadas e não pagas + compras/parcelas que ainda vão entrar em faturas não lançadas
   function cardUsed(card) {
     let used = 0;
     for (let i = 0, k = focusKey(card, curKey()); i < 48; i++, k = addMonths(k, 1)) {
       const f = (state.faturas[card.id] || {})[k];
-      used += f ? (f.paid ? 0 : f.amount) : faturaPreview(card.id, k);
+      used += f ? (f.paid ? 0 : f.amount) : faturaCharged(card.id, k);
     }
     return used;
   }
@@ -3675,14 +3682,18 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const cards = cardsOf(view.month);
     box.innerHTML = `<h3>Cartões <button class="ov-link" data-go="cartoes">Ver todos</button></h3>`
       + (cards.length ? cards.map(c => {
-        const k = focusKey(c, view.month), f = (state.faturas[c.id] || {})[k], prev = f ? 0 : faturaPreview(c.id, k), amt = f ? f.amount : prev;
+        const k = view.month, f = c.fatura, prev = f ? 0 : faturaPreview(c.id, k), amt = f ? f.amount : prev;
         const used = c.limit ? cardUsed(c) : 0, pct = c.limit ? used / c.limit : 0;
         const st = f ? FSTATE[faturaState(c, k, f)][1] : prev ? 'Prévia' : 'Sem fatura';
+        // já paga no mês atual: mostra também a próxima, que é a que está juntando compras agora
+        const nk = addMonths(k, 1), nf = (state.faturas[c.id] || {})[nk], nAmt = nf ? nf.amount : faturaPreview(c.id, nk);
+        const next = f && f.paid && k === curKey() && nAmt ? `<small class="ov-next">Próxima: ${nf ? '' : '≈ '}${money(nAmt)} em ${dm(faturaDates(c, nk).due)}</small>` : '';
         return `<div class="ov-row">${logoHtml({ brand: c.bank, name: c.name, color: c.color })}
           <div class="grow"><b>${esc(c.name)}${c.last4 ? ` •${esc(c.last4)}` : ''}</b><small>${st} · vence ${dm(faturaDates(c, k).due)}${c.limit ? ` · disponível ${money(Math.max(c.limit - used, 0))}` : ''}</small>
-            ${c.limit ? `<div class="meter ${pct > 0.9 ? 'over' : pct > 0.7 ? 'warn' : 'info'}"><i style="width:${Math.min(pct, 1) * 100}%"></i></div>` : ''}</div>
+            ${next}${c.limit ? `<div class="meter ${pct > 0.9 ? 'over' : pct > 0.7 ? 'warn' : 'info'}"><i style="width:${Math.min(pct, 1) * 100}%"></i></div>` : ''}</div>
           <span class="amt">${amt ? (f ? '' : '≈ ') + money(amt) : '—'}</span></div>`;
-      }).join('') : '<div class="ov-empty">Nenhum cartão cadastrado.</div>');
+      }).join('') + (cards.length > 1 ? `<div class="ov-row ov-tot"><div class="grow"><small>Faturas que vencem em ${monthName(view.month)}</small></div><span class="amt">${money(cards.reduce((s, c) => s + cardOut(c, view.month), 0))}</span></div>` : '')
+      : '<div class="ov-empty">Nenhum cartão cadastrado.</div>');
   }
 
   // Patrimônio = contas + investimentos. Investimento marcado "já está no saldo das contas" (inAcc) não entra de novo
@@ -4589,7 +4600,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       ${ccPreview(card)}
       ${moneyField('fAmount', f ? f.amount : 0, 'Valor da fatura')}
       ${last && !f ? `<div class="last-hint"><span>Mês passado: ${brl.format(last.amount / 100)}</span><button type="button" class="link" id="fLast">Usar esse valor</button></div>` : ''}
-      ${!f && faturaPreview(card.id, key) ? `<div class="last-hint"><span>Compras já lançadas neste cartão: ${brl.format(faturaPreview(card.id, key) / 100)}</span><button type="button" class="link" id="fPrevUse">Usar esse valor</button></div>` : ''}
+      ${!f && faturaPreview(card.id, key) ? `<div class="last-hint"><span>Soma do que já está nesta fatura: ${brl.format(faturaPreview(card.id, key) / 100)}</span><button type="button" class="link" id="fPrevUse">Usar esse valor</button></div>` : ''}
       <div id="insideBox"></div>
       ${st === 'late' && f && !nextF ? `<div class="movebox">Essa fatura venceu em ${dm(due)} e está sem pagar. Se esse valor é da fatura que ainda está aberta (fecha ${dm(faturaDates(card, next).close)}), mova pra de ${monthName(next)}.
         <br><button type="button" class="btn-soft" id="fMove">${ico('right', 'width:13px;height:13px')}Mover para a fatura de ${monthName(next)}</button></div>` : ''}
