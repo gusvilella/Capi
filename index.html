@@ -827,7 +827,7 @@ div.empty::before, .ov-forecast > .ov-empty::before, .ov-where > .ov-empty::befo
 .mes-it.sobra.neg { --sc: var(--amber); }
 .mes-it.sobra .kpi-value { color: var(--sc); font-weight: 600; }
 .mes-cap { margin-top: 2px; font-size: .72rem; color: var(--muted); line-height: 1.3; }
-.sobra-g { display: block; margin-top: 5px; padding-top: 5px; border-top: 1px dashed var(--line, rgba(128,128,128,.28)); color: var(--ink-2); }
+.sobra-g { display: block; color: var(--ink-2); }
 .sobra-g b { font-weight: 650; color: var(--ink); white-space: nowrap; }
 .mes-ring { flex: none; width: 44px; height: 44px; margin-left: auto; transform: rotate(-90deg); }
 .mes-ring .tr { stroke: color-mix(in srgb, var(--sc) 18%, transparent); }
@@ -1479,7 +1479,7 @@ img.mlogo { display: block; width: 20px; height: 20px; border-radius: 50%; backg
 
 /* Linguagem simples e guias */
 .title-wrap { min-width: 0; }
-.tab-hint { margin: 3px 0 0; font-size: .78rem; color: var(--muted); line-height: 1.4; }
+.tab-hint { display: none; }
 .tab-hint:empty { display: none; }
 button.kpi-label { border: 0; background: none; padding: 0; cursor: help; text-align: left; text-decoration: underline dotted var(--field-line); text-underline-offset: 4px; }
 button.kpi-label:hover { color: var(--ink); text-decoration-color: currentColor; }
@@ -3075,7 +3075,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     $('#kReceitaSub').innerHTML = (byWho.length > 1 ? splitHtml(byWho.map(([m, v]) => ({ n: m.name, v, c: memberColor(m.id), mark: avatar(m.id, true) }))) : '')
       + (recNote ? `<div class="knote">${recNote}</div>` : '');
     cnt($('#kDespesas'), t.despesas);
-    $('#kSaiuCap').textContent = !t.despesas ? '' : !t.aPagar ? 'Tudo pago' : t.jaPago > 0 ? `${money(t.jaPago)} já pago · ${money(t.aPagar)} a pagar` : `${money(t.aPagar)} a pagar`;
+    $('#kSaiuCap').textContent = !t.despesas ? '' : !t.aPagar ? 'Tudo pago' : `Falta pagar ${money(t.aPagar)}`;
     $('#kDespesasSub').innerHTML = splitHtml([{ n: 'Contas', v: t.fixas, c: '#8fa6c4' }, { n: 'Gastos', v: t.variaveis, c: '#d2ae86' },
       { n: 'Assinaturas', v: t.assinaturas, c: '#b29bcf' }, { n: 'Cartões', v: t.faturas, c: '#93b8a6' }]) || (t.despesas ? '' : '<div class="knote">Nada lançado ainda</div>');
     const signed = c => (c < 0 && !ui.hidden ? '–' : '') + money(Math.abs(c));
@@ -3111,7 +3111,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         : used > t.receita ? `Saiu ${Math.round((used / t.receita - 1) * 100)}% a mais do que entrou`
         : `${vc('Você usou', 'Vocês usaram')} ${Math.round(used / t.receita * 100)}% do que entrou`;
       // anel da sobra: quanto do que caiu já saiu (passou de 100%: anel cheio em âmbar)
-      $('#kSobraCap').innerHTML = esc((t.aPagar > 0 && view.month <= curKey() ? 'Depois de pagar o que falta · ' : '') + cap)
+      $('#kSobraCap').innerHTML = esc(!t.receita || used > t.receita ? cap : '')   // frase só quando falta lançar ou saiu mais do que entrou; no resto, o anel já mostra
         + (t.pct && t.receita ? `<span class="sobra-g">${t.saldo >= 0 ? `Guardando <b class="num">${esc(money(t.investir))}</b>, ficam <b class="num">${esc(money(t.saldo))}</b> livres` : `Pra guardar <b class="num">${esc(money(t.investir))}</b> faltam <b class="num">${esc(money(-t.saldo))}</b>`}</span>` : '');
       $('#kSobraBox').classList.toggle('neg', t.sobra < 0);
       $('#kRing').setAttribute('stroke-dasharray', `${(top ? Math.min(used / Math.max(t.receita, 1), 1) * 100 : 0).toFixed(1)} 100`);
@@ -3254,11 +3254,11 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const foot = (all && found.length > rows.length ? `<div class="yield"><span>Mostrando os ${rows.length} mais recentes de ${found.length} encontrados</span></div>` : '')
       + `<div class="total"><span>Total${filtered ? ' filtrado' : ''}${all ? ` (${found.length} em todos os meses)` : ''}</span>
       <strong class="num ${ui.tab === 'receita' ? 'pos' : 'negc'}">${ui.hidden ? '' : (ui.tab === 'receita') !== (sum < 0) ? '+ ' : '- '}${money(Math.abs(sum))}</strong></div>`
-      + (inside ? `<div class="yield"><span>No cartão: entra na fatura em que cai (conta no mês em que ela vence)</span><span class="num">${money(inside)}</span></div>` : '')
+      + (inside ? `<div class="yield"><span>No cartão</span><span class="num">${money(inside)}</span></div>` : '')
       + (isFixa && !filtered ? (() => {
         // quanto das contas fixas do mês já foi pago (ou está no cartão) e quanto falta
         const left = rows.filter(r => ['due', 'late'].includes(fixaState(r))).reduce((s, r) => s + r.amount, 0);
-        return `<div class="yield"><span>Já pago ${money(sum - left)}</span><span>${left ? `Falta pagar <strong class="num" style="color:var(--amber)">${money(left)}</strong>` : 'Tudo pago'}</span></div>`;
+        return rows.some(r => fixaState(r) !== 'card') ? `<div class="yield"><span>${left ? 'Falta pagar' : 'Tudo pago'}</span>${left ? `<strong class="num" style="color:var(--amber)">${money(left)}</strong>` : ''}</div>` : '';
       })() : '');
     $('#table').innerHTML = head + body + foot;
   }
@@ -3718,7 +3718,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
         const nk = addMonths(k, 1), nf = (state.faturas[c.id] || {})[nk], nAmt = nf ? nf.amount : faturaPreview(c.id, nk);
         const next = f && f.paid && k === curKey() && nAmt ? `<small class="ov-next">Próxima: ${nf ? '' : '≈ '}${money(nAmt)} em ${dm(faturaDates(c, nk).due)}</small>` : '';
         return `<div class="ov-row">${logoHtml({ brand: c.bank, name: c.name, color: c.color })}
-          <div class="grow"><b>${esc(c.name)}${c.last4 ? ` •${esc(c.last4)}` : ''}</b><small>${st} · vence ${dm(faturaDates(c, k).due)}${c.limit ? ` · disponível ${money(Math.max(c.limit - used, 0))}` : ''}</small>
+          <div class="grow"><b>${esc(c.name)}${c.last4 ? ` •${esc(c.last4)}` : ''}</b><small>${st} · vence ${dm(faturaDates(c, k).due)}</small>
             ${next}${c.limit ? `<div class="meter ${pct > 0.9 ? 'over' : pct > 0.7 ? 'warn' : 'info'}"><i style="width:${Math.min(pct, 1) * 100}%"></i></div>` : ''}</div>
           <span class="amt">${amt ? (f ? '' : '≈ ') + money(amt) : '—'}</span></div>`;
       }).join('') + (cards.length > 1 ? `<div class="ov-row ov-tot"><div class="grow"><small>Faturas que vencem em ${monthName(view.month)}</small></div><span class="amt">${money(cards.reduce((s, c) => s + cardOut(c, view.month), 0))}</span></div>` : '')
@@ -4514,9 +4514,9 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
     const total = rows.reduce((s, c) => s + (c.fatura ? c.fatura.amount : prevOf(c)), 0);
     const open = rows.reduce((s, c) => s + (c.fatura ? (c.fatura.paid ? 0 : c.fatura.amount) : prevOf(c)), 0);
     $('#table').innerHTML = head + body + `
-      <div class="total"><span>${view.month === curKey() ? 'Total das faturas atuais' : `Total das faturas que vencem em ${monthName(view.month)}`}${anyPrev ? ' <small style="color:var(--muted)">(com prévias)</small>' : ''}</span><strong class="num negc">${anyPrev ? '≈ ' : ''}${money(total)}</strong></div>
+      <div class="total"><span>${view.month === curKey() ? 'Total das faturas atuais' : `Total das faturas que vencem em ${monthName(view.month)}`}</span><strong class="num negc">${anyPrev ? '≈ ' : ''}${money(total)}</strong></div>
       <div class="yield"><span>${open ? 'Em aberto' : total ? 'Tudo pago' : ''}</span><span>${open ? `<strong class="num" style="color:var(--amber)">${money(open)}</strong>` : ''}</span></div>
-      <p class="cards-note">Cada fatura conta no mês em que vence, com o valor que você lançou. Sem valor lançado, vale a soma das compras dela.</p>`;
+`;
   }
 
   function renderCardsChart() {
@@ -5381,11 +5381,11 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       <div class="two">
         <div><label class="fl" for="fDay">Vence todo dia</label>
           <select class="select" id="fDay">${Array.from({ length: 31 }, (_, i) => `<option value="${i + 1}" ${i + 1 === f.day ? 'selected' : ''}>Dia ${pad(i + 1)}</option>`).join('')}</select></div>
-        <div><label class="fl">Quando você paga?</label>
-          <div class="seg2" id="fWhen"><button type="button" data-next="0">No mesmo mês</button><button type="button" data-next="1">No mês seguinte</button></div></div>
+        ${f.dueNext ? `<div><label class="fl">Quando você paga?</label>
+          <div class="seg2" id="fWhen"><button type="button" data-next="0">No mesmo mês</button><button type="button" data-next="1">No mês seguinte</button></div></div>` : ''}
       </div>
       <input type="checkbox" id="fDueNext" hidden ${f.dueNext ? 'checked' : ''} />
-      <p class="help" id="fWhenHelp"></p>
+      ${f.dueNext ? '<p class="help" id="fWhenHelp"></p>' : ''}
       ${editing ? '' : `<div id="paidNowBox" hidden>${checkField('fPaidNow', 'Já paguei a deste mês', 'O vencimento deste mês já passou. Desmarque se ainda não pagou.', true)}</div>`}
       ${payField(item ? f : null).replace('id="fPay"', 'id="fPay" data-fixa="1"')}
       ${footer(editing)}</form>`, m => {
@@ -5394,6 +5394,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
       // sugestões de nome e "quando você paga" com a frase mostrando o resultado
       m.querySelector('#fixSug')?.addEventListener('click', e => { const b = e.target.closest('[data-sug]'); if (!b) return; m.querySelector('#fDesc').value = b.dataset.sug; m.querySelectorAll('#fixSug button').forEach(x => x.classList.toggle('on', x === b)); m.querySelector('#fAmount').focus(); });
       const drawWhen = () => {
+        if (!m.querySelector('#fWhen')) return;   // a pergunta só existe em conta antiga marcada "no mês seguinte"
         const next = m.querySelector('#fDueNext').checked, day = +m.querySelector('#fDay').value;
         m.querySelectorAll('#fWhen button').forEach(b => b.classList.toggle('on', (b.dataset.next === '1') === next));
         const due = dateIn(next ? addMonths(view.month, 1) : view.month, day);
@@ -5401,7 +5402,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [tabindex]
           ? `A conta de ${monthName(view.month)} você paga em ${dm(due)}. Ela entra no que saiu em ${monthName(view.month)}.`
           : `A conta de ${monthName(view.month)} vence em ${dm(due)}.`;
       };
-      m.querySelector('#fWhen').addEventListener('click', e => { const b = e.target.closest('[data-next]'); if (!b) return; const c = m.querySelector('#fDueNext'); c.checked = b.dataset.next === '1'; c.dispatchEvent(new Event('change')); drawWhen(); });
+      m.querySelector('#fWhen')?.addEventListener('click', e => { const b = e.target.closest('[data-next]'); if (!b) return; const c = m.querySelector('#fDueNext'); c.checked = b.dataset.next === '1'; c.dispatchEvent(new Event('change')); drawWhen(); });
       m.querySelector('#fDay').addEventListener('change', drawWhen);
       drawWhen();
       // Conta nova com o vencimento deste mês já passado: pergunta se já foi paga, pra não nascer "Atrasada"
