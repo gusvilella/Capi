@@ -1850,7 +1850,7 @@ html:root[data-theme="dark"] .bar-mv i::after { background: linear-gradient(90de
 #table .row.just-in { animation: row-in 1.4s cubic-bezier(.2, .75, .25, 1) both; border-radius: 10px; }
 #table .row.just-edit { animation: row-edit 1.2s ease-out both; border-radius: 10px; }
 @keyframes row-edit { 0%, 20% { background-color: color-mix(in srgb, #ff9416 16%, transparent); } }
-.enter > .ov, .enter .evo, #mainGrid.enter > .card, #mainGrid.enter > div > .card { animation: slide-in .38s cubic-bezier(.2, .75, .25, 1) both; }
+.enter > .ov, .enter .evo, #mainGrid.enter > .card, #mainGrid.enter > div > .card { animation: slide-in .5s cubic-bezier(.2, .75, .25, 1) both; }
 @keyframes dn-roll { from { opacity: 0; transform: rotate(-360deg) scale(.82); } }
 @keyframes arc-draw { from { stroke-dasharray: 0 100; } }
 @keyframes ic-pop { 0% { opacity: 0; transform: scale(0); } 70% { opacity: 1; transform: scale(1.18); } 100% { transform: scale(1); } }
@@ -3194,7 +3194,7 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
     el.classList.remove('enter'); void el.offsetWidth;
     el.style.setProperty('--dx', dir * 18 + 'px'); el.style.setProperty('--dy', intro ? '14px' : '0px');
     const items = [...el.querySelectorAll(ui.tab === 'geral' ? ':scope > .ov, .evo' : ':scope > .card, :scope > div > .card')];
-    items.forEach((it, i) => { it.style.animationDelay = (intro ? 520 : 0) + Math.min(i, 5) * (intro ? 70 : 40) + 'ms'; });
+    items.forEach((it, i) => { it.style.animationDelay = (intro ? 420 : 0) + Math.min(i, 5) * (intro ? 70 : 40) + 'ms'; });
     el.classList.add('enter');
     clearTimeout(animateEnter.t);
     animateEnter.t = setTimeout(() => { el.classList.remove('enter'); items.forEach(it => { it.style.animationDelay = ''; }); }, intro ? 1400 : 700);
@@ -7828,7 +7828,7 @@ html:root .kpi.contas .kpi-value { font-size: clamp(2rem, 8.6vw, 2.7rem) !import
     const go = () => {
       if (done) return; done = true; sp.classList.add('gone');
       applyTheme(root.dataset.theme);   // barra do topo do celular volta à cor do app só agora
-      setTimeout(then, 140); setTimeout(() => sp.remove(), 1100);
+      then(); setTimeout(() => sp.remove(), 1100);   // a entrada do app começa junto com a saída da abertura (antes esperava 140ms e o Início piscava: aparecia, sumia e entrava)
     };
     sp.addEventListener('click', go); setTimeout(go, 1950);   // dá tempo da Capi subir, a laranja cair e ela mexer as orelhas
   }
