@@ -2166,6 +2166,47 @@ html:root[data-theme="dark"] .ov-more { border-color: var(--field-line) !importa
 }
 html:root .fab { background: #f28a2e !important; color: #241a11 !important; }
 @media (min-width: 981px) { html:root .kpi.mes .mes-it { padding: 16px 18px !important; } }
+/* ===== Visual novo nas abas, formulários e janelas ===== */
+html:root { --grad: linear-gradient(135deg, #17806a, #0e6b57); --grad-glow: rgba(14, 107, 87, .45); }
+html:root[data-theme="dark"] { --grad: linear-gradient(135deg, #1c8f76, #107460); --grad-glow: rgba(28, 143, 118, .4); --accent: #17806a; }
+/* abas: a rosca e a lista deixam de ser caixas; ficam direto na página, como no Início */
+html:root #mainGrid .card { background: none !important; box-shadow: none !important; border-radius: 0 !important; padding-left: 0 !important; padding-right: 0 !important; }
+html:root #mainGrid .card::before, html:root #mainGrid .card::after { display: none !important; }
+html:root #mainGrid .card-head h2 { font-size: 1.22rem !important; font-weight: 700 !important; letter-spacing: -.02em; }
+html:root #mainGrid .row { padding-left: 0 !important; padding-right: 0 !important; }
+html:root #mainGrid .row.head { border-bottom: 1px solid var(--line); }
+html:root #mainGrid .total { padding-left: 0; padding-right: 0; border-top: 1px solid var(--line); margin-top: 4px; }
+html:root #mainGrid .yield { padding-left: 0; padding-right: 0; }
+html:root #mainGrid .empty { background: none; }
+@media (min-width: 981px) { html:root #mainGrid { gap: 18px 48px !important; } }
+@media (max-width: 640px) { html:root #mainGrid .card-head h2 { font-size: 1.05rem !important; white-space: nowrap; } html:root #mainGrid .card-head .btn-soft { padding-left: 11px; padding-right: 11px; } }
+@media (max-width: 640px) { html:root:not([data-tab="geral"]) .app { row-gap: 8px; } html:root #mainGrid { gap: 22px !important; } }
+/* botões de ação das listas: pílulas leves */
+html:root .btn-soft { border-radius: 999px !important; background: transparent !important; box-shadow: inset 0 0 0 1px var(--field-line) !important; }
+html:root .btn-soft:hover { background: var(--field) !important; }
+html:root .btn-soft.on { box-shadow: inset 0 0 0 1.5px var(--accent) !important; }
+/* seletor de partes (Contas · Gastos · Assinaturas · Cartões) e abas do computador */
+html:root .seg-tabs { border-radius: 999px !important; padding: 4px !important; }
+html:root .seg-tabs button { border-radius: 999px !important; }
+html:root:not([data-theme="dark"]) .seg-tabs button.on { background: #241a11 !important; color: #faf5ec !important; box-shadow: none !important; }
+html:root[data-theme="dark"] .seg-tabs button.on { background: #f2f4f1 !important; color: #0a0e0d !important; box-shadow: none !important; }
+html:root .tab-ind { border-radius: 999px !important; }
+html:root .tabs button { border-radius: 999px !important; }
+/* janelas e formulários */
+html:root .modal { border-radius: 28px !important; }
+@media (max-width: 640px) { html:root .modal { border-radius: 28px 28px 0 0 !important; } }
+html:root:not([data-theme="dark"]) .modal { background: #fffdf8 !important; }
+html:root[data-theme="dark"] .modal { background: #111715 !important; box-shadow: 0 0 0 1px rgba(255, 255, 255, .08), 0 30px 80px -20px rgba(0, 0, 0, .8) !important; }
+html:root .modal .modal-head h3 { font-size: 1.3rem; font-weight: 700; letter-spacing: -.02em; }
+html:root .modal .input, html:root .modal .select { border-radius: 14px; }
+html:root .btn { border-radius: 999px !important; }
+html:root .btn.save { background: var(--grad) !important; box-shadow: none !important; }
+html:root:not([data-theme="dark"]) .btn.cancel { background: #f3ebdb !important; color: #57483a !important; }
+html:root .cat-chip, html:root .check { border-radius: 16px !important; }
+html:root .toast { border-radius: 999px !important; }
+/* cartõezinhos de aviso dentro das abas (assinaturas encontradas, resumo das metas) */
+html:root #mainGrid .detect, html:root #mainGrid .goal-sum { border-radius: 20px; }
+
 /* texto do bloco do dinheiro sempre por cima da Capi; ela não pega toque */
 .kpi.contas .kpi-value, .kpi.contas #kSaldoSub { position: relative; z-index: 1; }
 .kpi.contas #accountsBtn { z-index: 2; }
